@@ -1,4 +1,4 @@
-# Delphi GPT API
+# Delphi OpenAI API
 
 <img src="https://github.com/HemulGM/ChatGPT.API/blob/main/OpenAL-GPT3.png?raw=true" height="150" align="right">
 
@@ -18,18 +18,22 @@
 **Initialization**
 
 ```Pascal
-  FGPT := TGPTChatAPI.Create(Self, API_TOKEN);
+OpenAI := TOpenAI.Create(Self, API_TOKEN);
+```
+
+**Models**
+```Pascal
+var Models := OpenAI.Model.List();
 ```
 
 **Completaions**
 ```Pascal
-var Completions := FGPT.Completions(
+var Completions := OpenAI.Completion.Create(
   procedure(Params: TCompletionParams)
   begin
     Params.Prompt(MemoPrompt.Text);
     Params.MaxTokens(2048);
   end);
-  
 try
   for var Choice in Completions.Choices do
     MemoChat.Lines.Add(Choice.Index.ToString + ' ' + Choice.Text);
@@ -40,13 +44,12 @@ end;
 
 **Images Generations**
 ```Pascal
-var Images := FGPT.ImageGeneration(
+var Images := OpenAI.Image.Create(
   procedure(Params: TImageGenParams)
   begin
     Params.Prompt(MemoPrompt.Text);
     Params.ResponseFormat('url');
   end);
-  
 try
   for var Image in Images.Data do
     Image1.Bitmap.LoadFromUrl(Image.Url);
@@ -58,9 +61,9 @@ end;
 *Error handling*
 ```Pascal
 try
-  var Images := FGPT.ImageGeneration(...);
+  var Images := OpenAI.Image.Create(...);
 except
-  on E: GPTException do
-    ShowError('GPTError: ' + E.Message);
+  on E: OpenAIException do
+    ShowError('OpenAI Error: ' + E.Message);
 end;
 ```
