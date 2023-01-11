@@ -1,5 +1,20 @@
 # ChatGPT.API
  Delphi GPT API
+ 
+|API|Status|
+|---|---|
+|Models|🟢 Done|
+|Completions|🟢 Done|
+|Edits|🟢 Done|
+|Images|🟡 Working|
+|Embeddings|🟢 Done|
+|Files|🔴 None|
+|Fine-tunes|🔴 None|
+|Moderations|🔴 None|
+|Engines|🔴 None|
+|Parameter details|🔴 None|
+
+**Initialization**
 
 ```Pascal
   FGPT := TGPTChatAPI.Create(Self, API_TOKEN);
