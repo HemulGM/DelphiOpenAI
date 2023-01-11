@@ -11,7 +11,7 @@
 |Embeddings|🟢 Done|
 |Files|🔴 None|
 |Fine-tunes|🔴 None|
-|Moderations|🔴 None|
+|Moderations|🟢 Done|
 |Engines|🔴 None|
 |Parameter details|🔴 None|
 
