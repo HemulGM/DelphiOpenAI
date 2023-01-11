@@ -3,9 +3,9 @@
 interface
 
 uses
-  System.SysUtils, System.Classes, System.JSON, System.Net.HttpClient,
-  OpenAI.Completions, OpenAI.Edits, OpenAI.Errors, OpenAI.Params, OpenAI.Images,
-  OpenAI.Models, OpenAI.Embeddings, OpenAI.API;
+  System.SysUtils, System.Classes, OpenAI.Completions, OpenAI.Edits,
+  OpenAI.Errors, OpenAI.Params, OpenAI.Images, OpenAI.Models, OpenAI.Embeddings,
+  OpenAI.API, OpenAI.Moderations;
 
 type
   {$WARNINGS OFF}
@@ -17,6 +17,7 @@ type
     FImagesRoute: TImagesRoute;
     FModelsRoute: TModelsRoute;
     FEmbeddingsRoute: TEmbeddingsRoute;
+    FModerationsRoute: TModerationsRoute;
     procedure SetToken(const Value: string);
     function GetToken: string;
   public
@@ -48,6 +49,10 @@ type
     /// Get a vector representation of a given input that can be easily consumed by machine learning models and algorithms.
     /// </summary>
     property Embedding: TEmbeddingsRoute read FEmbeddingsRoute;
+    /// <summary>
+    /// Given a input text, outputs if the model classifies it as violating OpenAI's content policy.
+    /// </summary>
+    property Moderation: TModerationsRoute read FModerationsRoute;
   end;
   {$WARNINGS ON}
 
@@ -66,6 +71,7 @@ begin
   FImagesRoute := TImagesRoute.CreateRoute(API);
   FModelsRoute := TModelsRoute.CreateRoute(API);
   FEmbeddingsRoute := TEmbeddingsRoute.CreateRoute(API);
+  FModerationsRoute := TModerationsRoute.CreateRoute(API);
 end;
 
 constructor TOpenAI.Create(AOwner: TComponent; const AToken: string);
@@ -81,6 +87,7 @@ begin
   FImagesRoute.Free;
   FModelsRoute.Free;
   FEmbeddingsRoute.Free;
+  FModerationsRoute.Free;
   inherited;
 end;
 
@@ -95,6 +102,4 @@ begin
 end;
 
 end.
-
-
 
