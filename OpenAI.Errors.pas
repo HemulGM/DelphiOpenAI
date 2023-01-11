@@ -1,4 +1,4 @@
-﻿unit ChatGPT.API.Error;
+﻿unit OpenAI.Errors;
 
 interface
 

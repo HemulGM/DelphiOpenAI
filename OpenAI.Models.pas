@@ -1,9 +1,12 @@
-﻿unit ChatGPT.API.Models;
+﻿unit OpenAI.Models;
 
 interface
 
+uses
+  System.SysUtils, OpenAI.API;
+
 type
-  TGPTModelPermission = class
+  TModelPermission = class
   private
     FAllow_create_engine: Boolean;
     FAllow_fine_tuning: Boolean;
@@ -30,48 +33,73 @@ type
     property Organization: string read FOrganization write FOrganization;
   end;
 
-  TGPTModel = class
+  TModel = class
   private
     FCreated: Int64;
     FId: string;
     FObject: string;
     FOwned_by: string;
-    FPermission: TArray<TGPTModelPermission>;
+    FPermission: TArray<TModelPermission>;
     FRoot: string;
   public
     property Created: Int64 read FCreated write FCreated;
     property Id: string read FId write FId;
     property &Object: string read FObject write FObject;
     property OwnedBy: string read FOwned_by write FOwned_by;
-    property Permission: TArray<TGPTModelPermission> read FPermission write FPermission;
+    property Permission: TArray<TModelPermission> read FPermission write FPermission;
     property Root: string read FRoot write FRoot;
     destructor Destroy; override;
   end;
 
-  TGPTModels = class
+  TModels = class
   private
-    FData: TArray<TGPTModel>;
+    FData: TArray<TModel>;
     FObject: string;
   public
-    property Data: TArray<TGPTModel> read FData write FData;
+    property Data: TArray<TModel> read FData write FData;
     property &Object: string read FObject write FObject;
     destructor Destroy; override;
   end;
 
+  TModelsRoute = class(TOpenAIAPIRoute)
+  public
+    /// <summary>
+    /// Lists the currently available models, and provides basic information about each one such as the owner and availability.
+    /// </summary>
+    function List: TModels;
+    /// <summary>
+    /// Retrieves a model instance, providing basic information about the model such as the owner and permissioning.
+    /// </summary>
+    /// <param name="const Name: string">The ID of the model to use for this request</param>
+    function Retrieve(const Name: string): TModel;
+  end;
+
 implementation
 
-{ TGPTModels }
+{ TModelsRoute }
 
-destructor TGPTModels.Destroy;
+function TModelsRoute.List: TModels;
+begin
+  Result := API.Execute<TModels>('models');
+end;
+
+function TModelsRoute.Retrieve(const Name: string): TModel;
+begin
+  Result := API.Execute<TModel>('models' + '/' + Name);
+end;
+
+{ TModels }
+
+destructor TModels.Destroy;
 begin
   for var Item in FData do
     Item.Free;
   inherited;
 end;
 
-{ TGPTModel }
+{ TModel }
 
-destructor TGPTModel.Destroy;
+destructor TModel.Destroy;
 begin
   for var Item in FPermission do
     Item.Free;

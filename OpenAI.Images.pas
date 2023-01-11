@@ -1,9 +1,9 @@
-﻿unit ChatGPT.API.ImageGen;
+﻿unit OpenAI.Images;
 
 interface
 
 uses
-  ChatGPT.API.Params;
+  System.SysUtils, OpenAI.Params, OpenAI.API;
 
 type
   TImageGenParams = class(TJSONParam)
@@ -30,7 +30,7 @@ type
     constructor Create; override;
   end;
 
-  TGPTImageData = class
+  TImageData = class
   private
     FUrl: string;
     FB64_json: string;
@@ -39,21 +39,36 @@ type
     property B64Json: string read FB64_json write FB64_json;
   end;
 
-  TGPTImageGen = class
+  TImageGenerations = class
   private
-    FData: TArray<TGPTImageData>;
+    FData: TArray<TImageData>;
     FCreated: Int64;
   public
-    property Data: TArray<TGPTImageData> read FData write FData;
+    property Data: TArray<TImageData> read FData write FData;
     property Created: Int64 read FCreated write FCreated;
     destructor Destroy; override;
   end;
 
+  TImagesRoute = class(TOpenAIAPIRoute)
+  public
+    /// <summary>
+    /// Creates an image given a prompt.
+    /// </summary>
+    function Create(ParamProc: TProc<TImageGenParams>): TImageGenerations;
+  end;
+
 implementation
 
-{ TGPTImageGen }
+{ TImagesRoute }
 
-destructor TGPTImageGen.Destroy;
+function TImagesRoute.Create(ParamProc: TProc<TImageGenParams>): TImageGenerations;
+begin
+  Result := API.Execute<TImageGenerations, TImageGenParams>('images/generations', ParamProc);
+end;
+
+{ TImageGenerations }
+
+destructor TImageGenerations.Destroy;
 begin
   for var Item in FData do
     Item.Free;

@@ -1,9 +1,9 @@
-﻿unit ChatGPT.API.Edits;
+﻿unit OpenAI.Edits;
 
 interface
 
 uses
-  ChatGPT.API.Params;
+  System.SysUtils, OpenAI.Params, OpenAI.API;
 
 type
   TEditParams = class(TJSONParam)
@@ -40,7 +40,7 @@ type
     constructor Create; override;
   end;
 
-  TGPTEditUsage = class
+  TEditUsage = class
   private
     FCompletion_tokens: Int64;
     FPrompt_tokens: Int64;
@@ -51,7 +51,7 @@ type
     property TotalTokens: Int64 read FTotal_tokens write FTotal_tokens;
   end;
 
-  TGPTEditChoices = class
+  TEditChoices = class
   private
     FIndex: Int64;
     FText: string;
@@ -60,25 +60,40 @@ type
     property Text: string read FText write FText;
   end;
 
-  TGPTEdits = class
+  TEdits = class
   private
-    FChoices: TArray<TGPTEditChoices>;
+    FChoices: TArray<TEditChoices>;
     FCreated: Int64;
     FObject: string;
-    FUsage: TGPTEditUsage;
+    FUsage: TEditUsage;
   public
     property &Object: string read FObject write FObject;
-    property Choices: TArray<TGPTEditChoices> read FChoices write FChoices;
+    property Choices: TArray<TEditChoices> read FChoices write FChoices;
     property Created: Int64 read FCreated write FCreated;
-    property Usage: TGPTEditUsage read FUsage write FUsage;
+    property Usage: TEditUsage read FUsage write FUsage;
     destructor Destroy; override;
+  end;
+
+  TEditsRoute = class(TOpenAIAPIRoute)
+  public
+    /// <summary>
+    /// Creates a new edit for the provided input, instruction, and parameters
+    /// </summary>
+    function Create(ParamProc: TProc<TEditParams>): TEdits;
   end;
 
 implementation
 
-{ TGPTEdits }
+{ TEditsRoute }
 
-destructor TGPTEdits.Destroy;
+function TEditsRoute.Create(ParamProc: TProc<TEditParams>): TEdits;
+begin
+  Result := API.Execute<TEdits, TEditParams>('edits', ParamProc);
+end;
+
+{ TEdits }
+
+destructor TEdits.Destroy;
 begin
   if Assigned(FUsage) then
     FUsage.Free;

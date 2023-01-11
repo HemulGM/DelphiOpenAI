@@ -1,9 +1,9 @@
-﻿unit ChatGPT.API.Embeddings;
+﻿unit OpenAI.Embeddings;
 
 interface
 
 uses
-  ChatGPT.API.Params;
+  System.SysUtils, OpenAI.Params, OpenAI.API;
 
 type
   TEmbeddingParams = class(TJSONParam)
@@ -30,7 +30,7 @@ type
     function User(const Value: string): TEmbeddingParams; overload;
   end;
 
-  TGPTEmbeddingUsage = class
+  TEmbeddingUsage = class
   private
     FPrompt_tokens: Int64;
     FTotal_tokens: Int64;
@@ -39,7 +39,7 @@ type
     property TotalTokens: Int64 read FTotal_tokens write FTotal_tokens;
   end;
 
-  TGPTEmbeddingData = class
+  TEmbeddingData = class
   private
     FIndex: Int64;
     FObject: string;
@@ -50,25 +50,40 @@ type
     property Embedding: TArray<Extended> read FEmbedding write FEmbedding;
   end;
 
-  TGPTEmbeddings = class
+  TEmbeddings = class
   private
-    FData: TArray<TGPTEmbeddingData>;
+    FData: TArray<TEmbeddingData>;
     FObject: string;
-    FUsage: TGPTEmbeddingUsage;
+    FUsage: TEmbeddingUsage;
     FModel: string;
   public
     property &Object: string read FObject write FObject;
-    property Data: TArray<TGPTEmbeddingData> read FData write FData;
-    property Usage: TGPTEmbeddingUsage read FUsage write FUsage;
+    property Data: TArray<TEmbeddingData> read FData write FData;
+    property Usage: TEmbeddingUsage read FUsage write FUsage;
     property Model: string read FModel write FModel;
     destructor Destroy; override;
   end;
 
+  TEmbeddingsRoute = class(TOpenAIAPIRoute)
+  public
+    /// <summary>
+    /// Creates an embedding vector representing the input text.
+    /// </summary>
+    function Create(ParamProc: TProc<TEmbeddingParams>): TEmbeddings;
+  end;
+
 implementation
 
-{ TGPTEmbeddings }
+{ TEmbeddingsRoute }
 
-destructor TGPTEmbeddings.Destroy;
+function TEmbeddingsRoute.Create(ParamProc: TProc<TEmbeddingParams>): TEmbeddings;
+begin
+  Result := API.Execute<TEmbeddings, TEmbeddingParams>('embeddings', ParamProc);
+end;
+
+{ TEmbeddings }
+
+destructor TEmbeddings.Destroy;
 begin
   if Assigned(FUsage) then
     FUsage.Free;

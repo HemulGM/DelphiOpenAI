@@ -1,9 +1,9 @@
-﻿unit ChatGPT.API.Completions;
+﻿unit OpenAI.Completions;
 
 interface
 
 uses
-  ChatGPT.API.Params;
+  System.SysUtils, OpenAI.Params, OpenAI.API;
 
 type
   TCompletionParams = class(TJSONParam)
@@ -102,7 +102,7 @@ type
     constructor Create; override;
   end;
 
-  TGPTCompletionUsage = class
+  TCompletionUsage = class
   private
     FCompletion_tokens: Int64;
     FPrompt_tokens: Int64;
@@ -113,7 +113,7 @@ type
     property TotalTokens: Int64 read FTotal_tokens write FTotal_tokens;
   end;
 
-  TGPTCompletionChoices = class
+  TCompletionChoices = class
   private
     FFinish_reason: string;
     FIndex: Int64;
@@ -124,29 +124,44 @@ type
     property Text: string read FText write FText;
   end;
 
-  TGPTCompletions = class
+  TCompletions = class
   private
-    FChoices: TArray<TGPTCompletionChoices>;
+    FChoices: TArray<TCompletionChoices>;
     FCreated: Int64;
     FId: string;
     FModel: string;
     FObject: string;
-    FUsage: TGPTCompletionUsage;
+    FUsage: TCompletionUsage;
   public
-    property Choices: TArray<TGPTCompletionChoices> read FChoices write FChoices;
+    property Choices: TArray<TCompletionChoices> read FChoices write FChoices;
     property Created: Int64 read FCreated write FCreated;
     property Id: string read FId write FId;
     property Model: string read FModel write FModel;
     property &Object: string read FObject write FObject;
-    property Usage: TGPTCompletionUsage read FUsage write FUsage;
+    property Usage: TCompletionUsage read FUsage write FUsage;
     destructor Destroy; override;
+  end;
+
+  TCompletionsRoute = class(TOpenAIAPIRoute)
+  public
+    /// <summary>
+    /// Creates a completion for the provided prompt and parameters
+    /// </summary>
+    function Create(ParamProc: TProc<TCompletionParams>): TCompletions;
   end;
 
 implementation
 
-{ TGPTCompletions }
+{ TCompletionsRoute }
 
-destructor TGPTCompletions.Destroy;
+function TCompletionsRoute.Create(ParamProc: TProc<TCompletionParams>): TCompletions;
+begin
+  Result := API.Execute<TCompletions, TCompletionParams>('completions', ParamProc);
+end;
+
+{ TCompletions }
+
+destructor TCompletions.Destroy;
 begin
   if Assigned(FUsage) then
     FUsage.Free;
