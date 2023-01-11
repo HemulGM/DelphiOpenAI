@@ -5,7 +5,8 @@ interface
 uses
   System.SysUtils, System.Classes, System.JSON, System.Net.HttpClient,
   ChatGPT.API.Completions, ChatGPT.API.Edits, ChatGPT.API.Error,
-  ChatGPT.API.Params, ChatGPT.API.ImageGen;
+  ChatGPT.API.Params, ChatGPT.API.ImageGen, ChatGPT.API.Models,
+  ChatGPT.API.Embeddings;
 
 type
   GPTException = class(Exception)
@@ -31,6 +32,7 @@ type
     function ParseResponse<T: class, constructor>(const Code: Int64; const ResponseText: string): T;
     function Execute(const Path: string; Body: TJSONObject; Response: TStringStream): Integer; overload;
     function Execute<TResult: class, constructor; TParams: TJSONParam>(const Path: string; ParamProc: TProc<TParams>): TResult; overload;
+    function Execute<TResult: class, constructor>(const Path: string): TResult; overload;
   public
     constructor Create(AOwner: TComponent); overload; override;
     constructor Create(AOwner: TComponent; const AToken: string); overload;
@@ -50,6 +52,19 @@ type
     /// Given a prompt and/or an input image, the model will generate a new image.
     /// </summary>
     function ImageGeneration(ParamProc: TProc<TImageGenParams>): TGPTImageGen;
+    /// <summary>
+    /// List and describe the various models available in the API.
+    /// You can refer to the Models documentation to understand what models are available and the differences between them.
+    /// </summary>
+    function Models: TGPTModels;
+    /// <summary>
+    /// Retrieves a model instance, providing basic information about the model such as the owner and permissioning.
+    /// </summary>
+    function Model(const Name: string): TGPTModel;
+    /// <summary>
+    /// Get a vector representation of a given input that can be easily consumed by machine learning models and algorithms.
+    /// </summary>
+    function Embeddings(ParamProc: TProc<TEmbeddingParams>): TGPTEmbeddings;
   end;
   {$WARNINGS ON}
 
@@ -62,6 +77,8 @@ const
   URL_QUERY_COMPLETIONS = 'completions';
   URL_QUERY_EDITS = 'edits';
   URL_QUERY_IMAGE_GEN = 'images/generations';
+  URL_QUERY_MODELS = 'models';
+  URL_QUERY_EMBEDDINGS = 'embeddings';
 
 implementation
 
@@ -96,14 +113,19 @@ begin
   var Headers: TNetHeaders := [
     TNetHeader.Create('Authorization', 'Bearer ' + FToken),
     TNetHeader.Create('Content-Type', 'application/json')];
-  var Stream := TStringStream.Create;
-  Stream.WriteString(Body.ToJSON);
-  Stream.Position := 0;
-  try
-    Result := FHTTPClient.Post(URL_BASE + '/' + Path, Stream, Response, Headers).StatusCode;
-  finally
-    Stream.Free;
-  end;
+  if Assigned(Body) then
+  begin
+    var Stream := TStringStream.Create;
+    Stream.WriteString(Body.ToJSON);
+    Stream.Position := 0;
+    try
+      Result := FHTTPClient.Post(URL_BASE + '/' + Path, Stream, Response, Headers).StatusCode;
+    finally
+      Stream.Free;
+    end;
+  end
+  else
+    Result := FHTTPClient.Get(URL_BASE + '/' + Path, Response, Headers).StatusCode;
 end;
 
 function TGPTChatAPI.ParseResponse<T>(const Code: Int64; const ResponseText: string): T;
@@ -146,14 +168,40 @@ begin
   end;
 end;
 
+function TGPTChatAPI.Execute<TResult>(const Path: string): TResult;
+begin
+  var Response := TStringStream.Create;
+  try
+    var Code := Execute(Path, nil, Response);
+    Result := ParseResponse<TResult>(Code, Response.DataString);
+  finally
+    Response.Free;
+  end;
+end;
+
 function TGPTChatAPI.ImageGeneration(ParamProc: TProc<TImageGenParams>): TGPTImageGen;
 begin
   Result := Execute<TGPTImageGen, TImageGenParams>(URL_QUERY_IMAGE_GEN, ParamProc);
 end;
 
+function TGPTChatAPI.Model(const Name: string): TGPTModel;
+begin
+  Result := Execute<TGPTModel>(URL_QUERY_MODELS + '/' + Name);
+end;
+
+function TGPTChatAPI.Models: TGPTModels;
+begin
+  Result := Execute<TGPTModels>(URL_QUERY_MODELS);
+end;
+
 function TGPTChatAPI.Edits(ParamProc: TProc<TEditParams>): TGPTEdits;
 begin
   Result := Execute<TGPTEdits, TEditParams>(URL_QUERY_EDITS, ParamProc);
+end;
+
+function TGPTChatAPI.Embeddings(ParamProc: TProc<TEmbeddingParams>): TGPTEmbeddings;
+begin
+  Result := Execute<TGPTEmbeddings, TEmbeddingParams>(URL_QUERY_EMBEDDINGS, ParamProc);
 end;
 
 function TGPTChatAPI.Completions(ParamProc: TProc<TCompletionParams>): TGPTCompletions;
