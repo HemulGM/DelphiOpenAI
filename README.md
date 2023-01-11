@@ -18,7 +18,7 @@
 **Initialization**
 
 ```Pascal
-OpenAI := TOpenAI.Create(Self, API_TOKEN);
+var OpenAI := TOpenAI.Create(Self, API_TOKEN);
 ```
 
 **Models**
