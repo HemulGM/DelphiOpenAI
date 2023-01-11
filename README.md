@@ -28,7 +28,7 @@ var Images := FGPT.ImageGeneration(
   procedure(Params: TImageGenParams)
   begin
     Params.Prompt(MemoPrompt.Text);
-    Params.ResponseFormat('b64_json');
+    Params.ResponseFormat('url');
   end);
   
 try
