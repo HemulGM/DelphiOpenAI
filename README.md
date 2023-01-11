@@ -1,6 +1,6 @@
 # Delphi GPT API
 
-<img src="https://github.com/HemulGM/ChatGPT.API/blob/main/OpenAL-GPT3.png?raw=true" height="200" align="right">
+<img src="https://github.com/HemulGM/ChatGPT.API/blob/main/OpenAL-GPT3.png?raw=true" height="150" align="right">
 
 |API|Status|
 |---|---|
