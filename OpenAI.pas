@@ -5,7 +5,7 @@ interface
 uses
   System.SysUtils, System.Classes, OpenAI.Completions, OpenAI.Edits,
   OpenAI.Errors, OpenAI.Params, OpenAI.Images, OpenAI.Models, OpenAI.Embeddings,
-  OpenAI.API, OpenAI.Moderations;
+  OpenAI.API, OpenAI.Moderations, OpenAI.Engines;
 
 type
   {$WARNINGS OFF}
@@ -18,6 +18,7 @@ type
     FModelsRoute: TModelsRoute;
     FEmbeddingsRoute: TEmbeddingsRoute;
     FModerationsRoute: TModerationsRoute;
+    FEnginesRoute: TEnginesRoute;
     procedure SetToken(const Value: string);
     function GetToken: string;
   public
@@ -53,6 +54,12 @@ type
     /// Given a input text, outputs if the model classifies it as violating OpenAI's content policy.
     /// </summary>
     property Moderation: TModerationsRoute read FModerationsRoute;
+    /// <summary>
+    /// These endpoints describe and provide access to the various engines available in the API.
+    /// The Engines endpoints are deprecated.
+    /// Please use their replacement, Models, instead.
+    /// </summary>
+    property Engine: TEnginesRoute read FEnginesRoute;
   end;
   {$WARNINGS ON}
 
@@ -72,6 +79,7 @@ begin
   FModelsRoute := TModelsRoute.CreateRoute(API);
   FEmbeddingsRoute := TEmbeddingsRoute.CreateRoute(API);
   FModerationsRoute := TModerationsRoute.CreateRoute(API);
+  FEnginesRoute := TEnginesRoute.CreateRoute(API);
 end;
 
 constructor TOpenAI.Create(AOwner: TComponent; const AToken: string);
@@ -88,6 +96,7 @@ begin
   FModelsRoute.Free;
   FEmbeddingsRoute.Free;
   FModerationsRoute.Free;
+  FEnginesRoute.Free;
   inherited;
 end;
 

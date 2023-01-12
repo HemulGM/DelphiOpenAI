@@ -71,7 +71,8 @@ end;
 destructor TImageGenerations.Destroy;
 begin
   for var Item in FData do
-    Item.Free;
+    if Assigned(Item) then
+      Item.Free;
   inherited;
 end;
 

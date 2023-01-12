@@ -88,7 +88,8 @@ begin
   if Assigned(FUsage) then
     FUsage.Free;
   for var Item in FData do
-    Item.Free;
+    if Assigned(Item) then
+      Item.Free;
   inherited;
 end;
 

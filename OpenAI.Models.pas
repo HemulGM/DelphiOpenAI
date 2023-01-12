@@ -71,7 +71,7 @@ type
     /// Retrieves a model instance, providing basic information about the model such as the owner and permissioning.
     /// </summary>
     /// <param name="const Name: string">The ID of the model to use for this request</param>
-    function Retrieve(const Name: string): TModel;
+    function Retrieve(const Model: string): TModel;
   end;
 
 implementation
@@ -83,9 +83,9 @@ begin
   Result := API.Execute<TModels>('models');
 end;
 
-function TModelsRoute.Retrieve(const Name: string): TModel;
+function TModelsRoute.Retrieve(const Model: string): TModel;
 begin
-  Result := API.Execute<TModel>('models' + '/' + Name);
+  Result := API.Execute<TModel>('models' + '/' + Model);
 end;
 
 { TModels }
@@ -93,7 +93,8 @@ end;
 destructor TModels.Destroy;
 begin
   for var Item in FData do
-    Item.Free;
+    if Assigned(Item) then
+      Item.Free;
   inherited;
 end;
 
@@ -102,7 +103,8 @@ end;
 destructor TModel.Destroy;
 begin
   for var Item in FPermission do
-    Item.Free;
+    if Assigned(Item) then
+      Item.Free;
   inherited;
 end;
 

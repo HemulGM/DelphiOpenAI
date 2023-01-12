@@ -100,11 +100,15 @@ function TOpenAIAPI.ParseResponse<T>(const Code: Int64; const ResponseText: stri
 begin
   case Code of
     200..299:
-      Result := TJson.JsonToObject<T>(ResponseText);
+      {$WARNINGS OFF}
+      Result := TJson.JsonToObject<T>(UTF8ToString(ResponseText));
+      {$WARNINGS ON}
   else
     var Error: TGPTErrorResponse;
     try
-      Error := TJson.JsonToObject<TGPTErrorResponse>(ResponseText);
+      {$WARNINGS OFF}
+      Error := TJson.JsonToObject<TGPTErrorResponse>(UTF8ToString(ResponseText));
+      {$WARNINGS ON}
     except
       Error := nil;
     end;
@@ -113,6 +117,8 @@ begin
     else
       raise OpenAIException.Create('Unknown error', '', '', Code);
   end;
+  if not Assigned(Result) then
+    raise OpenAIException.Create('Empty response', '', '', Code);
 end;
 
 procedure TOpenAIAPI.CheckAPI;

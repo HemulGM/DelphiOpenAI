@@ -166,7 +166,8 @@ begin
   if Assigned(FUsage) then
     FUsage.Free;
   for var Item in FChoices do
-    Item.Free;
+    if Assigned(Item) then
+      Item.Free;
   inherited;
 end;
 
