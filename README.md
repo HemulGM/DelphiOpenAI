@@ -12,8 +12,7 @@
 |Files|🔴 None|
 |Fine-tunes|🔴 None|
 |Moderations|🟢 Done|
-|Engines|🔴 None|
-|Parameter details|🔴 None|
+|Engines (Depricated)|🟢 Done|
 
 **Initialization**
 
