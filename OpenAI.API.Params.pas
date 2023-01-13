@@ -23,6 +23,7 @@ type
     function Add(const Key: string; const Value: TJSONParam): TJSONParam; overload; virtual;
     function Add(const Key: string; Value: TArray<string>): TJSONParam; overload; virtual;
     function Add(const Key: string; Value: TArray<Integer>): TJSONParam; overload; virtual;
+    function Add(const Key: string; Value: TArray<Extended>): TJSONParam; overload; virtual;
     function Add(const Key: string; Value: TArray<TJSONValue>): TJSONParam; overload; virtual;
     function Add(const Key: string; Value: TArray<TJSONParam>): TJSONParam; overload; virtual;
     function GetOrCreateObject(const Name: string): TJSONObject;
@@ -134,6 +135,19 @@ begin
     JArr.AddElement(Item.JSON);
     Item.JSON := nil;
   end;
+
+  Add(Key, JArr);
+  Result := Self;
+end;
+
+function TJSONParam.Add(const Key: string; Value: TArray<Extended>): TJSONParam;
+var
+  JArr: TJSONArray;
+  Item: Extended;
+begin
+  JArr := TJSONArray.Create;
+  for Item in Value do
+    JArr.Add(Item);
 
   Add(Key, JArr);
   Result := Self;

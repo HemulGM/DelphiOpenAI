@@ -84,7 +84,7 @@ type
     /// A larger beta score puts more weight on recall and less on precision.
     /// A smaller beta score puts more weight on precision and less on recall.
     /// </summary>
-    function ClassificationBetas(const Value: string): TFineTuneCreateParams;
+    function ClassificationBetas(const Value: TArray<Extended>): TFineTuneCreateParams;
     /// <summary>
     /// A string of up to 40 characters that will be added to your fine-tuned model name.
     /// For example, a suffix of "custom-model-name" would produce a model name like
@@ -293,7 +293,7 @@ begin
   Result := TFineTuneCreateParams(Add('batch_size', Value));
 end;
 
-function TFineTuneCreateParams.ClassificationBetas(const Value: string): TFineTuneCreateParams;
+function TFineTuneCreateParams.ClassificationBetas(const Value: TArray<Extended>): TFineTuneCreateParams;
 begin
   Result := TFineTuneCreateParams(Add('classification_betas', Value));
 end;
