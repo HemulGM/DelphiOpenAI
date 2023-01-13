@@ -7,10 +7,10 @@
 |Models|🟢 Done|
 |Completions|🟢 Done|
 |Edits|🟢 Done|
-|Images|🟡 Working|
+|Images|🟢 Done|
 |Embeddings|🟢 Done|
-|Files|🔴 None|
-|Fine-tunes|🔴 None|
+|Files|🟡 Working|
+|Fine-tunes|🟡 Working|
 |Moderations|🟢 Done|
 |Engines (Depricated)|🟢 Done|
 
