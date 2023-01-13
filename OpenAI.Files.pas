@@ -22,6 +22,7 @@ type
     /// <summary>
     /// The intended purpose of the uploaded documents.
     /// Use "fine-tune" for Fine-tuning. This allows us to validate the format of the uploaded file.
+    /// Variants: ['fine-tune', 'answers', 'search', 'classifications']
     /// </summary>
     function Purpose(const Value: string): TFileCreateParams; overload;
   end;

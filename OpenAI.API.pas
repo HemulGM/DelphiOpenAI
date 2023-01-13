@@ -184,7 +184,25 @@ begin
     200..299: {success}
       ;
   else
-    raise OpenAIException.Create('Error downloading', '', Path, Code);
+    var Error: TGPTErrorResponse;
+    try
+      {$WARNINGS OFF}
+      var Strings := TStringStream.Create;
+      try
+        Response.Position := 0;
+        Strings.LoadFromStream(Response);
+        Error := TJson.JsonToObject<TGPTErrorResponse>(UTF8ToString(Strings.DataString));
+      finally
+        Strings.Free;
+      end;
+      {$WARNINGS ON}
+    except
+      Error := nil;
+    end;
+    if Assigned(Error) and Assigned(Error.Error) then
+      raise OpenAIException.Create(Error.Error.Message, Error.Error.&Type, Error.Error.Param, Error.Error.Code)
+    else
+      raise OpenAIException.Create('Unknown error', '', '', Code);
   end;
 end;
 

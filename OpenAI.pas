@@ -5,7 +5,7 @@ interface
 uses
   System.SysUtils, System.Classes, OpenAI.Completions, OpenAI.Edits,
   OpenAI.Errors, OpenAI.Params, OpenAI.Images, OpenAI.Models, OpenAI.Embeddings,
-  OpenAI.API, OpenAI.Moderations, OpenAI.Engines;
+  OpenAI.API, OpenAI.Moderations, OpenAI.Engines, OpenAI.Files;
 
 type
   {$WARNINGS OFF}
@@ -19,6 +19,7 @@ type
     FEmbeddingsRoute: TEmbeddingsRoute;
     FModerationsRoute: TModerationsRoute;
     FEnginesRoute: TEnginesRoute;
+    FFilesRoute: TFilesRoute;
     procedure SetToken(const Value: string);
     function GetToken: string;
   public
@@ -60,6 +61,10 @@ type
     /// Please use their replacement, Models, instead.
     /// </summary>
     property Engine: TEnginesRoute read FEnginesRoute;
+    /// <summary>
+    /// Files are used to upload documents that can be used with features like Fine-tuning.
+    /// </summary>
+    property &File: TFilesRoute read FFilesRoute;
   end;
   {$WARNINGS ON}
 
@@ -80,6 +85,7 @@ begin
   FEmbeddingsRoute := TEmbeddingsRoute.CreateRoute(API);
   FModerationsRoute := TModerationsRoute.CreateRoute(API);
   FEnginesRoute := TEnginesRoute.CreateRoute(API);
+  FFilesRoute := TFilesRoute.CreateRoute(API);
 end;
 
 constructor TOpenAI.Create(AOwner: TComponent; const AToken: string);
@@ -97,6 +103,7 @@ begin
   FEmbeddingsRoute.Free;
   FModerationsRoute.Free;
   FEnginesRoute.Free;
+  FFilesRoute.Free;
   inherited;
 end;
 
