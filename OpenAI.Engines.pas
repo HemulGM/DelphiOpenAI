@@ -48,12 +48,12 @@ implementation
 
 function TEnginesRoute.List: TEngines;
 begin
-  Result := API.Execute<TEngines>('engines');
+  Result := API.Get<TEngines>('engines');
 end;
 
 function TEnginesRoute.Retrieve(const EngineId: string): TEngine;
 begin
-  Result := API.Execute<TEngine>('engines' + '/' + EngineId);
+  Result := API.Get<TEngine>('engines' + '/' + EngineId);
 end;
 
 { TEngines }

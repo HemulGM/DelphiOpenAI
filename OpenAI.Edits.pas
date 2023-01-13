@@ -88,7 +88,7 @@ implementation
 
 function TEditsRoute.Create(ParamProc: TProc<TEditParams>): TEdits;
 begin
-  Result := API.Execute<TEdits, TEditParams>('edits', ParamProc);
+  Result := API.Post<TEdits, TEditParams>('edits', ParamProc);
 end;
 
 { TEdits }

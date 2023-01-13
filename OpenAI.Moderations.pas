@@ -108,7 +108,7 @@ implementation
 
 function TModerationsRoute.Create(ParamProc: TProc<TModerationsParams>): TModerations;
 begin
-  Result := API.Execute<TModerations, TModerationsParams>('moderations', ParamProc);
+  Result := API.Post<TModerations, TModerationsParams>('moderations', ParamProc);
 end;
 
 { TModerationsParams }

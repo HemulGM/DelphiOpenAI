@@ -156,7 +156,7 @@ implementation
 
 function TCompletionsRoute.Create(ParamProc: TProc<TCompletionParams>): TCompletions;
 begin
-  Result := API.Execute<TCompletions, TCompletionParams>('completions', ParamProc);
+  Result := API.Post<TCompletions, TCompletionParams>('completions', ParamProc);
 end;
 
 { TCompletions }

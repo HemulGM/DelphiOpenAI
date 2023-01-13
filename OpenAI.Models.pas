@@ -80,12 +80,12 @@ implementation
 
 function TModelsRoute.List: TModels;
 begin
-  Result := API.Execute<TModels>('models');
+  Result := API.Get<TModels>('models');
 end;
 
 function TModelsRoute.Retrieve(const Model: string): TModel;
 begin
-  Result := API.Execute<TModel>('models' + '/' + Model);
+  Result := API.Get<TModel>('models' + '/' + Model);
 end;
 
 { TModels }

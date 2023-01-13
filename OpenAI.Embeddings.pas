@@ -78,7 +78,7 @@ implementation
 
 function TEmbeddingsRoute.Create(ParamProc: TProc<TEmbeddingParams>): TEmbeddings;
 begin
-  Result := API.Execute<TEmbeddings, TEmbeddingParams>('embeddings', ParamProc);
+  Result := API.Post<TEmbeddings, TEmbeddingParams>('embeddings', ParamProc);
 end;
 
 { TEmbeddings }

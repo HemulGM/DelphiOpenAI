@@ -26,21 +26,28 @@ type
   private
     FHTTPClient: THTTPClient;
     FToken: string;
+    FBaseUrl: string;
     procedure SetToken(const Value: string);
-  public
-    procedure CheckAPI;
+    procedure SetBaseUrl(const Value: string);
+  protected
+    function Get(const Path: string; Response: TStringStream): Integer; overload;
+    function Delete(const Path: string; Response: TStringStream): Integer; overload;
+    function Post(const Path: string; Body: TJSONObject; Response: TStringStream): Integer; overload;
+    function Post(const Path: string; Body: TMultipartFormData; Response: TStringStream): Integer; overload;
     function ParseResponse<T: class, constructor>(const Code: Int64; const ResponseText: string): T;
-    function Execute(const Path: string; Response: TStringStream): Integer; overload;
-    function Execute(const Path: string; Body: TJSONObject; Response: TStringStream): Integer; overload;
-    function Execute(const Path: string; Body: TMultipartFormData; Response: TStringStream): Integer; overload;
-    function Execute<TResult: class, constructor; TParams: TJSONParam>(const Path: string; ParamProc: TProc<TParams>): TResult; overload;
-    function ExecuteForm<TResult: class, constructor; TParams: TMultipartFormData>(const Path: string; ParamProc: TProc<TParams>): TResult; overload;
-    function Execute<TResult: class, constructor>(const Path: string): TResult; overload;
+    procedure CheckAPI;
+  public
+    function Get<TResult: class, constructor>(const Path: string): TResult; overload;
+    procedure GetFile(const Path: string; Response: TStream); overload;
+    function Delete<TResult: class, constructor>(const Path: string): TResult; overload;
+    function Post<TResult: class, constructor; TParams: TJSONParam>(const Path: string; ParamProc: TProc<TParams>): TResult; overload;
+    function PostForm<TResult: class, constructor; TParams: TMultipartFormData>(const Path: string; ParamProc: TProc<TParams>): TResult; overload;
   public
     constructor Create(AOwner: TComponent); overload; override;
     constructor Create(AOwner: TComponent; const AToken: string); overload;
     destructor Destroy; override;
     property Token: string read FToken write SetToken;
+    property BaseUrl: string read FBaseUrl write SetBaseUrl;
   end;
   {$WARNINGS ON}
 
@@ -64,6 +71,7 @@ begin
   FHTTPClient := THTTPClient.Create;
   // Defaults
   FToken := '';
+  FBaseUrl := URL_BASE;
 end;
 
 constructor TOpenAIAPI.Create(AOwner: TComponent; const AToken: string);
@@ -78,7 +86,7 @@ begin
   inherited;
 end;
 
-function TOpenAIAPI.Execute(const Path: string; Body: TJSONObject; Response: TStringStream): Integer;
+function TOpenAIAPI.Post(const Path: string; Body: TJSONObject; Response: TStringStream): Integer;
 begin
   CheckAPI;
   var Headers: TNetHeaders := [
@@ -88,24 +96,104 @@ begin
   Stream.WriteString(Body.ToJSON);
   Stream.Position := 0;
   try
-    Result := FHTTPClient.Post(URL_BASE + '/' + Path, Stream, Response, Headers).StatusCode;
+    Result := FHTTPClient.Post(FBaseUrl + '/' + Path, Stream, Response, Headers).StatusCode;
   finally
     Stream.Free;
   end;
 end;
 
-function TOpenAIAPI.Execute(const Path: string; Response: TStringStream): Integer;
+function TOpenAIAPI.Get(const Path: string; Response: TStringStream): Integer;
 begin
   CheckAPI;
   var Headers: TNetHeaders := [TNetHeader.Create('Authorization', 'Bearer ' + FToken)];
-  Result := FHTTPClient.Get(URL_BASE + '/' + Path, Response, Headers).StatusCode;
+  Result := FHTTPClient.Get(FBaseUrl + '/' + Path, Response, Headers).StatusCode;
 end;
 
-function TOpenAIAPI.Execute(const Path: string; Body: TMultipartFormData; Response: TStringStream): Integer;
+function TOpenAIAPI.Post(const Path: string; Body: TMultipartFormData; Response: TStringStream): Integer;
 begin
   CheckAPI;
   var Headers: TNetHeaders := [TNetHeader.Create('Authorization', 'Bearer ' + FToken)];
-  Result := FHTTPClient.Post(URL_BASE + '/' + Path, Body, Response, Headers).StatusCode;
+  Result := FHTTPClient.Post(FBaseUrl + '/' + Path, Body, Response, Headers).StatusCode;
+end;
+
+function TOpenAIAPI.Post<TResult, TParams>(const Path: string; ParamProc: TProc<TParams>): TResult;
+begin
+  var Response := TStringStream.Create;
+  var Params := TParams.Create;
+  try
+    if Assigned(ParamProc) then
+      ParamProc(Params);
+    var Code := Post(Path, Params.JSON, Response);
+    Result := ParseResponse<TResult>(Code, Response.DataString);
+  finally
+    Params.Free;
+    Response.Free;
+  end;
+end;
+
+function TOpenAIAPI.Delete(const Path: string; Response: TStringStream): Integer;
+begin
+  CheckAPI;
+  var Headers: TNetHeaders := [TNetHeader.Create('Authorization', 'Bearer ' + FToken)];
+  Result := FHTTPClient.Delete(FBaseUrl + '/' + Path, Response, Headers).StatusCode;
+end;
+
+function TOpenAIAPI.Delete<TResult>(const Path: string): TResult;
+begin
+  var Response := TStringStream.Create;
+  try
+    var Code := Delete(Path, Response);
+    Result := ParseResponse<TResult>(Code, Response.DataString);
+  finally
+    Response.Free;
+  end;
+end;
+
+function TOpenAIAPI.PostForm<TResult, TParams>(const Path: string; ParamProc: TProc<TParams>): TResult;
+begin
+  var Response := TStringStream.Create;
+  var Params := TMultipartFormData.Create;
+  try
+    if Assigned(ParamProc) then
+      ParamProc(Params);
+    var Code := Post(Path, Params, Response);
+    Result := ParseResponse<TResult>(Code, Response.DataString);
+  finally
+    Params.Free;
+    Response.Free;
+  end;
+end;
+
+function TOpenAIAPI.Get<TResult>(const Path: string): TResult;
+begin
+  var Response := TStringStream.Create;
+  try
+    var Code := Get(Path, Response);
+    Result := ParseResponse<TResult>(Code, Response.DataString);
+  finally
+    Response.Free;
+  end;
+end;
+
+procedure TOpenAIAPI.GetFile(const Path: string; Response: TStream);
+begin
+  CheckAPI;
+  var Headers: TNetHeaders := [TNetHeader.Create('Authorization', 'Bearer ' + FToken)];
+  var Code := FHTTPClient.Get(FBaseUrl + '/' + Path, Response, Headers).StatusCode;
+  case Code of
+    200..299: {success}
+      ;
+  else
+    raise OpenAIException.Create('Error downloading', '', Path, Code);
+  end;
+end;
+
+procedure TOpenAIAPI.CheckAPI;
+begin
+  if FToken.IsEmpty then
+    raise Exception.Create('Token is empty!');
+  if FBaseUrl.IsEmpty then
+    raise Exception.Create('Base url is empty!');
 end;
 
 function TOpenAIAPI.ParseResponse<T>(const Code: Int64; const ResponseText: string): T;
@@ -133,51 +221,9 @@ begin
     raise OpenAIException.Create('Empty response', '', '', Code);
 end;
 
-procedure TOpenAIAPI.CheckAPI;
+procedure TOpenAIAPI.SetBaseUrl(const Value: string);
 begin
-  if FToken.IsEmpty then
-    raise Exception.Create('Token is empty!');
-end;
-
-function TOpenAIAPI.Execute<TResult, TParams>(const Path: string; ParamProc: TProc<TParams>): TResult;
-begin
-  var Response := TStringStream.Create;
-  var Params := TParams.Create;
-  try
-    if Assigned(ParamProc) then
-      ParamProc(Params);
-    var Code := Execute(Path, Params.JSON, Response);
-    Result := ParseResponse<TResult>(Code, Response.DataString);
-  finally
-    Params.Free;
-    Response.Free;
-  end;
-end;
-
-function TOpenAIAPI.ExecuteForm<TResult, TParams>(const Path: string; ParamProc: TProc<TParams>): TResult;
-begin
-  var Response := TStringStream.Create;
-  var Params := TMultipartFormData.Create;
-  try
-    if Assigned(ParamProc) then
-      ParamProc(Params);
-    var Code := Execute(Path, Params, Response);
-    Result := ParseResponse<TResult>(Code, Response.DataString);
-  finally
-    Params.Free;
-    Response.Free;
-  end;
-end;
-
-function TOpenAIAPI.Execute<TResult>(const Path: string): TResult;
-begin
-  var Response := TStringStream.Create;
-  try
-    var Code := Execute(Path, Response);
-    Result := ParseResponse<TResult>(Code, Response.DataString);
-  finally
-    Response.Free;
-  end;
+  FBaseUrl := Value;
 end;
 
 procedure TOpenAIAPI.SetToken(const Value: string);

@@ -141,17 +141,17 @@ implementation
 
 function TImagesRoute.Create(ParamProc: TProc<TImageCreateParams>): TImageGenerations;
 begin
-  Result := API.Execute<TImageGenerations, TImageCreateParams>('images/generations', ParamProc);
+  Result := API.Post<TImageGenerations, TImageCreateParams>('images/generations', ParamProc);
 end;
 
 function TImagesRoute.Edit(ParamProc: TProc<TImageEditParams>): TImageGenerations;
 begin
-  Result := API.ExecuteForm<TImageGenerations, TImageEditParams>('images/edits', ParamProc);
+  Result := API.PostForm<TImageGenerations, TImageEditParams>('images/edits', ParamProc);
 end;
 
 function TImagesRoute.Variation(ParamProc: TProc<TImageVariationParams>): TImageGenerations;
 begin
-  Result := API.ExecuteForm<TImageGenerations, TImageVariationParams>('images/variations', ParamProc);
+  Result := API.PostForm<TImageGenerations, TImageVariationParams>('images/variations', ParamProc);
 end;
 
 { TImageGenerations }
