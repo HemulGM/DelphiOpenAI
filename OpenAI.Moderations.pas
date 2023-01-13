@@ -3,7 +3,7 @@
 interface
 
 uses
-  System.SysUtils, OpenAI.Params, OpenAI.API, Rest.Json.Types;
+  System.SysUtils, OpenAI.API.Params, OpenAI.API, Rest.Json.Types;
 
 type
   TModerationsParams = class(TJSONParam)

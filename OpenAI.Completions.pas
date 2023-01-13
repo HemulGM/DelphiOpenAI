@@ -3,7 +3,7 @@
 interface
 
 uses
-  System.SysUtils, OpenAI.Params, OpenAI.API;
+  System.SysUtils, OpenAI.API.Params, OpenAI.API;
 
 type
   TCompletionParams = class(TJSONParam)

@@ -1,4 +1,4 @@
-﻿unit OpenAI.Params;
+﻿unit OpenAI.API.Params;
 
 interface
 

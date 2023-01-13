@@ -4,8 +4,8 @@ interface
 
 uses
   System.SysUtils, System.Classes, OpenAI.Completions, OpenAI.Edits,
-  OpenAI.Errors, OpenAI.Params, OpenAI.Images, OpenAI.Models, OpenAI.Embeddings,
-  OpenAI.API, OpenAI.Moderations, OpenAI.Engines, OpenAI.Files, OpenAI.FineTunes;
+  OpenAI.Images, OpenAI.Models, OpenAI.Embeddings, OpenAI.API,
+  OpenAI.Moderations, OpenAI.Engines, OpenAI.Files, OpenAI.FineTunes;
 
 type
   {$WARNINGS OFF}
@@ -23,12 +23,37 @@ type
     FFineTunesRoute: TFineTunesRoute;
     procedure SetToken(const Value: string);
     function GetToken: string;
+    function GetBaseUrl: string;
+    procedure SetBaseUrl(const Value: string);
+    function GetOrganization: string;
+    procedure SetOrganization(const Value: string);
   public
     constructor Create(AOwner: TComponent); overload; override;
     constructor Create(AOwner: TComponent; const AToken: string); overload;
     destructor Destroy; override;
-    property Token: string read GetToken write SetToken;
+  public
+    /// <summary>
+    /// Direct access to queries
+    /// </summary>
     property API: TOpenAIAPI read FAPI;
+    /// <summary>
+    /// The OpenAI API uses API keys for authentication.
+    /// Visit your API Keys page (https://beta.openai.com/account/api-keys) to retrieve the API key you'll use in your requests.
+    /// Remember that your API key is a secret! Do not share it with others or expose it in any client-side code (browsers, apps).
+    /// Production requests must be routed through your own backend server where your API key can be securely
+    /// loaded from an environment variable or key management service.
+    /// </summary>
+    property Token: string read GetToken write SetToken;
+    /// <summary>
+    /// Base Url (https://api.openai.com/v1)
+    /// </summary>
+    property BaseURL: string read GetBaseUrl write SetBaseUrl;
+    /// <summary>
+    /// For users who belong to multiple organizations, you can pass a header to specify which organization
+    /// is used for an API request. Usage from these API requests will count against the specified organization's
+    // subscription quota.
+    /// </summary>
+    property Organization: string read GetOrganization write SetOrganization;
   public
     /// <summary>
     /// Given a prompt, the model will return one or more predicted completions,
@@ -115,9 +140,29 @@ begin
   inherited;
 end;
 
+function TOpenAI.GetBaseUrl: string;
+begin
+  Result := FAPI.BaseUrl;
+end;
+
+function TOpenAI.GetOrganization: string;
+begin
+  Result := FAPI.Organization;
+end;
+
 function TOpenAI.GetToken: string;
 begin
   Result := FAPI.Token;
+end;
+
+procedure TOpenAI.SetBaseUrl(const Value: string);
+begin
+  FAPI.BaseUrl := Value;
+end;
+
+procedure TOpenAI.SetOrganization(const Value: string);
+begin
+  FAPI.Organization := Value;
 end;
 
 procedure TOpenAI.SetToken(const Value: string);

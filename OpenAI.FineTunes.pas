@@ -3,7 +3,7 @@
 interface
 
 uses
-  System.SysUtils, OpenAI.API, OpenAI.Params, OpenAI.Files;
+  System.SysUtils, OpenAI.API, OpenAI.API.Params, OpenAI.Files;
 
 type
   TFineTuneCreateParams = class(TJSONParam)

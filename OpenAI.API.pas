@@ -3,8 +3,8 @@
 interface
 
 uses
-  System.Classes, System.Net.HttpClient, System.Net.Mime, System.JSON,
-  OpenAI.Params, System.SysUtils;
+  System.Classes, System.Net.HttpClient, System.Net.URLClient, System.Net.Mime,
+  System.JSON, OpenAI.API.Params, System.SysUtils;
 
 type
   OpenAIException = class(Exception)
@@ -27,9 +27,12 @@ type
     FHTTPClient: THTTPClient;
     FToken: string;
     FBaseUrl: string;
+    FOrganization: string;
     procedure SetToken(const Value: string);
     procedure SetBaseUrl(const Value: string);
+    procedure SetOrganization(const Value: string);
   protected
+    function GetHeaders: TNetHeaders;
     function Get(const Path: string; Response: TStringStream): Integer; overload;
     function Delete(const Path: string; Response: TStringStream): Integer; overload;
     function Post(const Path: string; Response: TStringStream): Integer; overload;
@@ -50,6 +53,7 @@ type
     destructor Destroy; override;
     property Token: string read FToken write SetToken;
     property BaseUrl: string read FBaseUrl write SetBaseUrl;
+    property Organization: string read FOrganization write SetOrganization;
   end;
   {$WARNINGS ON}
 
@@ -65,7 +69,7 @@ type
 implementation
 
 uses
-  System.Net.URLClient, OpenAI.Errors, REST.Json;
+  OpenAI.Errors, REST.Json;
 
 constructor TOpenAIAPI.Create(AOwner: TComponent);
 begin
@@ -91,9 +95,7 @@ end;
 function TOpenAIAPI.Post(const Path: string; Body: TJSONObject; Response: TStringStream): Integer;
 begin
   CheckAPI;
-  var Headers: TNetHeaders := [
-    TNetHeader.Create('Authorization', 'Bearer ' + FToken),
-    TNetHeader.Create('Content-Type', 'application/json')];
+  var Headers := GetHeaders + [TNetHeader.Create('Content-Type', 'application/json')];
   var Stream := TStringStream.Create;
   Stream.WriteString(Body.ToJSON);
   Stream.Position := 0;
@@ -107,21 +109,21 @@ end;
 function TOpenAIAPI.Get(const Path: string; Response: TStringStream): Integer;
 begin
   CheckAPI;
-  var Headers: TNetHeaders := [TNetHeader.Create('Authorization', 'Bearer ' + FToken)];
+  var Headers := GetHeaders;
   Result := FHTTPClient.Get(FBaseUrl + '/' + Path, Response, Headers).StatusCode;
 end;
 
 function TOpenAIAPI.Post(const Path: string; Body: TMultipartFormData; Response: TStringStream): Integer;
 begin
   CheckAPI;
-  var Headers: TNetHeaders := [TNetHeader.Create('Authorization', 'Bearer ' + FToken)];
+  var Headers := GetHeaders;
   Result := FHTTPClient.Post(FBaseUrl + '/' + Path, Body, Response, Headers).StatusCode;
 end;
 
 function TOpenAIAPI.Post(const Path: string; Response: TStringStream): Integer;
 begin
   CheckAPI;
-  var Headers: TNetHeaders := [TNetHeader.Create('Authorization', 'Bearer ' + FToken)];
+  var Headers := GetHeaders;
   var Stream: TStringStream := nil;
   try
     Result := FHTTPClient.Post(FBaseUrl + '/' + Path, Stream, Response, Headers).StatusCode;
@@ -159,7 +161,7 @@ end;
 function TOpenAIAPI.Delete(const Path: string; Response: TStringStream): Integer;
 begin
   CheckAPI;
-  var Headers: TNetHeaders := [TNetHeader.Create('Authorization', 'Bearer ' + FToken)];
+  var Headers := GetHeaders;
   Result := FHTTPClient.Delete(FBaseUrl + '/' + Path, Response, Headers).StatusCode;
 end;
 
@@ -203,7 +205,7 @@ end;
 procedure TOpenAIAPI.GetFile(const Path: string; Response: TStream);
 begin
   CheckAPI;
-  var Headers: TNetHeaders := [TNetHeader.Create('Authorization', 'Bearer ' + FToken)];
+  var Headers := GetHeaders;
   var Code := FHTTPClient.Get(FBaseUrl + '/' + Path, Response, Headers).StatusCode;
   case Code of
     200..299: {success}
@@ -229,6 +231,13 @@ begin
     else
       raise OpenAIException.Create('Unknown error', '', '', Code);
   end;
+end;
+
+function TOpenAIAPI.GetHeaders: TNetHeaders;
+begin
+  Result := [TNetHeader.Create('Authorization', 'Bearer ' + FToken)];
+  if not FOrganization.IsEmpty then
+    Result := Result + [TNetHeader.Create('OpenAI-Organization', FOrganization)];
 end;
 
 procedure TOpenAIAPI.CheckAPI;
@@ -267,6 +276,11 @@ end;
 procedure TOpenAIAPI.SetBaseUrl(const Value: string);
 begin
   FBaseUrl := Value;
+end;
+
+procedure TOpenAIAPI.SetOrganization(const Value: string);
+begin
+  FOrganization := Value;
 end;
 
 procedure TOpenAIAPI.SetToken(const Value: string);

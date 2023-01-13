@@ -3,7 +3,7 @@
 interface
 
 uses
-  System.Classes, System.SysUtils, System.Net.Mime, OpenAI.Params, OpenAI.API;
+  System.Classes, System.SysUtils, System.Net.Mime, OpenAI.API.Params, OpenAI.API;
 
 type
   TFileCreateParams = class(TMultipartFormData)
