@@ -5,7 +5,7 @@ interface
 uses
   System.SysUtils, System.Classes, OpenAI.Completions, OpenAI.Edits,
   OpenAI.Errors, OpenAI.Params, OpenAI.Images, OpenAI.Models, OpenAI.Embeddings,
-  OpenAI.API, OpenAI.Moderations, OpenAI.Engines, OpenAI.Files;
+  OpenAI.API, OpenAI.Moderations, OpenAI.Engines, OpenAI.Files, OpenAI.FineTunes;
 
 type
   {$WARNINGS OFF}
@@ -20,6 +20,7 @@ type
     FModerationsRoute: TModerationsRoute;
     FEnginesRoute: TEnginesRoute;
     FFilesRoute: TFilesRoute;
+    FFineTunesRoute: TFineTunesRoute;
     procedure SetToken(const Value: string);
     function GetToken: string;
   public
@@ -65,6 +66,11 @@ type
     /// Files are used to upload documents that can be used with features like Fine-tuning.
     /// </summary>
     property &File: TFilesRoute read FFilesRoute;
+    /// <summary>
+    /// Creates a job that fine-tunes a specified model from a given dataset.
+    /// Response includes details of the enqueued job including job status and the name of the fine-tuned models once complete.
+    /// </summary>
+    property FineTune: TFineTunesRoute read FFineTunesRoute;
   end;
   {$WARNINGS ON}
 
@@ -86,6 +92,7 @@ begin
   FModerationsRoute := TModerationsRoute.CreateRoute(API);
   FEnginesRoute := TEnginesRoute.CreateRoute(API);
   FFilesRoute := TFilesRoute.CreateRoute(API);
+  FFineTunesRoute := TFineTunesRoute.CreateRoute(API);
 end;
 
 constructor TOpenAI.Create(AOwner: TComponent; const AToken: string);
@@ -104,6 +111,7 @@ begin
   FModerationsRoute.Free;
   FEnginesRoute.Free;
   FFilesRoute.Free;
+  FFineTunesRoute.Free;
   inherited;
 end;
 
