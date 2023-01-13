@@ -10,7 +10,7 @@
 |Images|🟢 Done|
 |Embeddings|🟢 Done|
 |Files|🟢 Done|
-|Fine-tunes|🟡 Working|
+|Fine-tunes|🟢 Done|
 |Moderations|🟢 Done|
 |Engines (Depricated)|🟢 Done|
 
