@@ -54,7 +54,7 @@ type
     destructor Destroy; override;
   end;
 
-  TFileDeleted = class
+  TDeletedInfo = class
   private
     FDeleted: Boolean;
     FId: string;
@@ -80,7 +80,7 @@ type
     /// <summary>
     /// Delete a file.
     /// </summary>
-    function Delete(const FileId: string): TFileDeleted;
+    function Delete(const FileId: string): TDeletedInfo;
     /// <summary>
     /// Returns information about a specific file.
     /// </summary>
@@ -100,9 +100,9 @@ begin
   Result := API.PostForm<TFile, TFileCreateParams>('files', ParamProc);
 end;
 
-function TFilesRoute.Delete(const FileId: string): TFileDeleted;
+function TFilesRoute.Delete(const FileId: string): TDeletedInfo;
 begin
-  Result := API.Delete<TFileDeleted>('files/' + FileId);
+  Result := API.Delete<TDeletedInfo>('files/' + FileId);
 end;
 
 procedure TFilesRoute.Download(const FileId: string; Stream: TStream);

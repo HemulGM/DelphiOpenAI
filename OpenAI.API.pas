@@ -32,6 +32,7 @@ type
   protected
     function Get(const Path: string; Response: TStringStream): Integer; overload;
     function Delete(const Path: string; Response: TStringStream): Integer; overload;
+    function Post(const Path: string; Response: TStringStream): Integer; overload;
     function Post(const Path: string; Body: TJSONObject; Response: TStringStream): Integer; overload;
     function Post(const Path: string; Body: TMultipartFormData; Response: TStringStream): Integer; overload;
     function ParseResponse<T: class, constructor>(const Code: Int64; const ResponseText: string): T;
@@ -41,6 +42,7 @@ type
     procedure GetFile(const Path: string; Response: TStream); overload;
     function Delete<TResult: class, constructor>(const Path: string): TResult; overload;
     function Post<TResult: class, constructor; TParams: TJSONParam>(const Path: string; ParamProc: TProc<TParams>): TResult; overload;
+    function Post<TResult: class, constructor>(const Path: string): TResult; overload;
     function PostForm<TResult: class, constructor; TParams: TMultipartFormData>(const Path: string; ParamProc: TProc<TParams>): TResult; overload;
   public
     constructor Create(AOwner: TComponent); overload; override;
@@ -116,6 +118,18 @@ begin
   Result := FHTTPClient.Post(FBaseUrl + '/' + Path, Body, Response, Headers).StatusCode;
 end;
 
+function TOpenAIAPI.Post(const Path: string; Response: TStringStream): Integer;
+begin
+  CheckAPI;
+  var Headers: TNetHeaders := [TNetHeader.Create('Authorization', 'Bearer ' + FToken)];
+  var Stream: TStringStream := nil;
+  try
+    Result := FHTTPClient.Post(FBaseUrl + '/' + Path, Stream, Response, Headers).StatusCode;
+  finally
+    //Stream.Free;
+  end;
+end;
+
 function TOpenAIAPI.Post<TResult, TParams>(const Path: string; ParamProc: TProc<TParams>): TResult;
 begin
   var Response := TStringStream.Create;
@@ -127,6 +141,17 @@ begin
     Result := ParseResponse<TResult>(Code, Response.DataString);
   finally
     Params.Free;
+    Response.Free;
+  end;
+end;
+
+function TOpenAIAPI.Post<TResult>(const Path: string): TResult;
+begin
+  var Response := TStringStream.Create;
+  try
+    var Code := Post(Path, Response);
+    Result := ParseResponse<TResult>(Code, Response.DataString);
+  finally
     Response.Free;
   end;
 end;
