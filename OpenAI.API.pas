@@ -3,8 +3,8 @@
 interface
 
 uses
-  System.Classes, System.Net.HttpClient, System.JSON, OpenAI.Params,
-  System.SysUtils;
+  System.Classes, System.Net.HttpClient, System.Net.Mime, System.JSON,
+  OpenAI.Params, System.SysUtils;
 
 type
   OpenAIException = class(Exception)
@@ -30,8 +30,11 @@ type
   public
     procedure CheckAPI;
     function ParseResponse<T: class, constructor>(const Code: Int64; const ResponseText: string): T;
+    function Execute(const Path: string; Response: TStringStream): Integer; overload;
     function Execute(const Path: string; Body: TJSONObject; Response: TStringStream): Integer; overload;
+    function Execute(const Path: string; Body: TMultipartFormData; Response: TStringStream): Integer; overload;
     function Execute<TResult: class, constructor; TParams: TJSONParam>(const Path: string; ParamProc: TProc<TParams>): TResult; overload;
+    function ExecuteForm<TResult: class, constructor; TParams: TMultipartFormData>(const Path: string; ParamProc: TProc<TParams>): TResult; overload;
     function Execute<TResult: class, constructor>(const Path: string): TResult; overload;
   public
     constructor Create(AOwner: TComponent); overload; override;
@@ -81,19 +84,28 @@ begin
   var Headers: TNetHeaders := [
     TNetHeader.Create('Authorization', 'Bearer ' + FToken),
     TNetHeader.Create('Content-Type', 'application/json')];
-  if Assigned(Body) then
-  begin
-    var Stream := TStringStream.Create;
-    Stream.WriteString(Body.ToJSON);
-    Stream.Position := 0;
-    try
-      Result := FHTTPClient.Post(URL_BASE + '/' + Path, Stream, Response, Headers).StatusCode;
-    finally
-      Stream.Free;
-    end;
-  end
-  else
-    Result := FHTTPClient.Get(URL_BASE + '/' + Path, Response, Headers).StatusCode;
+  var Stream := TStringStream.Create;
+  Stream.WriteString(Body.ToJSON);
+  Stream.Position := 0;
+  try
+    Result := FHTTPClient.Post(URL_BASE + '/' + Path, Stream, Response, Headers).StatusCode;
+  finally
+    Stream.Free;
+  end;
+end;
+
+function TOpenAIAPI.Execute(const Path: string; Response: TStringStream): Integer;
+begin
+  CheckAPI;
+  var Headers: TNetHeaders := [TNetHeader.Create('Authorization', 'Bearer ' + FToken)];
+  Result := FHTTPClient.Get(URL_BASE + '/' + Path, Response, Headers).StatusCode;
+end;
+
+function TOpenAIAPI.Execute(const Path: string; Body: TMultipartFormData; Response: TStringStream): Integer;
+begin
+  CheckAPI;
+  var Headers: TNetHeaders := [TNetHeader.Create('Authorization', 'Bearer ' + FToken)];
+  Result := FHTTPClient.Post(URL_BASE + '/' + Path, Body, Response, Headers).StatusCode;
 end;
 
 function TOpenAIAPI.ParseResponse<T>(const Code: Int64; const ResponseText: string): T;
@@ -142,11 +154,26 @@ begin
   end;
 end;
 
+function TOpenAIAPI.ExecuteForm<TResult, TParams>(const Path: string; ParamProc: TProc<TParams>): TResult;
+begin
+  var Response := TStringStream.Create;
+  var Params := TMultipartFormData.Create;
+  try
+    if Assigned(ParamProc) then
+      ParamProc(Params);
+    var Code := Execute(Path, Params, Response);
+    Result := ParseResponse<TResult>(Code, Response.DataString);
+  finally
+    Params.Free;
+    Response.Free;
+  end;
+end;
+
 function TOpenAIAPI.Execute<TResult>(const Path: string): TResult;
 begin
   var Response := TStringStream.Create;
   try
-    var Code := Execute(Path, nil, Response);
+    var Code := Execute(Path, Response);
     Result := ParseResponse<TResult>(Code, Response.DataString);
   finally
     Response.Free;
