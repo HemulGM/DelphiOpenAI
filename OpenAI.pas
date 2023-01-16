@@ -101,7 +101,7 @@ type
 
 implementation
 
-{ TGPTChatAPI }
+{ TOpenAI }
 
 constructor TOpenAI.Create(AOwner: TComponent);
 begin

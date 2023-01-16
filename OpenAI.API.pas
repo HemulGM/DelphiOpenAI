@@ -97,9 +97,9 @@ begin
   CheckAPI;
   var Headers := GetHeaders + [TNetHeader.Create('Content-Type', 'application/json')];
   var Stream := TStringStream.Create;
-  Stream.WriteString(Body.ToJSON);
-  Stream.Position := 0;
   try
+    Stream.WriteString(Body.ToJSON);
+    Stream.Position := 0;
     Result := FHTTPClient.Post(FBaseUrl + '/' + Path, Stream, Response, Headers).StatusCode;
   finally
     Stream.Free;
@@ -211,14 +211,14 @@ begin
     200..299: {success}
       ;
   else
-    var Error: TGPTErrorResponse;
+    var Error: TErrorResponse;
     try
       {$WARNINGS OFF}
       var Strings := TStringStream.Create;
       try
         Response.Position := 0;
         Strings.LoadFromStream(Response);
-        Error := TJson.JsonToObject<TGPTErrorResponse>(UTF8ToString(Strings.DataString));
+        Error := TJson.JsonToObject<TErrorResponse>(UTF8ToString(Strings.DataString));
       finally
         Strings.Free;
       end;
@@ -252,14 +252,18 @@ function TOpenAIAPI.ParseResponse<T>(const Code: Int64; const ResponseText: stri
 begin
   case Code of
     200..299:
-      {$WARNINGS OFF}
-      Result := TJson.JsonToObject<T>(UTF8ToString(ResponseText));
-      {$WARNINGS ON}
+      try
+        {$WARNINGS OFF}
+        Result := TJson.JsonToObject<T>(UTF8ToString(ResponseText));
+        {$WARNINGS ON}
+      except
+        Result := nil;
+      end;
   else
-    var Error: TGPTErrorResponse;
+    var Error: TErrorResponse;
     try
       {$WARNINGS OFF}
-      Error := TJson.JsonToObject<TGPTErrorResponse>(UTF8ToString(ResponseText));
+      Error := TJson.JsonToObject<TErrorResponse>(UTF8ToString(ResponseText));
       {$WARNINGS ON}
     except
       Error := nil;
@@ -270,7 +274,7 @@ begin
       raise OpenAIException.Create('Unknown error', '', '', Code);
   end;
   if not Assigned(Result) then
-    raise OpenAIException.Create('Empty response', '', '', Code);
+    raise OpenAIException.Create('Empty or invalid response', '', '', Code);
 end;
 
 procedure TOpenAIAPI.SetBaseUrl(const Value: string);

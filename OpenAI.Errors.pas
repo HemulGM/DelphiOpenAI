@@ -3,7 +3,7 @@
 interface
 
 type
-  TGPTError = class
+  TError = class
   private
     FMessage: string;
     FType: string;
@@ -16,19 +16,19 @@ type
     property Code: Int64 read FCode write FCode;
   end;
 
-  TGPTErrorResponse = class
+  TErrorResponse = class
   private
-    FError: TGPTError;
+    FError: TError;
   public
-    property Error: TGPTError read FError write FError;
+    property Error: TError read FError write FError;
     destructor Destroy; override;
   end;
 
 implementation
 
-{ TGPTErrorResponse }
+{ TErrorResponse }
 
-destructor TGPTErrorResponse.Destroy;
+destructor TErrorResponse.Destroy;
 begin
   if Assigned(FError) then
     FError.Free;
