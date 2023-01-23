@@ -213,16 +213,20 @@ begin
   else
     var Error: TErrorResponse;
     try
-      {$WARNINGS OFF}
       var Strings := TStringStream.Create;
       try
         Response.Position := 0;
         Strings.LoadFromStream(Response);
+        {$WARNINGS OFF}
+        {$IFDEF ANDROID}
+        Error := TJson.JsonToObject<TErrorResponse>(Strings.DataString);
+        {$ELSE}
         Error := TJson.JsonToObject<TErrorResponse>(UTF8ToString(Strings.DataString));
+        {$ENDIF}
+        {$WARNINGS ON}
       finally
         Strings.Free;
       end;
-      {$WARNINGS ON}
     except
       Error := nil;
     end;
@@ -254,7 +258,11 @@ begin
     200..299:
       try
         {$WARNINGS OFF}
+        {$IFDEF ANDROID}
+        Result := TJson.JsonToObject<T>(ResponseText);
+        {$ELSE}
         Result := TJson.JsonToObject<T>(UTF8ToString(ResponseText));
+        {$ENDIF}
         {$WARNINGS ON}
       except
         Result := nil;
@@ -263,7 +271,11 @@ begin
     var Error: TErrorResponse;
     try
       {$WARNINGS OFF}
+      {$IFDEF ANDROID}
+      Error := TJson.JsonToObject<TErrorResponse>(ResponseText);
+      {$ELSE}
       Error := TJson.JsonToObject<TErrorResponse>(UTF8ToString(ResponseText));
+      {$ENDIF}
       {$WARNINGS ON}
     except
       Error := nil;
