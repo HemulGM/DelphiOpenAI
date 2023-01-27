@@ -38,7 +38,15 @@ To use the library, just add the root folder to the IDE library path, or your pr
 ```Pascal
 uses OpenAI;
 
-var OpenAI := TOpenAI.Create(Self, API_TOKEN);
+var OpenAI := TOpenAIComponent.Create(Self, API_TOKEN);
+```
+
+or 
+
+```Pascal
+uses OpenAI;
+
+var OpenAI: IOpenAI := TOpenAI.Create(API_TOKEN);
 ```
 
 **Models**
