@@ -49,11 +49,6 @@ uses OpenAI;
 var OpenAI: IOpenAI := TOpenAI.Create(API_TOKEN);
 ```
 
-**Models**
-```Pascal
-var Models := OpenAI.Model.List();
-```
-
 # Examples
 
 Sources: [Playground (FMX)](https://github.com/HemulGM/DelphiOpenAIPlayground)
@@ -61,6 +56,17 @@ Sources: [Playground (FMX)](https://github.com/HemulGM/DelphiOpenAIPlayground)
 Sources: [ChatGPT (FMX)](https://github.com/HemulGM/ChatGPT)
 
 Sources: [DALL-E (FMX)](https://github.com/HemulGM/DALL-E)
+
+**Models**
+```Pascal
+var Models := OpenAI.Model.List();
+try
+  for var Model in Models.Data do
+    MemoChat.Lines.Add(Model.Id);
+finally
+  Models.Free;
+end;
+```
 
 **Completaions (for chat)**
 ```Pascal
