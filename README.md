@@ -48,6 +48,10 @@ var Models := OpenAI.Model.List();
 
 # Examples
 
+Sources: [Playground (FMX)](https://github.com/HemulGM/DelphiOpenAIPlayground)
+
+Sources: [ChatGPT (FMX)](https://github.com/HemulGM/ChatGPT)
+
 **Completaions (for chat)**
 ```Pascal
 var Completions := OpenAI.Completion.Create(
