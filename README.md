@@ -49,12 +49,6 @@ uses OpenAI;
 var OpenAI: IOpenAI := TOpenAI.Create(API_TOKEN);
 ```
 
-# Examples
-|Source|Preview|Source|Preview|
-|---|---|---|---|
-|[Playground (FMX)](https://github.com/HemulGM/DelphiOpenAIPlayground)|<img src="https://github.com/HemulGM/DelphiOpenAIPlayground/blob/main/preview.png?raw=true" height="150" align="right">|[ChatGPT (FMX)](https://github.com/HemulGM/ChatGPT)|<img src="https://github.com/HemulGM/ChatGPT/raw/main/preview.png?raw=true" height="150" align="right">|
-|[DALL-E (FMX)](https://github.com/HemulGM/DALL-E)|<img src="https://github.com/HemulGM/DALL-E/raw/main/Res/preview.jpg?raw=true" height="150" align="right">|||
-
 **Models**
 ```Pascal
 var Models := OpenAI.Model.List();
@@ -107,6 +101,12 @@ except
     ShowError('OpenAI Error: ' + E.Message);
 end;
 ```
+
+# Examples
+|Source|Preview|Source|Preview|
+|---|---|---|---|
+|[Playground (FMX)](https://github.com/HemulGM/DelphiOpenAIPlayground)|<img src="https://github.com/HemulGM/DelphiOpenAIPlayground/blob/main/preview.png?raw=true" height="150" align="right">|[ChatGPT (FMX)](https://github.com/HemulGM/ChatGPT)|<img src="https://github.com/HemulGM/ChatGPT/raw/main/preview.png?raw=true" height="150" align="right">|
+|[DALL-E (FMX)](https://github.com/HemulGM/DALL-E)|<img src="https://github.com/HemulGM/DALL-E/raw/main/Res/preview.jpg?raw=true" height="150" align="right">|||
 
 # Requirements
 This library does not require any 3rd party library. It works on recent Delphi versions (10.3+). Althought not fully tested, it should also work on all supported platforms (Windows, Linux, macOS, Android, iOS).
