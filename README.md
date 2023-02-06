@@ -50,6 +50,10 @@ var OpenAI: IOpenAI := TOpenAI.Create(API_TOKEN);
 ```
 
 # Examples
+|Source|Preview|Source|Preview|
+|---|---|---|---|
+|[Playground (FMX)](https://github.com/HemulGM/DelphiOpenAIPlayground)|<img src="https://github.com/HemulGM/DelphiOpenAIPlayground/blob/main/preview.png?raw=true" height="150" align="right">|[ChatGPT (FMX)](https://github.com/HemulGM/ChatGPT)|<img src="https://github.com/HemulGM/ChatGPT/raw/main/preview.png?raw=true" height="150" align="right">|
+|[DALL-E (FMX)](https://github.com/HemulGM/DALL-E)|<img src="https://github.com/HemulGM/DALL-E/raw/main/Res/preview.jpg?raw=true" height="150" align="right">|||
 
 Sources: [Playground (FMX)](https://github.com/HemulGM/DelphiOpenAIPlayground)
 
