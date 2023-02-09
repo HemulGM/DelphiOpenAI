@@ -54,6 +54,7 @@ type
     property Token: string read FToken write SetToken;
     property BaseUrl: string read FBaseUrl write SetBaseUrl;
     property Organization: string read FOrganization write SetOrganization;
+    property Client: THTTPClient read FHTTPClient;
   end;
   {$WARNINGS ON}
 
