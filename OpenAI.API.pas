@@ -20,7 +20,7 @@ type
   end;
 
   {$WARNINGS OFF}
-  TOpenAIAPI = class(TComponent)
+  TOpenAIAPI = class
     const
       URL_BASE = 'https://api.openai.com/v1';
   private
@@ -48,8 +48,8 @@ type
     function Post<TResult: class, constructor>(const Path: string): TResult; overload;
     function PostForm<TResult: class, constructor; TParams: TMultipartFormData>(const Path: string; ParamProc: TProc<TParams>): TResult; overload;
   public
-    constructor Create(AOwner: TComponent); overload; override;
-    constructor Create(AOwner: TComponent; const AToken: string); overload;
+    constructor Create; overload;
+    constructor Create(const AToken: string); overload;
     destructor Destroy; override;
     property Token: string read FToken write SetToken;
     property BaseUrl: string read FBaseUrl write SetBaseUrl;
@@ -72,7 +72,7 @@ implementation
 uses
   OpenAI.Errors, REST.Json;
 
-constructor TOpenAIAPI.Create(AOwner: TComponent);
+constructor TOpenAIAPI.Create;
 begin
   inherited;
   FHTTPClient := THTTPClient.Create;
@@ -81,9 +81,9 @@ begin
   FBaseUrl := URL_BASE;
 end;
 
-constructor TOpenAIAPI.Create(AOwner: TComponent; const AToken: string);
+constructor TOpenAIAPI.Create(const AToken: string);
 begin
-  Create(AOwner);
+  Create;
   Token := AToken;
 end;
 
@@ -212,25 +212,34 @@ begin
     200..299: {success}
       ;
   else
-    var Error: TErrorResponse;
+    var Error: TErrorResponse := nil;
     try
-      {$WARNINGS OFF}
-      var Strings := TStringStream.Create;
       try
-        Response.Position := 0;
-        Strings.LoadFromStream(Response);
-        Error := TJson.JsonToObject<TErrorResponse>(UTF8ToString(Strings.DataString));
-      finally
-        Strings.Free;
+        var Strings := TStringStream.Create;
+        try
+          Response.Position := 0;
+          Strings.LoadFromStream(Response);
+        {$WARNINGS OFF}
+        {$IFDEF ANDROID}
+          Error := TJson.JsonToObject<TErrorResponse>(Strings.DataString);
+        {$ELSE}
+          Error := TJson.JsonToObject<TErrorResponse>(UTF8ToString(Strings.DataString));
+        {$ENDIF}
+        {$WARNINGS ON}
+        finally
+          Strings.Free;
+        end;
+      except
+        Error := nil;
       end;
-      {$WARNINGS ON}
-    except
-      Error := nil;
+      if Assigned(Error) and Assigned(Error.Error) then
+        raise OpenAIException.Create(Error.Error.Message, Error.Error.&Type, Error.Error.Param, Error.Error.Code)
+      else
+        raise OpenAIException.Create('Unknown error', '', '', Code);
+    finally
+      if Assigned(Error) then
+        Error.Free;
     end;
-    if Assigned(Error) and Assigned(Error.Error) then
-      raise OpenAIException.Create(Error.Error.Message, Error.Error.&Type, Error.Error.Param, Error.Error.Code)
-    else
-      raise OpenAIException.Create('Unknown error', '', '', Code);
   end;
 end;
 
@@ -255,24 +264,37 @@ begin
     200..299:
       try
         {$WARNINGS OFF}
+        {$IFDEF ANDROID}
+        Result := TJson.JsonToObject<T>(ResponseText);
+        {$ELSE}
         Result := TJson.JsonToObject<T>(UTF8ToString(ResponseText));
+        {$ENDIF}
         {$WARNINGS ON}
       except
         Result := nil;
       end;
   else
-    var Error: TErrorResponse;
+    var Error: TErrorResponse := nil;
     try
-      {$WARNINGS OFF}
-      Error := TJson.JsonToObject<TErrorResponse>(UTF8ToString(ResponseText));
-      {$WARNINGS ON}
-    except
-      Error := nil;
+      try
+        {$WARNINGS OFF}
+        {$IFDEF ANDROID}
+        Error := TJson.JsonToObject<TErrorResponse>(ResponseText);
+        {$ELSE}
+        Error := TJson.JsonToObject<TErrorResponse>(UTF8ToString(ResponseText));
+        {$ENDIF}
+        {$WARNINGS ON}
+      except
+        Error := nil;
+      end;
+      if Assigned(Error) and Assigned(Error.Error) then
+        raise OpenAIException.Create(Error.Error.Message, Error.Error.&Type, Error.Error.Param, Error.Error.Code)
+      else
+        raise OpenAIException.Create('Unknown error', '', '', Code);
+    finally
+      if Assigned(Error) then
+        Error.Free;
     end;
-    if Assigned(Error) and Assigned(Error.Error) then
-      raise OpenAIException.Create(Error.Error.Message, Error.Error.&Type, Error.Error.Param, Error.Error.Code)
-    else
-      raise OpenAIException.Create('Unknown error', '', '', Code);
   end;
   if not Assigned(Result) then
     raise OpenAIException.Create('Empty or invalid response', '', '', Code);
