@@ -102,6 +102,11 @@ except
 end;
 ```
 
+*Usage proxy*
+```Pascal
+OpenAI.API.Client.ProxySettings := TProxySettings.Create(ProxyHost, ProxyPort, ProxyUserName, ProxyPassword);
+```
+
 # Examples
 |Source|Preview|Source|Preview|
 |---|---|---|---|
