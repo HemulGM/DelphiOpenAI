@@ -9,7 +9,7 @@ The library provides access to the API of the [OpenAI service](https://openai.co
 Delphi 10.4+ is required to work with the library. It is possible to build under 10.3.
 This library is a TOpenAI class for the main TComponent for more convenient work.
 
-*This is an unofficial library. OpenAI does not provide any official library for Delphi.*
+❗*This is an unofficial library. OpenAI does not provide any official library for Delphi.*
 
 **Coverage**
 
@@ -27,11 +27,11 @@ This library is a TOpenAI class for the main TComponent for more convenient work
 |Moderations|🟢 Done|
 |Engines (Depricated)|🟢 Done|
 
-# Installation
+# ⚒️ Installation
 
 To use the library, just add the root folder to the IDE library path, or your project source path.
 
-# Usage
+# 🌳 Usage
 
 **Initialization**
 
@@ -107,13 +107,13 @@ end;
 OpenAI.API.Client.ProxySettings := TProxySettings.Create(ProxyHost, ProxyPort, ProxyUserName, ProxyPassword);
 ```
 
-# Examples
+# ⚡ Examples
 |Source|Preview|Source|Preview|
 |---|---|---|---|
 |[Playground (FMX)](https://github.com/HemulGM/DelphiOpenAIPlayground)|<img src="https://github.com/HemulGM/DelphiOpenAIPlayground/blob/main/preview.png?raw=true" height="150" align="right">|[ChatGPT (FMX)](https://github.com/HemulGM/ChatGPT)|<img src="https://github.com/HemulGM/ChatGPT/raw/main/preview.png?raw=true" height="150" align="right">|
 |[DALL-E (FMX)](https://github.com/HemulGM/DALL-E)|<img src="https://github.com/HemulGM/DALL-E/raw/main/Res/preview.jpg?raw=true" height="150" align="right">|||
 
-# Requirements
+# 🚳 Requirements
 This library does not require any 3rd party library. It works on recent Delphi versions (10.3+). Althought not fully tested, it should also work on all supported platforms (Windows, Linux, macOS, Android, iOS).
 
 Since the library requires your secret API key, it's not recommended you use it on client applications, as your secret key will be exposed, unless you are sure about the security risks.
