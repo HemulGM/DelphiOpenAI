@@ -84,10 +84,12 @@ end;
 { TEmbeddings }
 
 destructor TEmbeddings.Destroy;
+var
+  Item: TEmbeddingData;
 begin
   if Assigned(FUsage) then
     FUsage.Free;
-  for var Item in FData do
+  for Item in FData do
     if Assigned(Item) then
       Item.Free;
   inherited;

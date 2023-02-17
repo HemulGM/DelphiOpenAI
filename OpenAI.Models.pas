@@ -91,8 +91,10 @@ end;
 { TModels }
 
 destructor TModels.Destroy;
+var
+  Item: TModel;
 begin
-  for var Item in FData do
+  for Item in FData do
     if Assigned(Item) then
       Item.Free;
   inherited;
@@ -101,8 +103,10 @@ end;
 { TModel }
 
 destructor TModel.Destroy;
+var
+  Item: TModelPermission;
 begin
-  for var Item in FPermission do
+  for Item in FPermission do
     if Assigned(Item) then
       Item.Free;
   inherited;

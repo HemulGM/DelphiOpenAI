@@ -3,7 +3,8 @@
 interface
 
 uses
-  System.Classes, System.SysUtils, System.Net.Mime, OpenAI.API.Params, OpenAI.API;
+  System.Classes, System.SysUtils, System.Net.Mime, OpenAI.API.Params,
+  OpenAI.API;
 
 type
   TImageCreateParams = class(TJSONParam)
@@ -27,7 +28,6 @@ type
     /// A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse.
     /// </summary>
     function User(const Value: string): TImageCreateParams;
-    constructor Create; override;
   end;
 
   TImageEditParams = class(TMultipartFormData)
@@ -157,19 +157,16 @@ end;
 { TImageGenerations }
 
 destructor TImageGenerations.Destroy;
+var
+  Item: TImageData;
 begin
-  for var Item in FData do
+  for Item in FData do
     if Assigned(Item) then
       Item.Free;
   inherited;
 end;
 
 { TImageCreateParams }
-
-constructor TImageCreateParams.Create;
-begin
-  inherited;
-end;
 
 function TImageCreateParams.N(const Value: Integer): TImageCreateParams;
 begin

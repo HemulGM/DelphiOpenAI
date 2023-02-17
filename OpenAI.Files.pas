@@ -3,7 +3,8 @@
 interface
 
 uses
-  System.Classes, System.SysUtils, System.Net.Mime, OpenAI.API.Params, OpenAI.API;
+  System.Classes, System.SysUtils, System.Net.Mime, OpenAI.API.Params,
+  OpenAI.API;
 
 type
   TFileCreateParams = class(TMultipartFormData)
@@ -123,8 +124,10 @@ end;
 { TFiles }
 
 destructor TFiles.Destroy;
+var
+  Item: TFile;
 begin
-  for var Item in FData do
+  for Item in FData do
     if Assigned(Item) then
       Item.Free;
   inherited;

@@ -94,10 +94,13 @@ begin
 end;
 
 function TOpenAIAPI.Post(const Path: string; Body: TJSONObject; Response: TStringStream): Integer;
+var
+  Headers: TNetHeaders;
+  Stream: TStringStream;
 begin
   CheckAPI;
-  var Headers := GetHeaders + [TNetHeader.Create('Content-Type', 'application/json')];
-  var Stream := TStringStream.Create;
+  Headers := GetHeaders + [TNetHeader.Create('Content-Type', 'application/json')];
+  Stream := TStringStream.Create;
   try
     Stream.WriteString(Body.ToJSON);
     Stream.Position := 0;
@@ -108,24 +111,31 @@ begin
 end;
 
 function TOpenAIAPI.Get(const Path: string; Response: TStringStream): Integer;
+var
+  Headers: TNetHeaders;
 begin
   CheckAPI;
-  var Headers := GetHeaders;
+  Headers := GetHeaders;
   Result := FHTTPClient.Get(FBaseUrl + '/' + Path, Response, Headers).StatusCode;
 end;
 
 function TOpenAIAPI.Post(const Path: string; Body: TMultipartFormData; Response: TStringStream): Integer;
+var
+  Headers: TNetHeaders;
 begin
   CheckAPI;
-  var Headers := GetHeaders;
+  Headers := GetHeaders;
   Result := FHTTPClient.Post(FBaseUrl + '/' + Path, Body, Response, Headers).StatusCode;
 end;
 
 function TOpenAIAPI.Post(const Path: string; Response: TStringStream): Integer;
+var
+  Headers: TNetHeaders;
+  Stream: TStringStream;
 begin
   CheckAPI;
-  var Headers := GetHeaders;
-  var Stream: TStringStream := nil;
+  Headers := GetHeaders;
+  Stream := nil;
   try
     Result := FHTTPClient.Post(FBaseUrl + '/' + Path, Stream, Response, Headers).StatusCode;
   finally
@@ -134,13 +144,17 @@ begin
 end;
 
 function TOpenAIAPI.Post<TResult, TParams>(const Path: string; ParamProc: TProc<TParams>): TResult;
+var
+  Response: TStringStream;
+  Params: TParams;
+  Code: Integer;
 begin
-  var Response := TStringStream.Create;
-  var Params := TParams.Create;
+  Response := TStringStream.Create;
+  Params := TParams.Create;
   try
     if Assigned(ParamProc) then
       ParamProc(Params);
-    var Code := Post(Path, Params.JSON, Response);
+    Code := Post(Path, Params.JSON, Response);
     Result := ParseResponse<TResult>(Code, Response.DataString);
   finally
     Params.Free;
@@ -149,10 +163,13 @@ begin
 end;
 
 function TOpenAIAPI.Post<TResult>(const Path: string): TResult;
+var
+  Response: TStringStream;
+  Code: Integer;
 begin
-  var Response := TStringStream.Create;
+  Response := TStringStream.Create;
   try
-    var Code := Post(Path, Response);
+    Code := Post(Path, Response);
     Result := ParseResponse<TResult>(Code, Response.DataString);
   finally
     Response.Free;
@@ -160,17 +177,22 @@ begin
 end;
 
 function TOpenAIAPI.Delete(const Path: string; Response: TStringStream): Integer;
+var
+  Headers: TNetHeaders;
 begin
   CheckAPI;
-  var Headers := GetHeaders;
+  Headers := GetHeaders;
   Result := FHTTPClient.Delete(FBaseUrl + '/' + Path, Response, Headers).StatusCode;
 end;
 
 function TOpenAIAPI.Delete<TResult>(const Path: string): TResult;
+var
+  Response: TStringStream;
+  Code: Integer;
 begin
-  var Response := TStringStream.Create;
+  Response := TStringStream.Create;
   try
-    var Code := Delete(Path, Response);
+    Code := Delete(Path, Response);
     Result := ParseResponse<TResult>(Code, Response.DataString);
   finally
     Response.Free;
@@ -178,13 +200,17 @@ begin
 end;
 
 function TOpenAIAPI.PostForm<TResult, TParams>(const Path: string; ParamProc: TProc<TParams>): TResult;
+var
+  Response: TStringStream;
+  Params: TMultipartFormData;
+  Code: Integer;
 begin
-  var Response := TStringStream.Create;
-  var Params := TMultipartFormData.Create;
+  Response := TStringStream.Create;
+  Params := TMultipartFormData.Create;
   try
     if Assigned(ParamProc) then
       ParamProc(Params);
-    var Code := Post(Path, Params, Response);
+    Code := Post(Path, Params, Response);
     Result := ParseResponse<TResult>(Code, Response.DataString);
   finally
     Params.Free;
@@ -193,10 +219,13 @@ begin
 end;
 
 function TOpenAIAPI.Get<TResult>(const Path: string): TResult;
+var
+  Response: TStringStream;
+  Code: Integer;
 begin
-  var Response := TStringStream.Create;
+  Response := TStringStream.Create;
   try
-    var Code := Get(Path, Response);
+    Code := Get(Path, Response);
     Result := ParseResponse<TResult>(Code, Response.DataString);
   finally
     Response.Free;
@@ -204,18 +233,23 @@ begin
 end;
 
 procedure TOpenAIAPI.GetFile(const Path: string; Response: TStream);
+var
+  Headers: TNetHeaders;
+  Code: Integer;
+  Error: TErrorResponse;
+  Strings: TStringStream;
 begin
   CheckAPI;
-  var Headers := GetHeaders;
-  var Code := FHTTPClient.Get(FBaseUrl + '/' + Path, Response, Headers).StatusCode;
+  Headers := GetHeaders;
+  Code := FHTTPClient.Get(FBaseUrl + '/' + Path, Response, Headers).StatusCode;
   case Code of
     200..299: {success}
       ;
   else
-    var Error: TErrorResponse := nil;
+    Error := nil;
     try
       try
-        var Strings := TStringStream.Create;
+        Strings := TStringStream.Create;
         try
           Response.Position := 0;
           Strings.LoadFromStream(Response);
@@ -259,6 +293,8 @@ begin
 end;
 
 function TOpenAIAPI.ParseResponse<T>(const Code: Int64; const ResponseText: string): T;
+var
+  Error: TErrorResponse;
 begin
   case Code of
     200..299:
@@ -274,7 +310,7 @@ begin
         Result := nil;
       end;
   else
-    var Error: TErrorResponse := nil;
+    Error := nil;
     try
       try
         {$WARNINGS OFF}

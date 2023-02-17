@@ -94,10 +94,12 @@ end;
 { TEdits }
 
 destructor TEdits.Destroy;
+var
+  Item: TEditChoices;
 begin
   if Assigned(FUsage) then
     FUsage.Free;
-  for var Item in FChoices do
+  for Item in FChoices do
     if Assigned(Item) then
       Item.Free;
   inherited;

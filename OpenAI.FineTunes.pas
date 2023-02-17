@@ -248,29 +248,34 @@ end;
 { TFineTune }
 
 destructor TFineTune.Destroy;
+var
+  Event: TFineTuneEvent;
+  AFile: TFile;
 begin
   if Assigned(FHyperparams) then
     FHyperparams.Free;
-  for var Item in FEvents do
-    if Assigned(Item) then
-      Item.Free;
-  for var Item in FResult_files do
-    if Assigned(Item) then
-      Item.Free;
-  for var Item in FTraining_files do
-    if Assigned(Item) then
-      Item.Free;
-  for var Item in FValidation_files do
-    if Assigned(Item) then
-      Item.Free;
+  for Event in FEvents do
+    if Assigned(Event) then
+      Event.Free;
+  for AFile in FResult_files do
+    if Assigned(AFile) then
+      AFile.Free;
+  for AFile in FTraining_files do
+    if Assigned(AFile) then
+      AFile.Free;
+  for AFile in FValidation_files do
+    if Assigned(AFile) then
+      AFile.Free;
   inherited;
 end;
 
 { TFineTunes }
 
 destructor TFineTunes.Destroy;
+var
+  Item: TFineTune;
 begin
-  for var Item in FData do
+  for Item in FData do
     if Assigned(Item) then
       Item.Free;
   inherited;
@@ -279,8 +284,10 @@ end;
 { TFineTuneEvents }
 
 destructor TFineTuneEvents.Destroy;
+var
+  Item: TFineTuneEvent;
 begin
-  for var Item in FData do
+  for Item in FData do
     if Assigned(Item) then
       Item.Free;
   inherited;

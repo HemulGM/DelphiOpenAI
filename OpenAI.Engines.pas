@@ -59,8 +59,10 @@ end;
 { TEngines }
 
 destructor TEngines.Destroy;
+var
+  Item: TEngine;
 begin
-  for var Item in FData do
+  for Item in FData do
     if Assigned(Item) then
       Item.Free;
   inherited;
