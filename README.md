@@ -29,11 +29,13 @@ This library is a `TOpenAI` class for the main TComponent for more convenient wo
 
 # ⚒️ Installation
 
-To use the library, just add the `root` folder to the IDE library path, or your project source path.
+You can install the package from `GetIt` [directly](https://getitnow.embarcadero.com/openai-for-delphi) in the IDE. Or, to use the library, just add the `root` folder to the IDE library path, or your project source path.
 
 # 🌳 Usage
 
-The library needs to be configured with your account's secret key which is available on the [website](https://beta.openai.com/account/api-keys).
+The library needs to be configured with your account's secret key which is available on the [website](https://beta.openai.com/account/api-keys). 
+
+Due to the fact that there can be many parameters and not all of them are required, they are configured using an anonymous function.
 
 **Initialization**
 
@@ -62,7 +64,7 @@ finally
 end;
 ```
 
-**Completaions (for chat)**
+**Completions (for chat)**
 ```Pascal
 var Completions := OpenAI.Completion.Create(
   procedure(Params: TCompletionParams)
