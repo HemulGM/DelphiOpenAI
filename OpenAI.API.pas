@@ -4,7 +4,7 @@ interface
 
 uses
   System.Classes, System.Net.HttpClient, System.Net.URLClient, System.Net.Mime,
-  System.JSON, OpenAI.API.Params, System.SysUtils;
+  System.JSON, OpenAI.Errors, OpenAI.API.Params, System.SysUtils;
 
 type
   OpenAIException = class(Exception)
@@ -19,6 +19,41 @@ type
     constructor Create(const Text, &Type: string; const Param: string = ''; Code: Int64 = -1); reintroduce;
   end;
 
+  OpenAIExceptionAPI = class(Exception);
+
+  /// <summary>
+  /// An InvalidRequestError indicates that your request was malformed or
+  // missing some required parameters, such as a token or an input.
+  // This could be due to a typo, a formatting error, or a logic error in your code.
+  /// </summary>
+  OpenAIExceptionInvalidRequestError = class(OpenAIException);
+
+  /// <summary>
+  /// A `RateLimitError` indicates that you have hit your assigned rate limit.
+  /// This means that you have sent too many tokens or requests in a given period of time,
+  /// and our services have temporarily blocked you from sending more.
+  /// </summary>
+  OpenAIExceptionRateLimitError = class(OpenAIException);
+
+  /// <summary>
+  /// An `AuthenticationError` indicates that your API key or token was invalid,
+  /// expired, or revoked. This could be due to a typo, a formatting error, or a security breach.
+  /// </summary>
+  OpenAIExceptionAuthenticationError = class(OpenAIException);
+
+  /// <summary>
+  /// This error message indicates that your account is not part of an organization
+  /// </summary>
+  OpenAIExceptionPermissionError = class(OpenAIException);
+
+  /// <summary>
+  /// This error message indicates that our servers are experiencing high
+  /// traffic and are unable to process your request at the moment
+  /// </summary>
+  OpenAIExceptionTryAgain = class(OpenAIException);
+
+  OpenAIExceptionInvalidResponse = class(OpenAIException);
+
   {$WARNINGS OFF}
   TOpenAIAPI = class
     const
@@ -31,6 +66,8 @@ type
     procedure SetToken(const Value: string);
     procedure SetBaseUrl(const Value: string);
     procedure SetOrganization(const Value: string);
+    procedure ParseAndRaiseError(Error: TError; Code: Int64);
+    procedure ParseError(const Code: Int64; const ResponseText: string);
   protected
     function GetHeaders: TNetHeaders;
     function Get(const Path: string; Response: TStringStream): Integer; overload;
@@ -70,7 +107,7 @@ type
 implementation
 
 uses
-  OpenAI.Errors, REST.Json;
+  REST.Json;
 
 constructor TOpenAIAPI.Create;
 begin
@@ -236,43 +273,22 @@ procedure TOpenAIAPI.GetFile(const Path: string; Response: TStream);
 var
   Headers: TNetHeaders;
   Code: Integer;
-  Error: TErrorResponse;
   Strings: TStringStream;
 begin
   CheckAPI;
   Headers := GetHeaders;
   Code := FHTTPClient.Get(FBaseUrl + '/' + Path, Response, Headers).StatusCode;
   case Code of
-    200..299: {success}
-      ;
+    200..299:
+      ; {success}
   else
-    Error := nil;
+    Strings := TStringStream.Create;
     try
-      try
-        Strings := TStringStream.Create;
-        try
-          Response.Position := 0;
-          Strings.LoadFromStream(Response);
-        {$WARNINGS OFF}
-        {$IFDEF ANDROID}
-          Error := TJson.JsonToObject<TErrorResponse>(Strings.DataString);
-        {$ELSE}
-          Error := TJson.JsonToObject<TErrorResponse>(UTF8ToString(Strings.DataString));
-        {$ENDIF}
-        {$WARNINGS ON}
-        finally
-          Strings.Free;
-        end;
-      except
-        Error := nil;
-      end;
-      if Assigned(Error) and Assigned(Error.Error) then
-        raise OpenAIException.Create(Error.Error.Message, Error.Error.&Type, Error.Error.Param, Error.Error.Code)
-      else
-        raise OpenAIException.Create('Unknown error', '', '', Code);
+      Response.Position := 0;
+      Strings.LoadFromStream(Response);
+      ParseError(Code, Strings.DataString);
     finally
-      if Assigned(Error) then
-        Error.Free;
+      Strings.Free;
     end;
   end;
 end;
@@ -287,53 +303,72 @@ end;
 procedure TOpenAIAPI.CheckAPI;
 begin
   if FToken.IsEmpty then
-    raise Exception.Create('Token is empty!');
+    raise OpenAIExceptionAPI.Create('Token is empty!');
   if FBaseUrl.IsEmpty then
-    raise Exception.Create('Base url is empty!');
+    raise OpenAIExceptionAPI.Create('Base url is empty!');
+end;
+
+procedure TOpenAIAPI.ParseAndRaiseError(Error: TError; Code: Int64);
+begin
+  case Code of
+    429:
+      raise OpenAIExceptionRateLimitError.Create(Error.Message, Error.&Type, Error.Param, Error.Code);
+    400, 404, 415:
+      raise OpenAIExceptionInvalidRequestError.Create(Error.Message, Error.&Type, Error.Param, Error.Code);
+    401:
+      raise OpenAIExceptionAuthenticationError.Create(Error.Message, Error.&Type, Error.Param, Error.Code);
+    403:
+      raise OpenAIExceptionPermissionError.Create(Error.Message, Error.&Type, Error.Param, Error.Code);
+    409:
+      raise OpenAIExceptionTryAgain.Create(Error.Message, Error.&Type, Error.Param, Error.Code);
+  else
+    raise OpenAIException.Create(Error.Message, Error.&Type, Error.Param, Error.Code);
+  end;
+end;
+
+procedure TOpenAIAPI.ParseError(const Code: Int64; const ResponseText: string);
+var
+  Error: TErrorResponse;
+begin
+  Error := nil;
+  try
+    try
+      {$IFDEF ANDROID}
+      Error := TJson.JsonToObject<TErrorResponse>(ResponseText);
+      {$ELSE}
+      Error := TJson.JsonToObject<TErrorResponse>(UTF8ToString(RawByteString(ResponseText)));
+      {$ENDIF}
+    except
+      Error := nil;
+    end;
+    if Assigned(Error) and Assigned(Error.Error) then
+      ParseAndRaiseError(Error.Error, Code)
+    else
+      raise OpenAIException.Create('Unknown error', '', '', Code);
+  finally
+    if Assigned(Error) then
+      Error.Free;
+  end;
 end;
 
 function TOpenAIAPI.ParseResponse<T>(const Code: Int64; const ResponseText: string): T;
-var
-  Error: TErrorResponse;
 begin
   case Code of
     200..299:
       try
-        {$WARNINGS OFF}
         {$IFDEF ANDROID}
         Result := TJson.JsonToObject<T>(ResponseText);
         {$ELSE}
-        Result := TJson.JsonToObject<T>(UTF8ToString(ResponseText));
+        Result := TJson.JsonToObject<T>(UTF8ToString(RawByteString(ResponseText)));
         {$ENDIF}
-        {$WARNINGS ON}
       except
         Result := nil;
       end;
   else
-    Error := nil;
-    try
-      try
-        {$WARNINGS OFF}
-        {$IFDEF ANDROID}
-        Error := TJson.JsonToObject<TErrorResponse>(ResponseText);
-        {$ELSE}
-        Error := TJson.JsonToObject<TErrorResponse>(UTF8ToString(ResponseText));
-        {$ENDIF}
-        {$WARNINGS ON}
-      except
-        Error := nil;
-      end;
-      if Assigned(Error) and Assigned(Error.Error) then
-        raise OpenAIException.Create(Error.Error.Message, Error.Error.&Type, Error.Error.Param, Error.Error.Code)
-      else
-        raise OpenAIException.Create('Unknown error', '', '', Code);
-    finally
-      if Assigned(Error) then
-        Error.Free;
-    end;
+    ParseError(Code, ResponseText);
   end;
   if not Assigned(Result) then
-    raise OpenAIException.Create('Empty or invalid response', '', '', Code);
+    raise OpenAIExceptionInvalidResponse.Create('Empty or invalid response', '', '', Code);
 end;
 
 procedure TOpenAIAPI.SetBaseUrl(const Value: string);
