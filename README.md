@@ -5,9 +5,9 @@
 ![GitHub](https://img.shields.io/badge/IDE%20Version-Delphi%2010.4+-yellow)
 ![GitHub](https://img.shields.io/badge/platform-all%20platforms-green)
 
-The library provides access to the API of the [OpenAI service](https://openai.com/api/), on the basis of which [ChatGPT](https://openai.com/blog/chatgpt) works and, for example, the generation of images from text using DALL-E.
-Delphi 10.4+ is required to work with the library. It is possible to build under 10.3.
-This library is a TOpenAI class for the main TComponent for more convenient work.
+The library provides access to the API of the [OpenAI service](https://openai.com/api/), on the basis of which [ChatGPT](https://openai.com/blog/chatgpt) works and, for example, the generation of images from text using `DALL-E`.
+`Delphi 10.4+` is required to work with the library. It is possible to build under `Delphi 10.3`.
+This library is a `TOpenAI` class for the main TComponent for more convenient work.
 
 ❗*This is an unofficial library. OpenAI does not provide any official library for Delphi.*
 
@@ -29,9 +29,11 @@ This library is a TOpenAI class for the main TComponent for more convenient work
 
 # ⚒️ Installation
 
-To use the library, just add the root folder to the IDE library path, or your project source path.
+To use the library, just add the `root` folder to the IDE library path, or your project source path.
 
 # 🌳 Usage
+
+The library needs to be configured with your account's secret key which is available on the [website](https://beta.openai.com/account/api-keys).
 
 **Initialization**
 
@@ -97,10 +99,22 @@ end;
 try
   var Images := OpenAI.Image.Create(...);
 except
+  on E: OpenAIExceptionRateLimitError do
+    ShowError('OpenAI Limit Error: ' + E.Message);
   on E: OpenAIException do
-    ShowError('OpenAI Error: ' + E.Message);
+    ShowError('OpenAI Error: ' + E.Message);  
 end;
 ```
+
+Exceptions:
+* OpenAIExceptionAPI - errors of wrapper
+* OpenAIException - base exception
+* OpenAIExceptionInvalidRequestError
+* OpenAIExceptionRateLimitError
+* OpenAIExceptionAuthenticationError
+* OpenAIExceptionPermissionError
+* OpenAIExceptionTryAgain
+* OpenAIExceptionInvalidResponse - parse error
 
 *Usage proxy*
 ```Pascal
