@@ -19,9 +19,11 @@ This library is a `TOpenAI` class for the main TComponent for more convenient wo
 |---|---|
 |Models|🟢 Done|
 |Completions|🟢 Done|
+|Chat|🟠 Working|
 |Edits|🟢 Done|
 |Images|🟢 Done|
 |Embeddings|🟢 Done|
+|Audio|🟠 Working|
 |Files|🟢 Done|
 |Fine-tunes|🟢 Done|
 |Moderations|🟢 Done|
