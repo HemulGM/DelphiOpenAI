@@ -5,7 +5,8 @@ interface
 uses
   System.SysUtils, System.Classes, OpenAI.Completions, OpenAI.Edits,
   OpenAI.Images, OpenAI.Models, OpenAI.Embeddings, OpenAI.API,
-  OpenAI.Moderations, OpenAI.Engines, OpenAI.Files, OpenAI.FineTunes;
+  OpenAI.Moderations, OpenAI.Engines, OpenAI.Files, OpenAI.FineTunes,
+  OpenAI.Chat;
 
 type
   IOpenAI = interface
@@ -26,6 +27,7 @@ type
     function GetEnginesRoute: TEnginesRoute;
     function GetFilesRoute: TFilesRoute;
     function GetFineTunesRoute: TFineTunesRoute;
+    function GetChatRoute: TChatRoute;
     /// <summary>
     /// Direct access to queries
     /// </summary>
@@ -89,6 +91,10 @@ type
     /// Response includes details of the enqueued job including job status and the name of the fine-tuned models once complete.
     /// </summary>
     property FineTune: TFineTunesRoute read GetFineTunesRoute;
+    /// <summary>
+    /// Given a chat conversation, the model will return a chat completion response.
+    /// </summary>
+    property Chat: TChatRoute read GetChatRoute;
   end;
 
   TOpenAI = class(TInterfacedObject, IOpenAI)
@@ -103,6 +109,7 @@ type
     FEnginesRoute: TEnginesRoute;
     FFilesRoute: TFilesRoute;
     FFineTunesRoute: TFineTunesRoute;
+    FChatRoute: TChatRoute;
     procedure SetToken(const Value: string);
     function GetToken: string;
     function GetBaseUrl: string;
@@ -119,6 +126,7 @@ type
     function GetEnginesRoute: TEnginesRoute;
     function GetFilesRoute: TFilesRoute;
     function GetFineTunesRoute: TFineTunesRoute;
+    function GetChatRoute: TChatRoute;
   public
     constructor Create; overload;
     constructor Create(const AToken: string); overload;
@@ -188,6 +196,10 @@ type
     /// Response includes details of the enqueued job including job status and the name of the fine-tuned models once complete.
     /// </summary>
     property FineTune: TFineTunesRoute read GetFineTunesRoute;
+    /// <summary>
+    /// Given a chat conversation, the model will return a chat completion response.
+    /// </summary>
+    property Chat: TChatRoute read GetChatRoute;
   end;
 
   TOpenAIComponent = class(TComponent, IOpenAI)
@@ -209,6 +221,7 @@ type
     function GetEnginesRoute: TEnginesRoute;
     function GetFilesRoute: TFilesRoute;
     function GetFineTunesRoute: TFineTunesRoute;
+    function GetChatRoute: TChatRoute;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -277,6 +290,10 @@ type
     /// Response includes details of the enqueued job including job status and the name of the fine-tuned models once complete.
     /// </summary>
     property FineTune: TFineTunesRoute read GetFineTunesRoute;
+    /// <summary>
+    /// Given a chat conversation, the model will return a chat completion response.
+    /// </summary>
+    property Chat: TChatRoute read GetChatRoute;
   end;
 
 implementation
@@ -315,6 +332,8 @@ begin
     FFilesRoute.Free;
   if Assigned(FFineTunesRoute) then
     FFineTunesRoute.Free;
+  if Assigned(FChatRoute) then
+    FChatRoute.Free;
   FAPI.Free;
   inherited;
 end;
@@ -327,6 +346,13 @@ end;
 function TOpenAI.GetBaseUrl: string;
 begin
   Result := FAPI.BaseUrl;
+end;
+
+function TOpenAI.GetChatRoute: TChatRoute;
+begin
+  if not Assigned(FChatRoute) then
+    FChatRoute := TChatRoute.CreateRoute(API);
+  Result := FChatRoute;
 end;
 
 function TOpenAI.GetCompletionsRoute: TCompletionsRoute;
@@ -439,6 +465,11 @@ end;
 function TOpenAIComponent.GetBaseUrl: string;
 begin
   Result := FOpenAI.GetBaseUrl;
+end;
+
+function TOpenAIComponent.GetChatRoute: TChatRoute;
+begin
+  Result := FOpenAI.GetChatRoute;
 end;
 
 function TOpenAIComponent.GetCompletionsRoute: TCompletionsRoute;
