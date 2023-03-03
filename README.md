@@ -19,7 +19,7 @@ This library is a `TOpenAI` class for the main TComponent for more convenient wo
 |---|---|
 |Models|🟢 Done|
 |Completions|🟢 Done|
-|Chat|🟠 Working|
+|Chat|🟢 Done|
 |Edits|🟢 Done|
 |Images|🟢 Done|
 |Embeddings|🟢 Done|
