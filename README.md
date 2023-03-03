@@ -6,7 +6,7 @@
 ![GitHub](https://img.shields.io/badge/platform-all%20platforms-green)
 
 The library provides access to the API of the [OpenAI service](https://openai.com/api/), on the basis of which [ChatGPT](https://openai.com/blog/chatgpt) works and, for example, the generation of images from text using `DALL-E`.
-`Delphi 10.4+` is required to work with the library. It is possible to build under `Delphi 10.3`.
+`Delphi 10.3+` is required to work with the library.
 This library is a `TOpenAI` class for the main TComponent for more convenient work.
 
 ❗*This is an unofficial library. OpenAI does not provide any official library for Delphi.*
