@@ -29,8 +29,8 @@ This repositorty contains Swift implementation over [OpenAI](https://beta.openai
 - [Links](#links)
 - [License](#license)
 
-**Coverage**
-
+<details>
+  <summary> Coverage </summary>
 <img src="https://github.com/HemulGM/ChatGPT.API/blob/main/OpenAL-GPT3.png?raw=true" height="150" align="right">
 
 |API|Status|
@@ -46,6 +46,8 @@ This repositorty contains Swift implementation over [OpenAI](https://beta.openai
 |Fine-tunes|🟢 Done|
 |Moderations|🟢 Done|
 |Engines (Depricated)|🟢 Done|
+
+</details>
 
 ## What is OpenAI
 
@@ -86,6 +88,7 @@ var OpenAI: IOpenAI := TOpenAI.Create(API_TOKEN);
 Once token you posses the token, and the instance is initialized you are ready to make requests.
 
 ### Models
+List and describe the various models available in the API. You can refer to the Models documentation to understand what models are available and the differences between them.
 
 ```Pascal
 var Models := OpenAI.Model.List();
@@ -97,7 +100,10 @@ finally
 end;
 ```
 
+Review [Models Documentation](https://platform.openai.com/docs/api-reference/models) for more info.
+
 ### Completions
+Given a prompt, the model will return one or more predicted completions, and can also return the probabilities of alternative tokens at each position.
 
 ```Pascal
 var Completions := OpenAI.Completion.Create(
@@ -114,9 +120,23 @@ finally
 end;
 ```
 
-Review [Completions Documentation](https://beta.openai.com/docs/api-reference/completions) for more info.
+Review [Completions Documentation](https://platform.openai.com/docs/api-reference/completions) for more info.
 
 ### Chats
+Given a chat conversation, the model will return a chat completion response.
+ChatGPT is powered by gpt-3.5-turbo, OpenAI’s most advanced language model.
+
+Using the OpenAI API, you can build your own applications with gpt-3.5-turbo to do things like:
+- Draft an email or other piece of writing
+- Write Python code
+- Answer questions about a set of documents
+- Create conversational agents
+- Give your software a natural language interface
+- Tutor in a range of subjects
+- Translate languages
+- Simulate characters for video games and much more
+
+This guide explains how to make an API call for chat-based language models and shares tips for getting good results.
 
 ```Pascal
 var Chat := OpenAI.Chat.Create(
@@ -133,9 +153,11 @@ finally
 end;
 ```
 
-Review [Chat Documentation](https://platform.openai.com/docs/guides/chat) for more info.
+Review [Chat Documentation](https://platform.openai.com/docs/api-reference/chat) for more info.
 
 ### Images
+Given a prompt and/or an input image, the model will generate a new image.
+
 ```Pascal
 var Images := OpenAI.Image.Create(
   procedure(Params: TImageGenParams)
@@ -151,7 +173,7 @@ finally
 end;
 ```
 
-Review [Images Documentation](https://beta.openai.com/docs/api-reference/images) for more info.
+Review [Images Documentation](https://platform.openai.com/docs/api-reference/images) for more info.
 
 ### Errors
 
@@ -196,7 +218,7 @@ Since the library requires your secret API key, it's not recommended you use it 
 
 ## Links
 
-- [OpenAI Documentation](https://beta.openai.com/docs/introduction)
+- [OpenAI Documentation](https://platform.openai.com/docs/introduction)
 - [OpenAI Playground](https://beta.openai.com/playground)
 - [OpenAI Examples](https://beta.openai.com/examples)
 - [Dall-E](https://labs.openai.com/)
