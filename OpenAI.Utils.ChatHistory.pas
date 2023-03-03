@@ -89,17 +89,18 @@ end;
 function TChatHistory.TextLength: Int64;
 var
   ItemTokenCount: Int64;
+  Item: TChatMessageBuild;
 begin
   Result := 0;
   if Assigned(FOnCalcContentTokens) then
-    for var Item in Self do
+    for Item in Self do
     begin
       ItemTokenCount := 0;
       FOnCalcContentTokens(Self, Item.Content, ItemTokenCount);
     end
   else
   begin
-    for var Item in Self do
+    for Item in Self do
       Inc(Result, Item.Content.Length);
   end;
 end;
