@@ -6,7 +6,21 @@ uses
   System.Classes, System.SysUtils, System.Net.Mime, OpenAI.API.Params,
   OpenAI.API;
 
+{$SCOPEDENUMS ON}
+
 type
+  TImageResponseFormat = (Url, B64Json);
+
+  TImageResponseFormatHelper = record helper for TImageResponseFormat
+    function ToString: string;
+  end;
+
+  TImageSize = (x256, x512, x1024);
+
+  TImageSizeHelper = record helper for TImageSize
+    function ToString: string;
+  end;
+
   TImageCreateParams = class(TJSONParam)
     /// <summary>
     /// A text description of the desired image(s). The maximum length is 1000 characters.
@@ -15,11 +29,19 @@ type
     /// <summary>
     /// The size of the generated images. Must be one of 256x256, 512x512, or 1024x1024.
     /// </summary>
-    function Size(const Value: string = '1024x1024'): TImageCreateParams; overload;
+    function Size(const Value: string): TImageCreateParams; overload;
+    /// <summary>
+    /// The size of the generated images. Must be one of 256x256, 512x512, or 1024x1024.
+    /// </summary>
+    function Size(const Value: TImageSize = TImageSize.x256): TImageCreateParams; overload;
     /// <summary>
     /// The format in which the generated images are returned. Must be one of url or b64_json
     /// </summary>
-    function ResponseFormat(const Value: string = 'url'): TImageCreateParams;
+    function ResponseFormat(const Value: string): TImageCreateParams; overload;
+    /// <summary>
+    /// The format in which the generated images are returned. Must be one of url or b64_json
+    /// </summary>
+    function ResponseFormat(const Value: TImageResponseFormat = TImageResponseFormat.Url): TImageCreateParams; overload;
     /// <summary>
     /// The number of images to generate. Must be between 1 and 10.
     /// </summary>
@@ -178,6 +200,16 @@ begin
   Result := TImageCreateParams(Add('prompt', Value));
 end;
 
+function TImageCreateParams.ResponseFormat(const Value: TImageResponseFormat): TImageCreateParams;
+begin
+  Result := ResponseFormat(Value.ToString);
+end;
+
+function TImageCreateParams.Size(const Value: TImageSize): TImageCreateParams;
+begin
+  Result := Size(Value.ToString);
+end;
+
 function TImageCreateParams.Size(const Value: string): TImageCreateParams;
 begin
   Result := TImageCreateParams(Add('size', Value));
@@ -285,6 +317,32 @@ function TImageVariationParams.User(const Value: string): TImageVariationParams;
 begin
   AddField('user', Value);
   Result := Self;
+end;
+
+{ TImageResponseFormatHelper }
+
+function TImageResponseFormatHelper.ToString: string;
+begin
+  case Self of
+    TImageResponseFormat.Url:
+      Result := 'url';
+    TImageResponseFormat.B64Json:
+      Result := 'b64_json';
+  end;
+end;
+
+{ TImageSizeHelper }
+
+function TImageSizeHelper.ToString: string;
+begin
+  case Self of
+    TImageSize.x256:
+      Result := '256x256';
+    TImageSize.x512:
+      Result := '512x512';
+    TImageSize.x1024:
+      Result := '1024x1024';
+  end;
 end;
 
 end.

@@ -111,7 +111,6 @@ constructor TEditParams.Create;
 begin
   inherited;
   Model('text-davinci-edit-001');
-  Temperature(0);
 end;
 
 function TEditParams.Model(const Value: string): TEditParams;

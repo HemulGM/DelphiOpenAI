@@ -83,7 +83,7 @@ type
     function Delete<TResult: class, constructor>(const Path: string): TResult; overload;
     function Post<TResult: class, constructor; TParams: TJSONParam>(const Path: string; ParamProc: TProc<TParams>): TResult; overload;
     function Post<TResult: class, constructor>(const Path: string): TResult; overload;
-    function PostForm<TResult: class, constructor; TParams: TMultipartFormData>(const Path: string; ParamProc: TProc<TParams>): TResult; overload;
+    function PostForm<TResult: class, constructor; TParams: TMultipartFormData, constructor>(const Path: string; ParamProc: TProc<TParams>): TResult; overload;
   public
     constructor Create; overload;
     constructor Create(const AToken: string); overload;
@@ -239,11 +239,11 @@ end;
 function TOpenAIAPI.PostForm<TResult, TParams>(const Path: string; ParamProc: TProc<TParams>): TResult;
 var
   Response: TStringStream;
-  Params: TMultipartFormData;
+  Params: TParams;
   Code: Integer;
 begin
   Response := TStringStream.Create;
-  Params := TMultipartFormData.Create;
+  Params := TParams.Create;
   try
     if Assigned(ParamProc) then
       ParamProc(Params);

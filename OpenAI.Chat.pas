@@ -16,10 +16,10 @@ type
 
   TChatMessageBuild = record
   private
-    FRole: string;
+    FRole: TMessageRole;
     FContent: string;
   public
-    property Role: string read FRole write FRole;
+    property Role: TMessageRole read FRole write FRole;
     property Content: string read FContent write FContent;
     class function Create(Role: TMessageRole; Content: string): TChatMessageBuild; static;
     class function User(Content: string): TChatMessageBuild; static;
@@ -214,7 +214,7 @@ begin
   for Item in Value do
   begin
     JSON := TJSONObject.Create;
-    JSON.AddPair('role', Item.Role);
+    JSON.AddPair('role', Item.Role.ToString);
     JSON.AddPair('content', Item.Content);
     Items.Add(JSON);
   end;
@@ -255,25 +255,25 @@ end;
 
 class function TChatMessageBuild.Assistant(Content: string): TChatMessageBuild;
 begin
-  Result.FRole := TMessageRole.Assistant.ToString;
+  Result.FRole := TMessageRole.Assistant;
   Result.FContent := Content;
 end;
 
 class function TChatMessageBuild.Create(Role: TMessageRole; Content: string): TChatMessageBuild;
 begin
-  Result.FRole := Role.ToString;
+  Result.FRole := Role;
   Result.FContent := Content;
 end;
 
 class function TChatMessageBuild.System(Content: string): TChatMessageBuild;
 begin
-  Result.FRole := TMessageRole.System.ToString;
+  Result.FRole := TMessageRole.System;
   Result.FContent := Content;
 end;
 
 class function TChatMessageBuild.User(Content: string): TChatMessageBuild;
 begin
-  Result.FRole := TMessageRole.User.ToString;
+  Result.FRole := TMessageRole.User;
   Result.FContent := Content;
 end;
 

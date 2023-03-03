@@ -23,6 +23,7 @@ type
     /// The input text to classify
     /// </summary>
     function Input(const Value: TArray<string>): TModerationsParams; overload;
+    constructor Create; reintroduce;
   end;
 
   TCategoryScores = class
@@ -112,6 +113,12 @@ begin
 end;
 
 { TModerationsParams }
+
+constructor TModerationsParams.Create;
+begin
+  inherited;
+  Model();
+end;
 
 function TModerationsParams.Input(const Value: TArray<string>): TModerationsParams;
 begin

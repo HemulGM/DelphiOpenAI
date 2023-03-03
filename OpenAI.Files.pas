@@ -6,7 +6,15 @@ uses
   System.Classes, System.SysUtils, System.Net.Mime, OpenAI.API.Params,
   OpenAI.API;
 
+{$SCOPEDENUMS ON}
+
 type
+  TFileCreatePurpose = (FineTune, Answer, Search, Classifications);
+
+  TFileCreatePurposeHelper = record helper for TFileCreatePurpose
+    function ToString: string;
+  end;
+
   TFileCreateParams = class(TMultipartFormData)
     /// <summary>
     /// Name of the JSON Lines file to be uploaded.
@@ -26,6 +34,12 @@ type
     /// Variants: ['fine-tune', 'answers', 'search', 'classifications']
     /// </summary>
     function Purpose(const Value: string): TFileCreateParams; overload;
+    /// <summary>
+    /// The intended purpose of the uploaded documents.
+    /// Use "fine-tune" for Fine-tuning. This allows us to validate the format of the uploaded file.
+    /// Variants: ['fine-tune', 'answers', 'search', 'classifications']
+    /// </summary>
+    function Purpose(const Value: TFileCreatePurpose): TFileCreateParams; overload;
   end;
 
   TFile = class
@@ -147,10 +161,31 @@ begin
   Result := Self;
 end;
 
+function TFileCreateParams.Purpose(const Value: TFileCreatePurpose): TFileCreateParams;
+begin
+  Result := Purpose(Value.ToString);
+end;
+
 function TFileCreateParams.Purpose(const Value: string): TFileCreateParams;
 begin
   AddField('purpose', Value);
   Result := Self;
+end;
+
+{ TFileCreatePurposeHelper }
+
+function TFileCreatePurposeHelper.ToString: string;
+begin
+  case Self of
+    TFileCreatePurpose.FineTune:
+      Result := 'fine-tune';
+    TFileCreatePurpose.Answer:
+      Result := 'answer';
+    TFileCreatePurpose.Search:
+      Result := 'search';
+    TFileCreatePurpose.Classifications:
+      Result := 'classifications';
+  end;
 end;
 
 end.
