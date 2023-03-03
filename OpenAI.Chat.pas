@@ -22,6 +22,9 @@ type
     property Role: string read FRole write FRole;
     property Content: string read FContent write FContent;
     class function Create(Role: TMessageRole; Content: string): TChatMessageBuild; static;
+    class function User(Content: string): TChatMessageBuild; static;
+    class function System(Content: string): TChatMessageBuild; static;
+    class function Assistant(Content: string): TChatMessageBuild; static;
   end;
 
   TChatParams = class(TJSONParam)
@@ -250,9 +253,27 @@ end;
 
 { TChatMessageBuild }
 
+class function TChatMessageBuild.Assistant(Content: string): TChatMessageBuild;
+begin
+  Result.FRole := TMessageRole.Assistant.ToString;
+  Result.FContent := Content;
+end;
+
 class function TChatMessageBuild.Create(Role: TMessageRole; Content: string): TChatMessageBuild;
 begin
   Result.FRole := Role.ToString;
+  Result.FContent := Content;
+end;
+
+class function TChatMessageBuild.System(Content: string): TChatMessageBuild;
+begin
+  Result.FRole := TMessageRole.System.ToString;
+  Result.FContent := Content;
+end;
+
+class function TChatMessageBuild.User(Content: string): TChatMessageBuild;
+begin
+  Result.FRole := TMessageRole.User.ToString;
   Result.FContent := Content;
 end;
 

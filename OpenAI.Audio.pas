@@ -7,117 +7,76 @@ uses
   OpenAI.API;
 
 type
-  TImageCreateParams = class(TJSONParam)
+  TAudioTranscription = class(TMultipartFormData)
     /// <summary>
-    /// A text description of the desired image(s). The maximum length is 1000 characters.
+    /// The audio file to transcribe, in one of these formats: mp3, mp4, mpeg, mpga, m4a, wav, or webm.
     /// </summary>
-    function Prompt(const Value: string): TImageCreateParams; overload;
+    function &File(const FileName: string): TAudioTranscription; overload;
     /// <summary>
-    /// The size of the generated images. Must be one of 256x256, 512x512, or 1024x1024.
+    /// The audio file to transcribe, in one of these formats: mp3, mp4, mpeg, mpga, m4a, wav, or webm.
     /// </summary>
-    function Size(const Value: string = '1024x1024'): TImageCreateParams; overload;
+    function &File(const Stream: TStream; const FileName: string): TAudioTranscription; overload;
     /// <summary>
-    /// The format in which the generated images are returned. Must be one of url or b64_json
+    /// ID of the model to use. Only whisper-1 is currently available.
     /// </summary>
-    function ResponseFormat(const Value: string = 'url'): TImageCreateParams;
+    function Model(const Value: string): TAudioTranscription; overload;
     /// <summary>
-    /// The number of images to generate. Must be between 1 and 10.
+    /// An optional text to guide the model's style or continue a previous audio segment.
+    /// The prompt should match the audio language.
     /// </summary>
-    function N(const Value: Integer = 1): TImageCreateParams;
+    /// <seealso>https://platform.openai.com/docs/guides/speech-to-text/prompting</seealso>
+    function Prompt(const Value: string): TAudioTranscription; overload;
     /// <summary>
-    /// A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse.
+    /// The format of the transcript output, in one of these options: json, text, srt, verbose_json, or vtt.
     /// </summary>
-    function User(const Value: string): TImageCreateParams;
-    constructor Create; override;
+    function ResponseFormat(const Value: string = 'json'): TAudioTranscription;
+    /// <summary>
+    /// The sampling temperature, between 0 and 1. Higher values like 0.8 will make the output more random,
+    /// while lower values like 0.2 will make it more focused and deterministic. If set to 0, the model will use
+    /// log probability to automatically increase the temperature until certain thresholds are hit.
+    /// </summary>
+    function Temperature(const Value: Single = 0): TAudioTranscription;
+    /// <summary>
+    /// The language of the input audio. Supplying the input language in ISO-639-1 format will improve accuracy and latency.
+    /// </summary>
+    function Language(const Value: string): TAudioTranscription; overload;
   end;
 
-  TImageEditParams = class(TMultipartFormData)
+  TAudioTranslation = class(TMultipartFormData)
     /// <summary>
-    /// The image to edit. Must be a valid PNG file, less than 4MB, and square.
-    /// If mask is not provided, image must have transparency, which will be used as the mask.
+    /// The audio file to translate, in one of these formats: mp3, mp4, mpeg, mpga, m4a, wav, or webm.
     /// </summary>
-    function Image(const FileName: string): TImageEditParams; overload;
+    function &File(const FileName: string): TAudioTranslation; overload;
     /// <summary>
-    /// The image to edit. Must be a valid PNG file, less than 4MB, and square.
-    /// If mask is not provided, image must have transparency, which will be used as the mask.
+    /// The audio file to transcribe, in one of these formats: mp3, mp4, mpeg, mpga, m4a, wav, or webm.
     /// </summary>
-    function Image(const Stream: TStream; const FileName: string): TImageEditParams; overload;
+    function &File(const Stream: TStream; const FileName: string): TAudioTranslation; overload;
     /// <summary>
-    /// An additional image whose fully transparent areas (e.g. where alpha is zero) indicate where image should be edited.
-    /// Must be a valid PNG file, less than 4MB, and have the same dimensions as image.
+    /// ID of the model to use. Only whisper-1 is currently available.
     /// </summary>
-    function Mask(const FileName: string): TImageEditParams; overload;
+    function Model(const Value: string): TAudioTranslation; overload;
     /// <summary>
-    /// An additional image whose fully transparent areas (e.g. where alpha is zero) indicate where image should be edited.
-    /// Must be a valid PNG file, less than 4MB, and have the same dimensions as image.
+    /// An optional text to guide the model's style or continue a previous audio segment. The prompt should be in English.
     /// </summary>
-    function Mask(const Stream: TStream; const FileName: string): TImageEditParams; overload;
+    /// <seealso>https://platform.openai.com/docs/guides/speech-to-text/prompting</seealso>
+    function Prompt(const Value: string): TAudioTranslation; overload;
     /// <summary>
-    /// A text description of the desired image(s). The maximum length is 1000 characters.
+    /// The format of the transcript output, in one of these options: json, text, srt, verbose_json, or vtt.
     /// </summary>
-    function Prompt(const Value: string): TImageEditParams; overload;
+    function ResponseFormat(const Value: string = 'json'): TAudioTranslation;
     /// <summary>
-    /// The number of images to generate. Must be between 1 and 10.
+    /// The sampling temperature, between 0 and 1. Higher values like 0.8 will make the output more random,
+    /// while lower values like 0.2 will make it more focused and deterministic. If set to 0, the model will use
+    /// log probability to automatically increase the temperature until certain thresholds are hit.
     /// </summary>
-    function N(const Value: Integer = 1): TImageEditParams;
-    /// <summary>
-    /// The size of the generated images. Must be one of 256x256, 512x512, or 1024x1024.
-    /// </summary>
-    function Size(const Value: string = '1024x1024'): TImageEditParams; overload;
-    /// <summary>
-    /// The format in which the generated images are returned. Must be one of url or b64_json.
-    /// </summary>
-    function ResponseFormat(const Value: string = 'url'): TImageEditParams;
-    /// <summary>
-    /// A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse.
-    /// </summary>
-    function User(const Value: string): TImageEditParams;
+    function Temperature(const Value: Single = 0): TAudioTranslation;
   end;
 
-  TImageVariationParams = class(TMultipartFormData)
-    /// <summary>
-    /// The image to use as the basis for the variation(s). Must be a valid PNG file, less than 4MB, and square.
-    /// </summary>
-    function Image(const FileName: string): TImageVariationParams; overload;
-    /// <summary>
-    /// The image to use as the basis for the variation(s). Must be a valid PNG file, less than 4MB, and square.
-    /// </summary>
-    function Image(const Stream: TStream; const FileName: string): TImageVariationParams; overload;
-    /// <summary>
-    /// The number of images to generate. Must be between 1 and 10.
-    /// </summary>
-    function N(const Value: Integer = 1): TImageVariationParams;
-    /// <summary>
-    /// The size of the generated images. Must be one of 256x256, 512x512, or 1024x1024.
-    /// </summary>
-    function Size(const Value: string = '1024x1024'): TImageVariationParams; overload;
-    /// <summary>
-    /// The format in which the generated images are returned. Must be one of url or b64_json.
-    /// </summary>
-    function ResponseFormat(const Value: string = 'url'): TImageVariationParams;
-    /// <summary>
-    /// A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse.
-    /// </summary>
-    function User(const Value: string): TImageVariationParams;
-  end;
-
-  TImageData = class
+  TAudioText = class
   private
-    FUrl: string;
-    FB64_json: string;
+    FText: string;
   public
-    property Url: string read FUrl write FUrl;
-    property B64Json: string read FB64_json write FB64_json;
-  end;
-
-  TImageGenerations = class
-  private
-    FData: TArray<TImageData>;
-    FCreated: Int64;
-  public
-    property Data: TArray<TImageData> read FData write FData;
-    property Created: Int64 read FCreated write FCreated;
-    destructor Destroy; override;
+    property Text: string read FText write FText;
   end;
 
   /// <summary>
@@ -126,171 +85,108 @@ type
   TAudioRoute = class(TOpenAIAPIRoute)
   public
     /// <summary>
-    /// Creates an image given a prompt.
+    /// Transcribes audio into the input language.
     /// </summary>
-    function Create(ParamProc: TProc<TImageCreateParams>): TImageGenerations;
+    function CreateTranscription(ParamProc: TProc<TAudioTranscription>): TAudioText;
     /// <summary>
-    /// Creates an edited or extended image given an original image and a prompt.
+    /// Translates audio into into English.
     /// </summary>
-    function Edit(ParamProc: TProc<TImageEditParams>): TImageGenerations;
-    /// <summary>
-    /// Creates a variation of a given image.
-    /// </summary>
-    function Variation(ParamProc: TProc<TImageVariationParams>): TImageGenerations;
+    function CreateTranslation(ParamProc: TProc<TAudioTranslation>): TAudioText;
   end;
 
 implementation
 
-{ TImagesRoute }
+{ TAudioRoute }
 
-function TAudioRoute.Create(ParamProc: TProc<TImageCreateParams>): TImageGenerations;
+function TAudioRoute.CreateTranscription(ParamProc: TProc<TAudioTranscription>): TAudioText;
 begin
-  Result := API.Post<TImageGenerations, TImageCreateParams>('images/generations', ParamProc);
+  Result := API.PostForm<TAudioText, TAudioTranscription>('audio/transcriptions', ParamProc);
 end;
 
-function TAudioRoute.Edit(ParamProc: TProc<TImageEditParams>): TImageGenerations;
+function TAudioRoute.CreateTranslation(ParamProc: TProc<TAudioTranslation>): TAudioText;
 begin
-  Result := API.PostForm<TImageGenerations, TImageEditParams>('images/edits', ParamProc);
+  Result := API.PostForm<TAudioText, TAudioTranslation>('audio/translations', ParamProc);
 end;
 
-function TAudioRoute.Variation(ParamProc: TProc<TImageVariationParams>): TImageGenerations;
+{ TAudioTranscription }
+
+function TAudioTranscription.&File(const FileName: string): TAudioTranscription;
 begin
-  Result := API.PostForm<TImageGenerations, TImageVariationParams>('images/variations', ParamProc);
-end;
-
-{ TImageGenerations }
-
-destructor TImageGenerations.Destroy;
-begin
-  for var Item in FData do
-    if Assigned(Item) then
-      Item.Free;
-  inherited;
-end;
-
-{ TImageCreateParams }
-
-constructor TImageCreateParams.Create;
-begin
-  inherited;
-end;
-
-function TImageCreateParams.N(const Value: Integer): TImageCreateParams;
-begin
-  Result := TImageCreateParams(Add('n', Value));
-end;
-
-function TImageCreateParams.Prompt(const Value: string): TImageCreateParams;
-begin
-  Result := TImageCreateParams(Add('prompt', Value));
-end;
-
-function TImageCreateParams.Size(const Value: string): TImageCreateParams;
-begin
-  Result := TImageCreateParams(Add('size', Value));
-end;
-
-function TImageCreateParams.ResponseFormat(const Value: string): TImageCreateParams;
-begin
-  Result := TImageCreateParams(Add('response_format', Value));
-end;
-
-function TImageCreateParams.User(const Value: string): TImageCreateParams;
-begin
-  Result := TImageCreateParams(Add('user', Value));
-end;
-
-{ TImageEditParams }
-
-function TImageEditParams.Image(const FileName: string): TImageEditParams;
-begin
-  AddFile('image', FileName);
+  AddFile('file', FileName);
   Result := Self;
 end;
 
-function TImageEditParams.Image(const Stream: TStream; const FileName: string): TImageEditParams;
+function TAudioTranscription.&File(const Stream: TStream; const FileName: string): TAudioTranscription;
 begin
-  AddStream('image', Stream, FileName);
+  AddStream('file', Stream, FileName);
   Result := Self;
 end;
 
-function TImageEditParams.Mask(const Stream: TStream; const FileName: string): TImageEditParams;
+function TAudioTranscription.Language(const Value: string): TAudioTranscription;
 begin
-  AddStream('mask', Stream, FileName);
+  AddFile('language', Value);
   Result := Self;
 end;
 
-function TImageEditParams.Mask(const FileName: string): TImageEditParams;
+function TAudioTranscription.Temperature(const Value: Single): TAudioTranscription;
 begin
-  AddFile('mask', FileName);
+  AddField('temperature', Value.ToString);
   Result := Self;
 end;
 
-function TImageEditParams.N(const Value: Integer): TImageEditParams;
-begin
-  AddField('n', Value.ToString);
-  Result := Self;
-end;
-
-function TImageEditParams.Prompt(const Value: string): TImageEditParams;
+function TAudioTranscription.Prompt(const Value: string): TAudioTranscription;
 begin
   AddField('prompt', Value);
   Result := Self;
 end;
 
-function TImageEditParams.ResponseFormat(const Value: string): TImageEditParams;
+function TAudioTranscription.ResponseFormat(const Value: string): TAudioTranscription;
 begin
   AddField('response_format', Value);
   Result := Self;
 end;
 
-function TImageEditParams.Size(const Value: string): TImageEditParams;
+function TAudioTranscription.Model(const Value: string): TAudioTranscription;
 begin
-  AddField('size', Value);
+  AddField('model', Value);
   Result := Self;
 end;
 
-function TImageEditParams.User(const Value: string): TImageEditParams;
+{ TAudioTranslation }
+
+function TAudioTranslation.&File(const FileName: string): TAudioTranslation;
 begin
-  AddField('user', Value);
+  AddFile('file', FileName);
   Result := Self;
 end;
 
-{ TImageVariationParams }
-
-function TImageVariationParams.Image(const FileName: string): TImageVariationParams;
+function TAudioTranslation.&File(const Stream: TStream; const FileName: string): TAudioTranslation;
 begin
-  AddFile('image', FileName);
+  AddStream('file', Stream, FileName);
   Result := Self;
 end;
 
-function TImageVariationParams.Image(const Stream: TStream; const FileName: string): TImageVariationParams;
+function TAudioTranslation.Temperature(const Value: Single): TAudioTranslation;
 begin
-  AddStream('image', Stream, FileName);
+  AddField('temperature', Value.ToString);
   Result := Self;
 end;
 
-function TImageVariationParams.N(const Value: Integer): TImageVariationParams;
+function TAudioTranslation.Prompt(const Value: string): TAudioTranslation;
 begin
-  AddField('n', Value.ToString);
+  AddField('prompt', Value);
   Result := Self;
 end;
 
-function TImageVariationParams.ResponseFormat(const Value: string): TImageVariationParams;
+function TAudioTranslation.ResponseFormat(const Value: string): TAudioTranslation;
 begin
   AddField('response_format', Value);
   Result := Self;
 end;
 
-function TImageVariationParams.Size(const Value: string): TImageVariationParams;
+function TAudioTranslation.Model(const Value: string): TAudioTranslation;
 begin
-  AddField('size', Value);
-  Result := Self;
-end;
-
-function TImageVariationParams.User(const Value: string): TImageVariationParams;
-begin
-  AddField('user', Value);
+  AddField('model', Value);
   Result := Self;
 end;
 

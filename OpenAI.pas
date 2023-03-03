@@ -6,7 +6,7 @@ uses
   System.SysUtils, System.Classes, OpenAI.Completions, OpenAI.Edits,
   OpenAI.Images, OpenAI.Models, OpenAI.Embeddings, OpenAI.API,
   OpenAI.Moderations, OpenAI.Engines, OpenAI.Files, OpenAI.FineTunes,
-  OpenAI.Chat;
+  OpenAI.Chat, OpenAI.Audio;
 
 type
   IOpenAI = interface
@@ -28,6 +28,7 @@ type
     function GetFilesRoute: TFilesRoute;
     function GetFineTunesRoute: TFineTunesRoute;
     function GetChatRoute: TChatRoute;
+    function GetAudioRoute: TAudioRoute;
     /// <summary>
     /// Direct access to queries
     /// </summary>
@@ -95,6 +96,10 @@ type
     /// Given a chat conversation, the model will return a chat completion response.
     /// </summary>
     property Chat: TChatRoute read GetChatRoute;
+    /// <summary>
+    /// Learn how to turn audio into text.
+    /// </summary>
+    property Audio: TAudioRoute read GetAudioRoute;
   end;
 
   TOpenAI = class(TInterfacedObject, IOpenAI)
@@ -110,6 +115,7 @@ type
     FFilesRoute: TFilesRoute;
     FFineTunesRoute: TFineTunesRoute;
     FChatRoute: TChatRoute;
+    FAudioRoute: TAudioRoute;
     procedure SetToken(const Value: string);
     function GetToken: string;
     function GetBaseUrl: string;
@@ -127,6 +133,7 @@ type
     function GetFilesRoute: TFilesRoute;
     function GetFineTunesRoute: TFineTunesRoute;
     function GetChatRoute: TChatRoute;
+    function GetAudioRoute: TAudioRoute;
   public
     constructor Create; overload;
     constructor Create(const AToken: string); overload;
@@ -200,6 +207,10 @@ type
     /// Given a chat conversation, the model will return a chat completion response.
     /// </summary>
     property Chat: TChatRoute read GetChatRoute;
+    /// <summary>
+    /// Learn how to turn audio into text.
+    /// </summary>
+    property Audio: TAudioRoute read GetAudioRoute;
   end;
 
   TOpenAIComponent = class(TComponent, IOpenAI)
@@ -222,6 +233,7 @@ type
     function GetFilesRoute: TFilesRoute;
     function GetFineTunesRoute: TFineTunesRoute;
     function GetChatRoute: TChatRoute;
+    function GetAudioRoute: TAudioRoute;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -294,6 +306,10 @@ type
     /// Given a chat conversation, the model will return a chat completion response.
     /// </summary>
     property Chat: TChatRoute read GetChatRoute;
+    /// <summary>
+    /// Learn how to turn audio into text.
+    /// </summary>
+    property Audio: TAudioRoute read GetAudioRoute;
   end;
 
 implementation
@@ -334,6 +350,8 @@ begin
     FFineTunesRoute.Free;
   if Assigned(FChatRoute) then
     FChatRoute.Free;
+  if Assigned(FAudioRoute) then
+    FAudioRoute.Free;
   FAPI.Free;
   inherited;
 end;
@@ -341,6 +359,13 @@ end;
 function TOpenAI.GetAPI: TOpenAIAPI;
 begin
   Result := FAPI;
+end;
+
+function TOpenAI.GetAudioRoute: TAudioRoute;
+begin
+  if not Assigned(FAudioRoute) then
+    FAudioRoute := TAudioRoute.CreateRoute(API);
+  Result := FAudioRoute;
 end;
 
 function TOpenAI.GetBaseUrl: string;
@@ -460,6 +485,11 @@ end;
 function TOpenAIComponent.GetAPI: TOpenAIAPI;
 begin
   Result := FOpenAI.API;
+end;
+
+function TOpenAIComponent.GetAudioRoute: TAudioRoute;
+begin
+  Result := FOpenAI.GetAudioRoute;
 end;
 
 function TOpenAIComponent.GetBaseUrl: string;
