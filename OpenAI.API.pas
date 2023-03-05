@@ -186,7 +186,7 @@ var
   Params: TParams;
   Code: Integer;
 begin
-  Response := TStringStream.Create;
+  Response := TStringStream.Create('',TEncoding.UTF8);
   Params := TParams.Create;
   try
     if Assigned(ParamProc) then
@@ -204,7 +204,7 @@ var
   Response: TStringStream;
   Code: Integer;
 begin
-  Response := TStringStream.Create;
+  Response := TStringStream.Create('',TEncoding.UTF8);
   try
     Code := Post(Path, Response);
     Result := ParseResponse<TResult>(Code, Response.DataString);
@@ -227,7 +227,7 @@ var
   Response: TStringStream;
   Code: Integer;
 begin
-  Response := TStringStream.Create;
+  Response := TStringStream.Create('',TEncoding.UTF8);
   try
     Code := Delete(Path, Response);
     Result := ParseResponse<TResult>(Code, Response.DataString);
@@ -242,7 +242,7 @@ var
   Params: TParams;
   Code: Integer;
 begin
-  Response := TStringStream.Create;
+  Response := TStringStream.Create('',TEncoding.UTF8);
   Params := TParams.Create;
   try
     if Assigned(ParamProc) then
@@ -260,7 +260,7 @@ var
   Response: TStringStream;
   Code: Integer;
 begin
-  Response := TStringStream.Create;
+  Response := TStringStream.Create('',TEncoding.UTF8);
   try
     Code := Get(Path, Response);
     Result := ParseResponse<TResult>(Code, Response.DataString);
@@ -359,7 +359,8 @@ begin
         {$IFDEF ANDROID}
         Result := TJson.JsonToObject<T>(ResponseText);
         {$ELSE}
-        Result := TJson.JsonToObject<T>(UTF8ToString(RawByteString(ResponseText)));
+        //Result := TJson.JsonToObject<T>(UTF8ToString(RawByteString(ResponseText)));
+        Result := TJson.JsonToObject<T>(ResponseText);
         {$ENDIF}
       except
         Result := nil;
