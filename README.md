@@ -9,7 +9,7 @@ ___
 ![GitHub](https://img.shields.io/badge/IDE%20Version-Delphi%2010.3+-yellow)
 ![GitHub](https://img.shields.io/badge/platform-all%20platforms-green)
 
-This repositorty contains Swift implementation over [OpenAI](https://beta.openai.com/docs/api-reference/) public API.
+This repositorty contains Delphi implementation over [OpenAI](https://beta.openai.com/docs/api-reference/) public API.
 
 ❗*This is an unofficial library. OpenAI does not provide any official library for Delphi.*
 
