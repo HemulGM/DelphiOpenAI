@@ -97,6 +97,7 @@ begin
     begin
       ItemTokenCount := 0;
       FOnCalcContentTokens(Self, Item.Content, ItemTokenCount);
+      Inc(Result, ItemTokenCount);
     end
   else
   begin
