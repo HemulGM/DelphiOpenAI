@@ -3,7 +3,7 @@
 interface
 
 uses
-  System.SysUtils, OpenAI.API.Params, OpenAI.API;
+  System.SysUtils, OpenAI.API.Params, OpenAI.API, System.Classes;
 
 {$SCOPEDENUMS ON}
 
@@ -113,9 +113,18 @@ type
     FIndex: Int64;
     FMessage: TChatMessage;
     FFinish_reason: string;
+    FDelta: TChatMessage;
   public
     property Index: Int64 read FIndex write FIndex;
     property Message: TChatMessage read FMessage write FMessage;
+    property Delta: TChatMessage read FDelta write FDelta;
+    /// <summary>
+    /// The possible values for finish_reason are:
+    /// stop: API returned complete model output
+    /// length: Incomplete model output due to max_tokens parameter or token limit
+    /// content_filter: Omitted content due to a flag from our content filters
+    /// null: API response still in progress or incomplete
+    /// </summary>
     property FinishReason: string read FFinish_reason write FFinish_reason;
     destructor Destroy; override;
   end;
@@ -136,6 +145,8 @@ type
     destructor Destroy; override;
   end;
 
+  TChatEvent = reference to procedure(Chat: TChat; IsDone: Boolean; var Cancel: Boolean);
+
   /// <summary>
   /// Given a chat conversation, the model will return a chat completion response.
   /// </summary>
@@ -145,18 +156,69 @@ type
     /// Creates a completion for the chat message
     /// </summary>
     function Create(ParamProc: TProc<TChatParams>): TChat;
+    /// <summary>
+    /// Creates a completion for the chat message
+    /// </summary>
+    function CreateStream(ParamProc: TProc<TChatParams>; Event: TChatEvent): Boolean;
   end;
 
 implementation
 
 uses
-  System.JSON;
+  System.JSON, Rest.Json;
 
 { TChatRoute }
 
 function TChatRoute.Create(ParamProc: TProc<TChatParams>): TChat;
 begin
   Result := API.Post<TChat, TChatParams>('chat/completions', ParamProc);
+end;
+
+function TChatRoute.CreateStream(ParamProc: TProc<TChatParams>; Event: TChatEvent): Boolean;
+var
+  Response: TStringStream;
+  RetPos: Integer;
+begin
+  Response := TStringStream.Create('', TEncoding.UTF8);
+  try
+    RetPos := 0;
+    Result := API.Post<TChatParams>('chat/completions', ParamProc, Response,
+      procedure(const Sender: TObject; AContentLength: Int64; AReadCount: Int64; var AAbort: Boolean)
+      var
+        IsDone: Boolean;
+        Data: string;
+        Chat: TChat;
+        TextBuffer: string;
+        Line: string;
+        Ret: Integer;
+      begin
+        TextBuffer := Response.DataString;
+        repeat
+          Ret := TextBuffer.IndexOf(#10, RetPos);
+          if Ret >= 0 then
+          begin
+            Line := TextBuffer.Substring(RetPos, Ret - RetPos);
+            RetPos := Ret + 1;
+            if Line.IsEmpty or (Line.StartsWith(#10)) then
+              Continue;
+            Chat := nil;
+            Data := Line.Replace('data: ', '').Trim([' ', #13, #10]);
+            IsDone := Data = '[DONE]';
+            if not IsDone then
+            begin
+              try
+                Chat := TJson.JsonToObject<TChat>(Data);
+              except
+                Chat := nil;
+              end;
+            end;
+            Event(Chat, IsDone, AAbort);
+          end;
+        until Ret < 0;
+      end);
+  finally
+    Response.Free;
+  end;
 end;
 
 { TChat }
@@ -297,6 +359,8 @@ destructor TChatChoices.Destroy;
 begin
   if Assigned(FMessage) then
     FMessage.Free;
+  if Assigned(FDelta) then
+    FDelta.Free;
   inherited;
 end;
 

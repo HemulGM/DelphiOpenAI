@@ -73,7 +73,7 @@ type
     function Get(const Path: string; Response: TStringStream): Integer; overload;
     function Delete(const Path: string; Response: TStringStream): Integer; overload;
     function Post(const Path: string; Response: TStringStream): Integer; overload;
-    function Post(const Path: string; Body: TJSONObject; Response: TStringStream): Integer; overload;
+    function Post(const Path: string; Body: TJSONObject; Response: TStringStream; OnReceiveData: TReceiveDataCallback = nil): Integer; overload;
     function Post(const Path: string; Body: TMultipartFormData; Response: TStringStream): Integer; overload;
     function ParseResponse<T: class, constructor>(const Code: Int64; const ResponseText: string): T;
     procedure CheckAPI;
@@ -81,6 +81,7 @@ type
     function Get<TResult: class, constructor>(const Path: string): TResult; overload;
     procedure GetFile(const Path: string; Response: TStream); overload;
     function Delete<TResult: class, constructor>(const Path: string): TResult; overload;
+    function Post<TParams: TJSONParam>(const Path: string; ParamProc: TProc<TParams>; Response: TStringStream; Event: TReceiveDataCallback): Boolean; overload;
     function Post<TResult: class, constructor; TParams: TJSONParam>(const Path: string; ParamProc: TProc<TParams>): TResult; overload;
     function Post<TResult: class, constructor>(const Path: string): TResult; overload;
     function PostForm<TResult: class, constructor; TParams: TMultipartFormData, constructor>(const Path: string; ParamProc: TProc<TParams>): TResult; overload;
@@ -130,7 +131,7 @@ begin
   inherited;
 end;
 
-function TOpenAIAPI.Post(const Path: string; Body: TJSONObject; Response: TStringStream): Integer;
+function TOpenAIAPI.Post(const Path: string; Body: TJSONObject; Response: TStringStream; OnReceiveData: TReceiveDataCallback): Integer;
 var
   Headers: TNetHeaders;
   Stream: TStringStream;
@@ -138,11 +139,13 @@ begin
   CheckAPI;
   Headers := GetHeaders + [TNetHeader.Create('Content-Type', 'application/json')];
   Stream := TStringStream.Create;
+  FHTTPClient.ReceiveDataCallBack := OnReceiveData;
   try
     Stream.WriteString(Body.ToJSON);
     Stream.Position := 0;
     Result := FHTTPClient.Post(FBaseUrl + '/' + Path, Stream, Response, Headers).StatusCode;
   finally
+    FHTTPClient.OnReceiveData := nil;
     Stream.Free;
   end;
 end;
@@ -186,7 +189,7 @@ var
   Params: TParams;
   Code: Integer;
 begin
-  Response := TStringStream.Create('',TEncoding.UTF8);
+  Response := TStringStream.Create('', TEncoding.UTF8);
   Params := TParams.Create;
   try
     if Assigned(ParamProc) then
@@ -199,12 +202,33 @@ begin
   end;
 end;
 
+function TOpenAIAPI.Post<TParams>(const Path: string; ParamProc: TProc<TParams>; Response: TStringStream; Event: TReceiveDataCallback): Boolean;
+var
+  Params: TParams;
+  Code: Integer;
+begin
+  Params := TParams.Create;
+  try
+    if Assigned(ParamProc) then
+      ParamProc(Params);
+    Code := Post(Path, Params.JSON, Response, Event);
+    case Code of
+      200..299:
+        Result := True;
+    else
+      Result := False;
+    end;
+  finally
+    Params.Free;
+  end;
+end;
+
 function TOpenAIAPI.Post<TResult>(const Path: string): TResult;
 var
   Response: TStringStream;
   Code: Integer;
 begin
-  Response := TStringStream.Create('',TEncoding.UTF8);
+  Response := TStringStream.Create('', TEncoding.UTF8);
   try
     Code := Post(Path, Response);
     Result := ParseResponse<TResult>(Code, Response.DataString);
@@ -227,7 +251,7 @@ var
   Response: TStringStream;
   Code: Integer;
 begin
-  Response := TStringStream.Create('',TEncoding.UTF8);
+  Response := TStringStream.Create('', TEncoding.UTF8);
   try
     Code := Delete(Path, Response);
     Result := ParseResponse<TResult>(Code, Response.DataString);
@@ -242,7 +266,7 @@ var
   Params: TParams;
   Code: Integer;
 begin
-  Response := TStringStream.Create('',TEncoding.UTF8);
+  Response := TStringStream.Create('', TEncoding.UTF8);
   Params := TParams.Create;
   try
     if Assigned(ParamProc) then
@@ -260,7 +284,7 @@ var
   Response: TStringStream;
   Code: Integer;
 begin
-  Response := TStringStream.Create('',TEncoding.UTF8);
+  Response := TStringStream.Create('', TEncoding.UTF8);
   try
     Code := Get(Path, Response);
     Result := ParseResponse<TResult>(Code, Response.DataString);

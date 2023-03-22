@@ -3,7 +3,7 @@
 interface
 
 uses
-  System.SysUtils, OpenAI.API.Params, OpenAI.API;
+  System.SysUtils, System.Classes, OpenAI.API.Params, OpenAI.API;
 
 type
   TCompletionParams = class(TJSONParam)
@@ -120,6 +120,7 @@ type
     FText: string;
   public
     property FinishReason: string read FFinish_reason write FFinish_reason;
+    //property Logprobs: string read FFinish_reason write FFinish_reason;
     property Index: Int64 read FIndex write FIndex;
     property Text: string read FText write FText;
   end;
@@ -142,21 +143,77 @@ type
     destructor Destroy; override;
   end;
 
+  TCompletionEvent = reference to procedure(Completions: TCompletions; IsDone: Boolean; var Cancel: Boolean);
+
   TCompletionsRoute = class(TOpenAIAPIRoute)
   public
     /// <summary>
     /// Creates a completion for the provided prompt and parameters
     /// </summary>
     function Create(ParamProc: TProc<TCompletionParams>): TCompletions;
+    /// <summary>
+    /// Creates a completion for the provided prompt and parameters (for Stream is true parameter)
+    /// </summary>
+    function CreateStream(ParamProc: TProc<TCompletionParams>; Event: TCompletionEvent): Boolean;
   end;
 
 implementation
+
+uses
+  REST.Json;
 
 { TCompletionsRoute }
 
 function TCompletionsRoute.Create(ParamProc: TProc<TCompletionParams>): TCompletions;
 begin
   Result := API.Post<TCompletions, TCompletionParams>('completions', ParamProc);
+end;
+
+function TCompletionsRoute.CreateStream(ParamProc: TProc<TCompletionParams>; Event: TCompletionEvent): Boolean;
+var
+  Response: TStringStream;
+  RetPos: Integer;
+begin
+  Response := TStringStream.Create('', TEncoding.UTF8);
+  try
+    RetPos := 0;
+    Result := API.Post<TCompletionParams>('completions', ParamProc, Response,
+      procedure(const Sender: TObject; AContentLength: Int64; AReadCount: Int64; var AAbort: Boolean)
+      var
+        IsDone: Boolean;
+        Data: string;
+        Completions: TCompletions;
+        TextBuffer: string;
+        Line: string;
+        Ret: Integer;
+      begin
+        TextBuffer := Response.DataString;
+        repeat
+          Ret := TextBuffer.IndexOf(#10, RetPos);
+          if Ret >= 0 then
+          begin
+            Line := TextBuffer.Substring(RetPos, Ret - RetPos);
+            RetPos := Ret + 1;
+            if Line.IsEmpty or (Line.StartsWith(#10)) then
+              Continue;
+            Completions := nil;
+            Data := Line.Replace('data: ', '').Trim([' ', #13, #10]);
+            IsDone := Data = '[DONE]';
+            if not IsDone then
+            begin
+              try
+                Completions := TJson.JsonToObject<TCompletions>(Data);
+              except
+                Completions := nil;
+              end;
+            end;
+            Event(Completions, IsDone, AAbort);
+          end;
+        until Ret < 0;
+      end);
+  finally
+    Response.Free;
+  end;
 end;
 
 { TCompletions }
