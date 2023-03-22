@@ -153,6 +153,26 @@ finally
 end;
 ```
 
+#### Stream mode
+```Pascal
+OpenAI.Chat.CreateStream(
+  procedure(Params: TChatParams)
+  begin
+    Params.Messages([TchatMessageBuild.User(Buf.Text)]);
+    Params.MaxTokens(1024);
+    Params.Stream;
+  end,
+  procedure(Chat: TChat; IsDone: Boolean; var Cancel: Boolean)
+  begin
+    if (not IsDone) and Assigned(Chat) then
+      Writeln(Chat.Choices[0].Delta.Content)
+    else if IsDone then
+      Writeln('DONE!');
+    Writeln('-------');
+    Sleep(100);
+  end);
+```
+
 Review [Chat Documentation](https://platform.openai.com/docs/api-reference/chat) for more info.
 
 ### Images
