@@ -212,7 +212,12 @@ begin
                 Chat := nil;
               end;
             end;
-            Event(Chat, IsDone, AAbort);
+            try
+              Event(Chat, IsDone, AAbort);
+            finally
+              if Assigned(Chat) then
+                Chat.Free;
+            end;
           end;
         until Ret < 0;
       end);

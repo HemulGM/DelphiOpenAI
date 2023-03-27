@@ -207,7 +207,12 @@ begin
                 Completions := nil;
               end;
             end;
-            Event(Completions, IsDone, AAbort);
+            try
+              Event(Completions, IsDone, AAbort);
+            finally
+              if Assigned(Completions) then
+                Completions.Free;
+            end;
           end;
         until Ret < 0;
       end);
