@@ -93,6 +93,7 @@ type
     /// A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse.
     /// </summary>
     function User(const Value: string): TImageEditParams;
+    constructor Create(AOwnsOutputStream: Boolean = True);
   end;
 
   TImageVariationParams = class(TMultipartFormData)
@@ -120,6 +121,7 @@ type
     /// A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse.
     /// </summary>
     function User(const Value: string): TImageVariationParams;
+    constructor Create(AOwnsOutputStream: Boolean = True); reintroduce;
   end;
 
   TImageData = class
@@ -233,6 +235,11 @@ begin
   Result := Self;
 end;
 
+constructor TImageEditParams.Create(AOwnsOutputStream: Boolean);
+begin
+  inherited;
+end;
+
 function TImageEditParams.Image(const Stream: TStream; const FileName: string): TImageEditParams;
 begin
   AddStream('image', Stream, FileName);
@@ -287,6 +294,11 @@ function TImageVariationParams.Image(const FileName: string): TImageVariationPar
 begin
   AddFile('image', FileName);
   Result := Self;
+end;
+
+constructor TImageVariationParams.Create(AOwnsOutputStream: Boolean);
+begin
+  inherited;
 end;
 
 function TImageVariationParams.Image(const Stream: TStream; const FileName: string): TImageVariationParams;

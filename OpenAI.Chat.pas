@@ -12,6 +12,7 @@ type
 
   TMessageRoleHelper = record helper for TMessageRole
     function ToString: string;
+    class function FromString(const Value: string): TMessageRole; static;
   end;
 
   TChatMessageBuild = record
@@ -345,6 +346,18 @@ begin
 end;
 
 { TMessageRoleHelper }
+
+class function TMessageRoleHelper.FromString(const Value: string): TMessageRole;
+begin
+  if Value = 'system' then
+    Exit(TMessageRole.System)
+  else if Value = 'user' then
+    Exit(TMessageRole.User)
+  else if Value = 'assistant' then
+    Exit(TMessageRole.Assistant)
+  else
+    Result := TMessageRole.User;
+end;
 
 function TMessageRoleHelper.ToString: string;
 begin

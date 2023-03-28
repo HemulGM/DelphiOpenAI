@@ -52,7 +52,7 @@ type
     /// The language of the input audio. Supplying the input language in ISO-639-1 format will improve accuracy and latency (like en, ru, uk).
     /// </summary>
     function Language(const Value: string): TAudioTranscription; overload;
-    constructor Create; reintroduce;
+    constructor Create(AOwnsOutputStream: Boolean = True); reintroduce;
   end;
 
   TAudioTranslation = class(TMultipartFormData)
@@ -83,6 +83,7 @@ type
     /// log probability to automatically increase the temperature until certain thresholds are hit.
     /// </summary>
     function Temperature(const Value: Single = 0): TAudioTranslation;
+    constructor Create(AOwnsOutputStream: Boolean = True); reintroduce;
   end;
 
   TAudioText = class
@@ -131,7 +132,7 @@ end;
 
 constructor TAudioTranscription.Create;
 begin
-  inherited Create(True);
+  inherited;
   Model('whisper-1');
 end;
 
@@ -182,6 +183,11 @@ function TAudioTranslation.&File(const FileName: string): TAudioTranslation;
 begin
   AddFile('file', FileName);
   Result := Self;
+end;
+
+constructor TAudioTranslation.Create(AOwnsOutputStream: Boolean);
+begin
+  inherited;
 end;
 
 function TAudioTranslation.&File(const Stream: TStream; const FileName: string): TAudioTranslation;

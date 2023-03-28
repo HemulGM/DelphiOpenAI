@@ -9,7 +9,7 @@ uses
 {$SCOPEDENUMS ON}
 
 type
-  TFileCreatePurpose = (FineTune, Answer, Search, Classifications);
+  TFileCreatePurpose = (FineTune, Answers, Search, Classifications);
 
   TFileCreatePurposeHelper = record helper for TFileCreatePurpose
     function ToString: string;
@@ -40,6 +40,7 @@ type
     /// Variants: ['fine-tune', 'answers', 'search', 'classifications']
     /// </summary>
     function Purpose(const Value: TFileCreatePurpose): TFileCreateParams; overload;
+    constructor Create(AOwnsOutputStream: Boolean = True);  reintroduce;
   end;
 
   TFile = class
@@ -155,6 +156,11 @@ begin
   Result := Self;
 end;
 
+constructor TFileCreateParams.Create(AOwnsOutputStream: Boolean);
+begin
+  inherited;
+end;
+
 function TFileCreateParams.&File(const Stream: TStream; const FileName: string): TFileCreateParams;
 begin
   AddStream('file', Stream, FileName);
@@ -179,8 +185,8 @@ begin
   case Self of
     TFileCreatePurpose.FineTune:
       Result := 'fine-tune';
-    TFileCreatePurpose.Answer:
-      Result := 'answer';
+    TFileCreatePurpose.Answers:
+      Result := 'answers';
     TFileCreatePurpose.Search:
       Result := 'search';
     TFileCreatePurpose.Classifications:
