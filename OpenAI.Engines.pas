@@ -10,12 +10,12 @@ type
   private
     FId: string;
     FObject: string;
-    FOwned_by: string;
+    FOwner: string;
     FReady: Boolean;
   public
     property Id: string read FId write FId;
     property &Object: string read FObject write FObject;
-    property OwnedBy: string read FOwned_by write FOwned_by;
+    property Owner: string read FOwner write FOwner;
     property Ready: Boolean read FReady write FReady;
   end;
 
@@ -63,8 +63,7 @@ var
   Item: TEngine;
 begin
   for Item in FData do
-    if Assigned(Item) then
-      Item.Free;
+    Item.Free;
   inherited;
 end;
 

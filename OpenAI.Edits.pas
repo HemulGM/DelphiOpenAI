@@ -100,8 +100,7 @@ begin
   if Assigned(FUsage) then
     FUsage.Free;
   for Item in FChoices do
-    if Assigned(Item) then
-      Item.Free;
+    Item.Free;
   inherited;
 end;
 

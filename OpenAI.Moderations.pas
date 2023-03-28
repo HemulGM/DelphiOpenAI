@@ -93,6 +93,7 @@ type
     property Id: string read FId write FId;
     property Model: string read FModel write FModel;
     property Results: TArray<TResult> read FResults write FResults;
+    destructor Destroy; override;
   end;
 
   TModerationsRoute = class(TOpenAIAPIRoute)
@@ -143,6 +144,17 @@ begin
     FCategories.Free;
   if Assigned(FCategory_scores) then
     FCategory_scores.Free;
+  inherited;
+end;
+
+{ TModerations }
+
+destructor TModerations.Destroy;
+var
+  Item: TResult;
+begin
+  for Item in FResults do
+    Item.Free;
   inherited;
 end;
 

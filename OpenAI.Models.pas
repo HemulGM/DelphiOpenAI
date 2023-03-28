@@ -95,8 +95,7 @@ var
   Item: TModel;
 begin
   for Item in FData do
-    if Assigned(Item) then
-      Item.Free;
+    Item.Free;
   inherited;
 end;
 
@@ -107,8 +106,7 @@ var
   Item: TModelPermission;
 begin
   for Item in FPermission do
-    if Assigned(Item) then
-      Item.Free;
+    Item.Free;
   inherited;
 end;
 
