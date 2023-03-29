@@ -180,7 +180,7 @@ Given a prompt and/or an input image, the model will generate a new image.
 
 ```Pascal
 var Images := OpenAI.Image.Create(
-  procedure(Params: TImageGenParams)
+  procedure(Params: TImageCreateParams)
   begin
     Params.Prompt(MemoPrompt.Text);
     Params.ResponseFormat('url');
