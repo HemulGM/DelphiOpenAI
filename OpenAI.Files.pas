@@ -40,7 +40,7 @@ type
     /// Variants: ['fine-tune', 'answers', 'search', 'classifications']
     /// </summary>
     function Purpose(const Value: TFileCreatePurpose): TFileCreateParams; overload;
-    constructor Create(AOwnsOutputStream: Boolean = True);  reintroduce;
+    constructor Create;  reintroduce;
   end;
 
   TFile = class
@@ -156,9 +156,9 @@ begin
   Result := Self;
 end;
 
-constructor TFileCreateParams.Create(AOwnsOutputStream: Boolean);
+constructor TFileCreateParams.Create;
 begin
-  inherited;
+  inherited Create(True);
 end;
 
 function TFileCreateParams.&File(const Stream: TStream; const FileName: string): TFileCreateParams;
