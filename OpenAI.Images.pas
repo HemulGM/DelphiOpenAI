@@ -2,9 +2,7 @@
 
 interface
 
-uses
-  System.Classes, System.SysUtils, System.Net.Mime, OpenAI.API.Params,
-  OpenAI.API;
+uses System.Classes, System.SysUtils, System.Net.Mime, OpenAI.API.Params, OpenAI.API;
 
 {$SCOPEDENUMS ON}
 
@@ -23,9 +21,13 @@ type
 
   TImageCreateParams = class(TJSONParam)
     /// <summary>
-    /// A text description of the desired image(s). The maximum length is 1000 characters.
+    /// A text description of the desired image(s) for the openaid-environment. The maximum length is 1000 characters.
     /// </summary>
     function Prompt(const Value: string): TImageCreateParams; overload;
+    /// <summary>
+    /// A text description of the desired image(s) for the azure-environment. The maximum length is 1000 characters.
+    /// </summary>
+    function Caption(const Value: string): TImageCreateParams; overload;
     /// <summary>
     /// The size of the generated images. Must be one of 256x256, 512x512, or 1024x1024.
     /// </summary>
@@ -41,7 +43,8 @@ type
     /// <summary>
     /// The format in which the generated images are returned. Must be one of url or b64_json
     /// </summary>
-    function ResponseFormat(const Value: TImageResponseFormat = TImageResponseFormat.Url): TImageCreateParams; overload;
+    function ResponseFormat(const Value: TImageResponseFormat = TImageResponseFormat.Url)
+      : TImageCreateParams; overload;
     /// <summary>
     /// The number of images to generate. Must be between 1 and 10.
     /// </summary>
@@ -143,12 +146,48 @@ type
     destructor Destroy; override;
   end;
 
+  TAzureImageRequest = class
+  private
+    FID: string;
+    FStatus: string;
+  public
+    property ID: string read FID write FID;
+    property Status: string read FStatus write FStatus;
+  end;
+
+  TAzureImageData = class
+  private
+    FCaption: string;
+    FContentURL: string;
+    FContentURLExpiresAt: string;
+    FCreatedDateTime: string;
+  public
+    property Caption: string read FCaption write FCaption;
+    property ContentURL: string read FContentURL write FContentURL;
+    property ContentURLExpiresAt: string read FContentURLExpiresAt write FContentURLExpiresAt;
+    property CreatedDateTime: string read FCreatedDateTime write FCreatedDateTime;
+  end;
+
+  TAzureImageResponse = class
+  private
+    FID: string;
+    FStatus: string;
+    FResult: TAzureImageData;
+  public
+    constructor Create;
+    destructor Destroy; override;
+    property Result: TAzureImageData read FResult write FResult;
+    property ID: string read FID write FID;
+    property Status: string read FStatus write FStatus;
+  end;
+
   TImagesRoute = class(TOpenAIAPIRoute)
   public
     /// <summary>
     /// Creates an image given a prompt.
     /// </summary>
     function Create(ParamProc: TProc<TImageCreateParams>): TImageGenerations;
+    function CreateAzure(ParamProc: TProc<TImageCreateParams>): TAzureImageResponse;
     /// <summary>
     /// Creates an edited or extended image given an original image and a prompt.
     /// </summary>
@@ -166,6 +205,28 @@ implementation
 function TImagesRoute.Create(ParamProc: TProc<TImageCreateParams>): TImageGenerations;
 begin
   Result := API.Post<TImageGenerations, TImageCreateParams>('images/generations', ParamProc);
+end;
+
+function TImagesRoute.CreateAzure(ParamProc: TProc<TImageCreateParams>): TAzureImageResponse;
+var
+  ARequest: TAzureImageRequest;
+begin
+  // First place the task with POST
+  ARequest := API.Post<TAzureImageRequest, TImageCreateParams>('text-to-image', ParamProc);
+
+  // Repeat GET requesting the operations-endpoint until we have a "succeeded" response
+  while true do
+  begin
+    Result := API.Get<TAzureImageResponse>('text-to-image/operations/' + ARequest.ID);
+    if Result.FStatus = 'Succeeded' then
+      exit;
+    if Result.FStatus = 'Failed' then
+      // We could parse the "error" object with fields "code" and "message" to handle errors if required
+      exit;
+    Sleep(1000);
+
+    // Maybe add some kind of timeout?
+  end;
 end;
 
 function TImagesRoute.Edit(ParamProc: TProc<TImageEditParams>): TImageGenerations;
@@ -191,6 +252,11 @@ begin
 end;
 
 { TImageCreateParams }
+
+function TImageCreateParams.Caption(const Value: string): TImageCreateParams;
+begin
+  Result := TImageCreateParams(Add('caption', Value));
+end;
 
 function TImageCreateParams.N(const Value: Integer): TImageCreateParams;
 begin
@@ -237,7 +303,7 @@ end;
 
 constructor TImageEditParams.Create;
 begin
-  inherited Create(True);
+  inherited Create(true);
 end;
 
 function TImageEditParams.Image(const Stream: TStream; const FileName: string): TImageEditParams;
@@ -298,10 +364,11 @@ end;
 
 constructor TImageVariationParams.Create;
 begin
-  inherited Create(True);
+  inherited Create(true);
 end;
 
-function TImageVariationParams.Image(const Stream: TStream; const FileName: string): TImageVariationParams;
+function TImageVariationParams.Image(const Stream: TStream; const FileName: string)
+  : TImageVariationParams;
 begin
   AddStream('image', Stream, FileName);
   Result := Self;
@@ -357,5 +424,17 @@ begin
   end;
 end;
 
-end.
+{ TAzureImageResponse }
 
+constructor TAzureImageResponse.Create;
+begin
+  FResult := TAzureImageData.Create;
+end;
+
+destructor TAzureImageResponse.Destroy;
+begin
+  FResult.Free;
+  inherited;
+end;
+
+end.
