@@ -63,6 +63,11 @@ type
     FToken: string;
     FBaseUrl: string;
     FOrganization: string;
+
+    FIsAzure: Boolean;
+    FAzureApiVersion: string;
+    FAzureDeployment: string;
+
     procedure SetToken(const Value: string);
     procedure SetBaseUrl(const Value: string);
     procedure SetOrganization(const Value: string);
@@ -70,6 +75,7 @@ type
     procedure ParseError(const Code: Int64; const ResponseText: string);
   protected
     function GetHeaders: TNetHeaders;
+    function GetRequestURL(const Path: string): string;
     function Get(const Path: string; Response: TStringStream): Integer; overload;
     function Delete(const Path: string; Response: TStringStream): Integer; overload;
     function Post(const Path: string; Response: TStringStream): Integer; overload;
@@ -93,6 +99,10 @@ type
     property BaseUrl: string read FBaseUrl write SetBaseUrl;
     property Organization: string read FOrganization write SetOrganization;
     property Client: THTTPClient read FHTTPClient;
+
+    property IsAzure: Boolean read FIsAzure write FIsAzure;
+    property AzureApiVersion: string read FAzureApiVersion write FAzureApiVersion;
+    property AzureDeployment: string read FAzureDeployment write FAzureDeployment;
   end;
   {$WARNINGS ON}
 
@@ -117,6 +127,9 @@ begin
   // Defaults
   FToken := '';
   FBaseUrl := URL_BASE;
+  FIsAzure := false;
+  FAzureApiVersion := '';
+  FAzureDeployment := '';
 end;
 
 constructor TOpenAIAPI.Create(const AToken: string);
@@ -143,7 +156,7 @@ begin
   try
     Stream.WriteString(Body.ToJSON);
     Stream.Position := 0;
-    Result := FHTTPClient.Post(FBaseUrl + '/' + Path, Stream, Response, Headers).StatusCode;
+    Result := FHTTPClient.Post(GetRequestURL(Path), Stream, Response, Headers).StatusCode;
   finally
     FHTTPClient.OnReceiveData := nil;
     Stream.Free;
@@ -156,7 +169,7 @@ var
 begin
   CheckAPI;
   Headers := GetHeaders;
-  Result := FHTTPClient.Get(FBaseUrl + '/' + Path, Response, Headers).StatusCode;
+  Result := FHTTPClient.Get(GetRequestURL(Path), Response, Headers).StatusCode;
 end;
 
 function TOpenAIAPI.Post(const Path: string; Body: TMultipartFormData; Response: TStringStream): Integer;
@@ -165,7 +178,7 @@ var
 begin
   CheckAPI;
   Headers := GetHeaders;
-  Result := FHTTPClient.Post(FBaseUrl + '/' + Path, Body, Response, Headers).StatusCode;
+  Result := FHTTPClient.Post(GetRequestURL(Path), Body, Response, Headers).StatusCode;
 end;
 
 function TOpenAIAPI.Post(const Path: string; Response: TStringStream): Integer;
@@ -177,7 +190,7 @@ begin
   Headers := GetHeaders;
   Stream := nil;
   try
-    Result := FHTTPClient.Post(FBaseUrl + '/' + Path, Stream, Response, Headers).StatusCode;
+    Result := FHTTPClient.Post(GetRequestURL(Path), Stream, Response, Headers).StatusCode;
   finally
     //Stream.Free;
   end;
@@ -243,7 +256,7 @@ var
 begin
   CheckAPI;
   Headers := GetHeaders;
-  Result := FHTTPClient.Delete(FBaseUrl + '/' + Path, Response, Headers).StatusCode;
+  Result := FHTTPClient.Delete(GetRequestURL(Path), Response, Headers).StatusCode;
 end;
 
 function TOpenAIAPI.Delete<TResult>(const Path: string): TResult;
@@ -301,7 +314,7 @@ var
 begin
   CheckAPI;
   Headers := GetHeaders;
-  Code := FHTTPClient.Get(FBaseUrl + '/' + Path, Response, Headers).StatusCode;
+  Code := FHTTPClient.Get(GetRequestURL(Path), Response, Headers).StatusCode;
   case Code of
     200..299:
       ; {success}
@@ -319,9 +332,27 @@ end;
 
 function TOpenAIAPI.GetHeaders: TNetHeaders;
 begin
+  // Additional headers are not required when using azure
+  if IsAzure then
+    exit;
+
   Result := [TNetHeader.Create('Authorization', 'Bearer ' + FToken)];
   if not FOrganization.IsEmpty then
     Result := Result + [TNetHeader.Create('OpenAI-Organization', FOrganization)];
+end;
+
+function TOpenAIAPI.GetRequestURL(const Path: string): string;
+begin
+  Result := FBaseURL + '/';
+  if IsAzure then
+    Result := Result + AzureDeployment + '/';
+  Result := Result + Path;
+
+  // API-Key and API-Version have to be included in the request not header when using azure
+  if IsAzure then
+  begin
+    Result := Result + Format('?api-version=%s&api-key=%s', [AzureApiVersion, Token]);
+  end;
 end;
 
 procedure TOpenAIAPI.CheckAPI;

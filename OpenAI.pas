@@ -2,11 +2,9 @@
 
 interface
 
-uses
-  System.SysUtils, System.Classes, OpenAI.Completions, OpenAI.Edits,
-  OpenAI.Images, OpenAI.Models, OpenAI.Embeddings, OpenAI.API,
-  OpenAI.Moderations, OpenAI.Engines, OpenAI.Files, OpenAI.FineTunes,
-  OpenAI.Chat, OpenAI.Audio;
+uses System.SysUtils, System.Classes, OpenAI.Completions, OpenAI.Edits, OpenAI.Images,
+  OpenAI.Models, OpenAI.Embeddings, OpenAI.API, OpenAI.Moderations, OpenAI.Engines, OpenAI.Files,
+  OpenAI.FineTunes, OpenAI.Chat, OpenAI.Audio;
 
 type
   IOpenAI = interface
@@ -134,6 +132,12 @@ type
     function GetFineTunesRoute: TFineTunesRoute;
     function GetChatRoute: TChatRoute;
     function GetAudioRoute: TAudioRoute;
+    function GetAzureAPIVersion: string;
+    function GetAzureDeployment: string;
+    function GetIsAzure: Boolean;
+    procedure SetAzureAPIVersion(const Value: string);
+    procedure SetAzureDeployment(const Value: string);
+    procedure SetIsAzure(const Value: Boolean);
   public
     constructor Create; overload;
     constructor Create(const AToken: string); overload;
@@ -161,6 +165,10 @@ type
     // subscription quota.
     /// </summary>
     property Organization: string read GetOrganization write SetOrganization;
+
+    property IsAzure: Boolean read GetIsAzure write SetIsAzure;
+    property AzureApiVersion: string read GetAzureAPIVersion write SetAzureAPIVersion;
+    property AzureDeployment: string read GetAzureDeployment write SetAzureDeployment;
   public
     /// <summary>
     /// Given a prompt, the model will return one or more predicted completions,
@@ -368,9 +376,19 @@ begin
   Result := FAudioRoute;
 end;
 
+function TOpenAI.GetAzureAPIVersion: string;
+begin
+  Result := FAPI.AzureApiVersion;
+end;
+
+function TOpenAI.GetAzureDeployment: string;
+begin
+  Result := FAPI.AzureDeployment;
+end;
+
 function TOpenAI.GetBaseUrl: string;
 begin
-  Result := FAPI.BaseUrl;
+  Result := FAPI.BaseURL;
 end;
 
 function TOpenAI.GetChatRoute: TChatRoute;
@@ -429,6 +447,11 @@ begin
   Result := FImagesRoute;
 end;
 
+function TOpenAI.GetIsAzure: Boolean;
+begin
+  Result := FAPI.IsAzure;
+end;
+
 function TOpenAI.GetModelsRoute: TModelsRoute;
 begin
   if not Assigned(FModelsRoute) then
@@ -453,9 +476,24 @@ begin
   Result := FAPI.Token;
 end;
 
+procedure TOpenAI.SetAzureAPIVersion(const Value: string);
+begin
+  FAPI.AzureApiVersion := Value;
+end;
+
+procedure TOpenAI.SetAzureDeployment(const Value: string);
+begin
+  FAPI.AzureDeployment := Value;
+end;
+
 procedure TOpenAI.SetBaseUrl(const Value: string);
 begin
-  FAPI.BaseUrl := Value;
+  FAPI.BaseURL := Value;
+end;
+
+procedure TOpenAI.SetIsAzure(const Value: Boolean);
+begin
+  FAPI.IsAzure := Value;
 end;
 
 procedure TOpenAI.SetOrganization(const Value: string);
@@ -573,4 +611,3 @@ begin
 end;
 
 end.
-
