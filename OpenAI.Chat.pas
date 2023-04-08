@@ -19,9 +19,14 @@ type
   private
     FRole: TMessageRole;
     FContent: string;
+    FTag: string;
   public
     property Role: TMessageRole read FRole write FRole;
     property Content: string read FContent write FContent;
+    /// <summary>
+    /// Tag - custom field for convenience. Not used in requests
+    /// </summary>
+    property Tag: string read FTag write FTag;
     class function Create(Role: TMessageRole; Content: string): TChatMessageBuild; static;
     class function User(Content: string): TChatMessageBuild; static;
     class function System(Content: string): TChatMessageBuild; static;
