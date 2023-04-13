@@ -25,10 +25,6 @@ type
     /// </summary>
     function Prompt(const Value: string): TImageCreateParams; overload;
     /// <summary>
-    /// A text description of the desired image(s) for the azure-environment. The maximum length is 1000 characters.
-    /// </summary>
-    function Caption(const Value: string): TImageCreateParams; overload;
-    /// <summary>
     /// The size of the generated images. Must be one of 256x256, 512x512, or 1024x1024.
     /// </summary>
     function Size(const Value: string): TImageCreateParams; overload;
@@ -53,6 +49,13 @@ type
     /// A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse.
     /// </summary>
     function User(const Value: string): TImageCreateParams;
+  end;
+
+  TImageAzureCreateParams = class(TImageCreateParams)
+   /// <summary>
+    /// A text description of the desired image(s) for the azure-environment. The maximum length is 1000 characters.
+    /// </summary>
+    function Caption(const Value: string): TImageCreateParams; overload;
   end;
 
   TImageEditParams = class(TMultipartFormData)
@@ -187,7 +190,6 @@ type
     /// Creates an image given a prompt.
     /// </summary>
     function Create(ParamProc: TProc<TImageCreateParams>): TImageGenerations;
-    function CreateAzure(ParamProc: TProc<TImageCreateParams>): TAzureImageResponse;
     /// <summary>
     /// Creates an edited or extended image given an original image and a prompt.
     /// </summary>
@@ -198,6 +200,14 @@ type
     function Variation(ParamProc: TProc<TImageVariationParams>): TImageGenerations;
   end;
 
+  TImagesAzureRoute = class(TOpenAIAPIRoute)
+  public
+    /// <summary>
+    /// Creates an image given a prompt.
+    /// </summary>
+    function Create(ParamProc: TProc<TImageAzureCreateParams>): TAzureImageResponse;
+  end;
+
 implementation
 
 { TImagesRoute }
@@ -205,28 +215,6 @@ implementation
 function TImagesRoute.Create(ParamProc: TProc<TImageCreateParams>): TImageGenerations;
 begin
   Result := API.Post<TImageGenerations, TImageCreateParams>('images/generations', ParamProc);
-end;
-
-function TImagesRoute.CreateAzure(ParamProc: TProc<TImageCreateParams>): TAzureImageResponse;
-var
-  ARequest: TAzureImageRequest;
-begin
-  // First place the task with POST
-  ARequest := API.Post<TAzureImageRequest, TImageCreateParams>('text-to-image', ParamProc);
-
-  // Repeat GET requesting the operations-endpoint until we have a "succeeded" response
-  while true do
-  begin
-    Result := API.Get<TAzureImageResponse>('text-to-image/operations/' + ARequest.ID);
-    if Result.FStatus = 'Succeeded' then
-      exit;
-    if Result.FStatus = 'Failed' then
-      // We could parse the "error" object with fields "code" and "message" to handle errors if required
-      exit;
-    Sleep(1000);
-
-    // Maybe add some kind of timeout?
-  end;
 end;
 
 function TImagesRoute.Edit(ParamProc: TProc<TImageEditParams>): TImageGenerations;
@@ -252,11 +240,6 @@ begin
 end;
 
 { TImageCreateParams }
-
-function TImageCreateParams.Caption(const Value: string): TImageCreateParams;
-begin
-  Result := TImageCreateParams(Add('caption', Value));
-end;
 
 function TImageCreateParams.N(const Value: Integer): TImageCreateParams;
 begin
@@ -435,6 +418,37 @@ destructor TAzureImageResponse.Destroy;
 begin
   FResult.Free;
   inherited;
+end;
+
+{ TImagesAzureRoute }
+
+function TImagesAzureRoute.Create(ParamProc: TProc<TImageAzureCreateParams>): TAzureImageResponse;
+var
+  ARequest: TAzureImageRequest;
+begin
+  // First place the task with POST
+  ARequest := API.Post<TAzureImageRequest, TImageAzureCreateParams>('text-to-image', ParamProc);
+
+  // Repeat GET requesting the operations-endpoint until we have a "succeeded" response
+  while true do
+  begin
+    Result := API.Get<TAzureImageResponse>('text-to-image/operations/' + ARequest.ID);
+    if Result.FStatus = 'Succeeded' then
+      exit;
+    if Result.FStatus = 'Failed' then
+      // We could parse the "error" object with fields "code" and "message" to handle errors if required
+      exit;
+    Sleep(1000);
+
+    // Maybe add some kind of timeout?
+  end;
+end;
+
+{ TImageAzureCreateParams }
+
+function TImageAzureCreateParams.Caption(const Value: string): TImageCreateParams;
+begin
+  Result := TImageCreateParams(Add('caption', Value));
 end;
 
 end.

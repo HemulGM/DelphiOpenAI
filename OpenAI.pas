@@ -106,6 +106,7 @@ type
     FCompletionsRoute: TCompletionsRoute;
     FEditsRoute: TEditsRoute;
     FImagesRoute: TImagesRoute;
+    FImagesAzureRoute: TImagesAzureRoute;
     FModelsRoute: TModelsRoute;
     FEmbeddingsRoute: TEmbeddingsRoute;
     FModerationsRoute: TModerationsRoute;
@@ -138,6 +139,7 @@ type
     procedure SetAzureAPIVersion(const Value: string);
     procedure SetAzureDeployment(const Value: string);
     procedure SetIsAzure(const Value: Boolean);
+    function GetImagesAzureRoute: TImagesAzureRoute;
   public
     constructor Create; overload;
     constructor Create(const AToken: string); overload;
@@ -183,6 +185,10 @@ type
     /// Given a prompt and/or an input image, the model will generate a new image.
     /// </summary>
     property Image: TImagesRoute read GetImagesRoute;
+    /// <summary>
+    /// Given a prompt and/or an input image, the model will generate a new image.
+    /// </summary>
+    property ImageAzure: TImagesAzureRoute read GetImagesAzureRoute;
     /// <summary>
     /// List and describe the various models available in the API.
     /// You can refer to the Models documentation to understand what models are available and the differences between them.
@@ -344,6 +350,8 @@ begin
     FEditsRoute.Free;
   if Assigned(FImagesRoute) then
     FImagesRoute.Free;
+  if Assigned(FImagesAzureRoute) then
+    FImagesAzureRoute.Free;
   if Assigned(FModelsRoute) then
     FModelsRoute.Free;
   if Assigned(FEmbeddingsRoute) then
@@ -438,6 +446,13 @@ begin
   if not Assigned(FFineTunesRoute) then
     FFineTunesRoute := TFineTunesRoute.CreateRoute(API);
   Result := FFineTunesRoute;
+end;
+
+function TOpenAI.GetImagesAzureRoute: TImagesAzureRoute;
+begin
+  if not Assigned(FImagesAzureRoute) then
+    FImagesAzureRoute := TImagesAzureRoute.CreateRoute(API);
+  Result := FImagesAzureRoute;
 end;
 
 function TOpenAI.GetImagesRoute: TImagesRoute;
