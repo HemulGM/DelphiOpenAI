@@ -27,7 +27,7 @@ type
   protected
     procedure Notify(const Item: TChatMessageBuild; Action: TCollectionNotification); override;
   public
-    procedure New(Role: TMessageRole; Content: string);
+    procedure New(Role: TMessageRole; Content, Tag: string);
     function TextLength: Int64;
     property AutoTrim: Boolean read FAutoTrim write SetAutoTrim;
     property MaxTokensForQuery: Int64 read FMaxTokensForQuery write SetMaxTokensForQuery;
@@ -51,9 +51,13 @@ begin
   FMaxTokensOfModel := DEFULT_MODEL_TOKENS_LIMIT;
 end;
 
-procedure TChatHistory.New(Role: TMessageRole; Content: string);
+procedure TChatHistory.New(Role: TMessageRole; Content, Tag: string);
+var
+  Item: TChatMessageBuild;
 begin
-  Add(TChatMessageBuild.Create(Role, Content));
+  Item := TChatMessageBuild.Create(Role, Content);
+  Item.Tag := Tag;
+  Add(Item);
 end;
 
 procedure TChatHistory.Notify(const Item: TChatMessageBuild; Action: TCollectionNotification);
