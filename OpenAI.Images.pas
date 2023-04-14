@@ -237,9 +237,6 @@ type
 
 implementation
 
-uses
-  Winapi.Windows;
-
 { TImagesRoute }
 
 function TImagesRoute.Create(ParamProc: TProc<TImageCreateParams>): TImageGenerations;
@@ -465,7 +462,7 @@ begin
   if (Result.ID = '') or (Result.Status = 'Failed') then
     exit;
 
-  StartTime := GetTickCount64;
+  StartTime := TThread.GetTickCount64;
 
   // Repeat GET requesting the operations-endpoint until we have a "succeeded" response
   while true do
@@ -479,7 +476,7 @@ begin
 
     // Check timeout - current documentation is not precise what to expect when the state is "inProgress"
     // but the result at this point should contain all relevant information
-    ElapsedTime := GetTickCount64 - StartTime;
+    ElapsedTime := TThread.GetTickCount64 - StartTime;
     if ElapsedTime > Timeout then
       exit;
 
