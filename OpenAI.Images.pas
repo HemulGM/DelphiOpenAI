@@ -2,7 +2,9 @@
 
 interface
 
-uses System.Classes, System.SysUtils, System.Net.Mime, OpenAI.API.Params, OpenAI.API;
+uses
+  System.Classes, System.SysUtils, System.Net.Mime, OpenAI.API.Params,
+  OpenAI.API;
 
 {$SCOPEDENUMS ON}
 
@@ -39,8 +41,7 @@ type
     /// <summary>
     /// The format in which the generated images are returned. Must be one of url or b64_json
     /// </summary>
-    function ResponseFormat(const Value: TImageResponseFormat = TImageResponseFormat.Url)
-      : TImageCreateParams; overload;
+    function ResponseFormat(const Value: TImageResponseFormat = TImageResponseFormat.Url): TImageCreateParams; overload;
     /// <summary>
     /// The number of images to generate. Must be between 1 and 10.
     /// </summary>
@@ -63,8 +64,7 @@ type
     /// <summary>
     /// The size of the generated images. Must be one of 256x256, 512x512, or 1024x1024.
     /// </summary>
-    function Resolution(const Value: TImageSize = TImageSize.x256)
-      : TImageAzureCreateParams; overload;
+    function Resolution(const Value: TImageSize = TImageSize.x256): TImageAzureCreateParams; overload;
     /// <summary>
     /// The format in which the generated images are returned. Must be one of url or b64_json
     /// </summary>
@@ -72,8 +72,7 @@ type
     /// <summary>
     /// The format in which the generated images are returned. Must be one of url or b64_json
     /// </summary>
-    function ResponseFormat(const Value: TImageResponseFormat = TImageResponseFormat.Url)
-      : TImageAzureCreateParams; overload;
+    function ResponseFormat(const Value: TImageResponseFormat = TImageResponseFormat.Url): TImageAzureCreateParams; overload;
     /// <summary>
     /// The number of images to generate. Must be between 1 and 10.
     /// </summary>
@@ -116,11 +115,19 @@ type
     /// <summary>
     /// The size of the generated images. Must be one of 256x256, 512x512, or 1024x1024.
     /// </summary>
-    function Size(const Value: string = '1024x1024'): TImageEditParams; overload;
+    function Size(const Value: string): TImageEditParams; overload;
+    /// <summary>
+    /// The size of the generated images. Must be one of 256x256, 512x512, or 1024x1024.
+    /// </summary>
+    function Size(const Value: TImageSize = TImageSize.x256): TImageEditParams; overload;
+    /// <summary>
+    /// The format in which the generated images are returned. Must be one of url or b64_json
+    /// </summary>
+    function ResponseFormat(const Value: string): TImageEditParams; overload;
     /// <summary>
     /// The format in which the generated images are returned. Must be one of url or b64_json.
     /// </summary>
-    function ResponseFormat(const Value: string = 'url'): TImageEditParams;
+    function ResponseFormat(const Value: TImageResponseFormat = TImageResponseFormat.Url): TImageEditParams; overload;
     /// <summary>
     /// A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse.
     /// </summary>
@@ -144,11 +151,19 @@ type
     /// <summary>
     /// The size of the generated images. Must be one of 256x256, 512x512, or 1024x1024.
     /// </summary>
-    function Size(const Value: string = '1024x1024'): TImageVariationParams; overload;
+    function Size(const Value: string): TImageVariationParams; overload;
+    /// <summary>
+    /// The size of the generated images. Must be one of 256x256, 512x512, or 1024x1024.
+    /// </summary>
+    function Size(const Value: TImageSize = TImageSize.x256): TImageVariationParams; overload;
+    /// <summary>
+    /// The format in which the generated images are returned. Must be one of url or b64_json
+    /// </summary>
+    function ResponseFormat(const Value: string): TImageVariationParams; overload;
     /// <summary>
     /// The format in which the generated images are returned. Must be one of url or b64_json.
     /// </summary>
-    function ResponseFormat(const Value: string = 'url'): TImageVariationParams;
+    function ResponseFormat(const Value: TImageResponseFormat = TImageResponseFormat.Url): TImageVariationParams; overload;
     /// <summary>
     /// A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse.
     /// </summary>
@@ -227,13 +242,19 @@ type
     function Variation(ParamProc: TProc<TImageVariationParams>): TImageGenerations;
   end;
 
+  TCancelCallback = reference to procedure(var Cancel: Boolean);
+
   TImagesAzureRoute = class(TOpenAIAPIRoute)
   public
     /// <summary>
     /// Creates an image given a prompt.
     /// </summary>
-    function Create(ParamProc: TProc<TImageAzureCreateParams>): TAzureImageResponse;
+    function Create(ParamProc: TProc<TImageAzureCreateParams>; CancelCallback: TCancelCallback = nil): TAzureImageResponse;
   end;
+
+const
+  AzureFailed = 'Failed';
+  AzureSuccessed = 'Succeeded';
 
 implementation
 
@@ -261,8 +282,7 @@ var
   Item: TImageData;
 begin
   for Item in FData do
-    if Assigned(Item) then
-      Item.Free;
+    Item.Free;
   inherited;
 end;
 
@@ -352,9 +372,21 @@ begin
   Result := Self;
 end;
 
+function TImageEditParams.ResponseFormat(const Value: TImageResponseFormat): TImageEditParams;
+begin
+  AddField('response_format', Value.ToString);
+  Result := Self;
+end;
+
 function TImageEditParams.Size(const Value: string): TImageEditParams;
 begin
   AddField('size', Value);
+  Result := Self;
+end;
+
+function TImageEditParams.Size(const Value: TImageSize): TImageEditParams;
+begin
+  AddField('size', Value.ToString);
   Result := Self;
 end;
 
@@ -377,8 +409,7 @@ begin
   inherited Create(true);
 end;
 
-function TImageVariationParams.Image(const Stream: TStream; const FileName: string)
-  : TImageVariationParams;
+function TImageVariationParams.Image(const Stream: TStream; const FileName: string): TImageVariationParams;
 begin
   AddStream('image', Stream, FileName);
   Result := Self;
@@ -396,9 +427,21 @@ begin
   Result := Self;
 end;
 
+function TImageVariationParams.ResponseFormat(const Value: TImageResponseFormat): TImageVariationParams;
+begin
+  AddField('response_format', Value.ToString);
+  Result := Self;
+end;
+
 function TImageVariationParams.Size(const Value: string): TImageVariationParams;
 begin
   AddField('size', Value);
+  Result := Self;
+end;
+
+function TImageVariationParams.Size(const Value: TImageSize = TImageSize.x256): TImageVariationParams;
+begin
+  AddField('size', Value.ToString);
   Result := Self;
 end;
 
@@ -447,40 +490,41 @@ end;
 
 { TImagesAzureRoute }
 
-function TImagesAzureRoute.Create(ParamProc: TProc<TImageAzureCreateParams>): TAzureImageResponse;
-var
-  StartTime, ElapsedTime: UInt64;
+function TImagesAzureRoute.Create(ParamProc: TProc<TImageAzureCreateParams>; CancelCallback: TCancelCallback): TAzureImageResponse;
 const
   Timeout: Integer = 20000; // 20 second timeout
   PollInterval: Integer = 1000; // poll for image once per second
+var
+  StartTime: UInt64;
+  Cancel: Boolean;
 begin
   // First place the task with POST
   Result := API.Post<TAzureImageResponse, TImageAzureCreateParams>('text-to-image', ParamProc);
 
   // Check if we got a valid id - current azure documentation is not that precise here if we always get "NotStarted".
   // Otherwise we get "failed" and in the "error"-property we can find "code" and "message" of the error
-  if (Result.ID = '') or (Result.Status = 'Failed') then
-    exit;
+  if (Result.ID = '') or (Result.Status = AzureFailed) then
+    Exit;
 
+  // Timeout timestamp
   StartTime := TThread.GetTickCount64;
+  Cancel := False;
 
   // Repeat GET requesting the operations-endpoint until we have a "succeeded" response
-  while true do
+  while not Cancel do
   begin
+    Result.Free;
     Result := API.Get<TAzureImageResponse>('text-to-image/operations/' + Result.ID);
-    if Result.FStatus = 'Succeeded' then
-      exit;
-    if Result.FStatus = 'Failed' then
-      // The TAzureImageResponse holds an error object in this case that can be analyzed by the developer
-      exit;
-
+    // The TAzureImageResponse holds an error object in this case that can be analyzed by the developer
+    if (Result.Status = AzureSuccessed) or (Result.Status = AzureFailed) then
+      Exit;
     // Check timeout - current documentation is not precise what to expect when the state is "inProgress"
     // but the result at this point should contain all relevant information
-    ElapsedTime := TThread.GetTickCount64 - StartTime;
-    if ElapsedTime > Timeout then
-      exit;
-
+    if TThread.GetTickCount64 - StartTime > Timeout then
+      Exit;
     Sleep(PollInterval);
+    if Assigned(CancelCallback) then
+      CancelCallback(Cancel);
   end;
 end;
 
@@ -501,8 +545,7 @@ begin
   Result := TImageAzureCreateParams(Add('response_format', Value));
 end;
 
-function TImageAzureCreateParams.ResponseFormat(const Value: TImageResponseFormat)
-  : TImageAzureCreateParams;
+function TImageAzureCreateParams.ResponseFormat(const Value: TImageResponseFormat): TImageAzureCreateParams;
 begin
   Result := ResponseFormat(Value.ToString);
 end;
@@ -523,3 +566,4 @@ begin
 end;
 
 end.
+
