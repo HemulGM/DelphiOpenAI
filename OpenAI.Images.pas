@@ -51,11 +51,37 @@ type
     function User(const Value: string): TImageCreateParams;
   end;
 
-  TImageAzureCreateParams = class(TImageCreateParams)
-   /// <summary>
+  TImageAzureCreateParams = class(TJSONParam)
+    /// <summary>
     /// A text description of the desired image(s) for the azure-environment. The maximum length is 1000 characters.
     /// </summary>
-    function Caption(const Value: string): TImageCreateParams; overload;
+    function Caption(const Value: string): TImageAzureCreateParams; overload;
+    /// <summary>
+    /// The size of the generated images. Must be one of 256x256, 512x512, or 1024x1024.
+    /// </summary>
+    function Resolution(const Value: string): TImageAzureCreateParams; overload;
+    /// <summary>
+    /// The size of the generated images. Must be one of 256x256, 512x512, or 1024x1024.
+    /// </summary>
+    function Resolution(const Value: TImageSize = TImageSize.x256)
+      : TImageAzureCreateParams; overload;
+    /// <summary>
+    /// The format in which the generated images are returned. Must be one of url or b64_json
+    /// </summary>
+    function ResponseFormat(const Value: string): TImageAzureCreateParams; overload;
+    /// <summary>
+    /// The format in which the generated images are returned. Must be one of url or b64_json
+    /// </summary>
+    function ResponseFormat(const Value: TImageResponseFormat = TImageResponseFormat.Url)
+      : TImageAzureCreateParams; overload;
+    /// <summary>
+    /// The number of images to generate. Must be between 1 and 10.
+    /// </summary>
+    function N(const Value: Integer = 1): TImageAzureCreateParams;
+    /// <summary>
+    /// A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse.
+    /// </summary>
+    function User(const Value: string): TImageAzureCreateParams;
   end;
 
   TImageEditParams = class(TMultipartFormData)
@@ -149,13 +175,13 @@ type
     destructor Destroy; override;
   end;
 
-  TAzureImageRequest = class
+  TAzureError = class
   private
-    FID: string;
-    FStatus: string;
+    FCode: string;
+    FMessage: string;
   public
-    property ID: string read FID write FID;
-    property Status: string read FStatus write FStatus;
+    property Code: string read FCode write FCode;
+    property Message: string read FMessage write FMessage;
   end;
 
   TAzureImageData = class
@@ -176,10 +202,11 @@ type
     FID: string;
     FStatus: string;
     FResult: TAzureImageData;
+    FError: TAzureError;
   public
-    constructor Create;
     destructor Destroy; override;
     property Result: TAzureImageData read FResult write FResult;
+    property Error: TAzureError read FError write FError;
     property ID: string read FID write FID;
     property Status: string read FStatus write FStatus;
   end;
@@ -209,6 +236,9 @@ type
   end;
 
 implementation
+
+uses
+  Winapi.Windows;
 
 { TImagesRoute }
 
@@ -409,14 +439,12 @@ end;
 
 { TAzureImageResponse }
 
-constructor TAzureImageResponse.Create;
-begin
-  FResult := TAzureImageData.Create;
-end;
-
 destructor TAzureImageResponse.Destroy;
 begin
-  FResult.Free;
+  if Assigned(FResult) then
+    FResult.Free;
+  if Assigned(FError) then
+    FError.Free;
   inherited;
 end;
 
@@ -424,31 +452,77 @@ end;
 
 function TImagesAzureRoute.Create(ParamProc: TProc<TImageAzureCreateParams>): TAzureImageResponse;
 var
-  ARequest: TAzureImageRequest;
+  StartTime, ElapsedTime: UInt64;
+const
+  Timeout: Integer = 20000; // 20 second timeout
+  PollInterval: Integer = 1000; // poll for image once per second
 begin
   // First place the task with POST
-  ARequest := API.Post<TAzureImageRequest, TImageAzureCreateParams>('text-to-image', ParamProc);
+  Result := API.Post<TAzureImageResponse, TImageAzureCreateParams>('text-to-image', ParamProc);
+
+  // Check if we got a valid id - current azure documentation is not that precise here if we always get "NotStarted".
+  // Otherwise we get "failed" and in the "error"-property we can find "code" and "message" of the error
+  if (Result.ID = '') or (Result.Status = 'Failed') then
+    exit;
+
+  StartTime := GetTickCount64;
 
   // Repeat GET requesting the operations-endpoint until we have a "succeeded" response
   while true do
   begin
-    Result := API.Get<TAzureImageResponse>('text-to-image/operations/' + ARequest.ID);
+    Result := API.Get<TAzureImageResponse>('text-to-image/operations/' + Result.ID);
     if Result.FStatus = 'Succeeded' then
       exit;
     if Result.FStatus = 'Failed' then
-      // We could parse the "error" object with fields "code" and "message" to handle errors if required
+      // The TAzureImageResponse holds an error object in this case that can be analyzed by the developer
       exit;
-    Sleep(1000);
 
-    // Maybe add some kind of timeout?
+    // Check timeout - current documentation is not precise what to expect when the state is "inProgress"
+    // but the result at this point should contain all relevant information
+    ElapsedTime := GetTickCount64 - StartTime;
+    if ElapsedTime > Timeout then
+      exit;
+
+    Sleep(PollInterval);
   end;
 end;
 
 { TImageAzureCreateParams }
 
-function TImageAzureCreateParams.Caption(const Value: string): TImageCreateParams;
+function TImageAzureCreateParams.Caption(const Value: string): TImageAzureCreateParams;
 begin
-  Result := TImageCreateParams(Add('caption', Value));
+  Result := TImageAzureCreateParams(Add('caption', Value));
+end;
+
+function TImageAzureCreateParams.N(const Value: Integer): TImageAzureCreateParams;
+begin
+  Result := TImageAzureCreateParams(Add('n', Value));
+end;
+
+function TImageAzureCreateParams.ResponseFormat(const Value: string): TImageAzureCreateParams;
+begin
+  Result := TImageAzureCreateParams(Add('response_format', Value));
+end;
+
+function TImageAzureCreateParams.ResponseFormat(const Value: TImageResponseFormat)
+  : TImageAzureCreateParams;
+begin
+  Result := ResponseFormat(Value.ToString);
+end;
+
+function TImageAzureCreateParams.Resolution(const Value: string): TImageAzureCreateParams;
+begin
+  Result := TImageAzureCreateParams(Add('resolution', Value));
+end;
+
+function TImageAzureCreateParams.Resolution(const Value: TImageSize): TImageAzureCreateParams;
+begin
+  Result := Resolution(Value.ToString);
+end;
+
+function TImageAzureCreateParams.User(const Value: string): TImageAzureCreateParams;
+begin
+  Result := TImageAzureCreateParams(Add('user', Value));
 end;
 
 end.
