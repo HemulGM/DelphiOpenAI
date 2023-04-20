@@ -497,6 +497,7 @@ const
 var
   StartTime: UInt64;
   Cancel: Boolean;
+  OperationID: string;
 begin
   // First place the task with POST
   Result := API.Post<TAzureImageResponse, TImageAzureCreateParams>('text-to-image', ParamProc);
@@ -510,11 +511,13 @@ begin
   StartTime := TThread.GetTickCount64;
   Cancel := False;
 
+  OperationID := Result.ID;
+  
   // Repeat GET requesting the operations-endpoint until we have a "succeeded" response
   while not Cancel do
   begin
     Result.Free;
-    Result := API.Get<TAzureImageResponse>('text-to-image/operations/' + Result.ID);
+    Result := API.Get<TAzureImageResponse>('text-to-image/operations/' + OperationID);
     // The TAzureImageResponse holds an error object in this case that can be analyzed by the developer
     if (Result.Status = AzureSuccessed) or (Result.Status = AzureFailed) then
       Exit;
