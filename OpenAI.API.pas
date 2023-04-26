@@ -334,7 +334,7 @@ function TOpenAIAPI.GetHeaders: TNetHeaders;
 begin
   // Additional headers are not required when using azure
   if IsAzure then
-    exit;
+    Exit;
 
   Result := [TNetHeader.Create('Authorization', 'Bearer ' + FToken)];
   if not FOrganization.IsEmpty then
@@ -350,9 +350,7 @@ begin
 
   // API-Key and API-Version have to be included in the request not header when using azure
   if IsAzure then
-  begin
     Result := Result + Format('?api-version=%s&api-key=%s', [AzureApiVersion, Token]);
-  end;
 end;
 
 procedure TOpenAIAPI.CheckAPI;
@@ -388,10 +386,11 @@ begin
   Error := nil;
   try
     try
-      {$IFDEF ANDROID}
+      {$IFDEF ANDROID OR IOS OR IOS64}
       Error := TJson.JsonToObject<TErrorResponse>(ResponseText);
       {$ELSE}
-      Error := TJson.JsonToObject<TErrorResponse>(UTF8ToString(RawByteString(ResponseText)));
+      Error := TJson.JsonToObject<TErrorResponse>(ResponseText);
+      //Error := TJson.JsonToObject<TErrorResponse>(UTF8ToString(RawByteString(ResponseText)));
       {$ENDIF}
     except
       Error := nil;
@@ -411,7 +410,7 @@ begin
   case Code of
     200..299:
       try
-        {$IFDEF ANDROID}
+        {$IFDEF ANDROID OR IOS OR IOS64}
         Result := TJson.JsonToObject<T>(ResponseText);
         {$ELSE}
         //Result := TJson.JsonToObject<T>(UTF8ToString(RawByteString(ResponseText)));

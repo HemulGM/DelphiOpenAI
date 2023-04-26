@@ -508,7 +508,11 @@ begin
     Exit;
 
   // Timeout timestamp
+  {$IF CompilerVersion > 34}
   StartTime := TThread.GetTickCount64;
+  {$ELSE}
+  StartTime := TThread.GetTickCount;
+  {$ENDIF}
   Cancel := False;
 
   OperationID := Result.ID;
@@ -523,7 +527,7 @@ begin
       Exit;
     // Check timeout - current documentation is not precise what to expect when the state is "inProgress"
     // but the result at this point should contain all relevant information
-    if TThread.GetTickCount64 - StartTime > Timeout then
+    if TThread.{$IF CompilerVersion > 34}GetTickCount64{$ELSE}GetTickCount{$ENDIF} - StartTime > Timeout then
       Exit;
     Sleep(PollInterval);
     if Assigned(CancelCallback) then
