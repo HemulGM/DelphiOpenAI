@@ -31,7 +31,6 @@ This repositorty contains Delphi implementation over [OpenAI](https://beta.opena
 
 <details>
   <summary> Coverage </summary>
-<img src="https://github.com/HemulGM/ChatGPT.API/blob/main/OpenAL-GPT3.png?raw=true" height="150" align="right">
 
 |API|Status|
 |---|---|
