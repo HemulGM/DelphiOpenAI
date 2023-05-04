@@ -20,17 +20,28 @@ type
     FRole: TMessageRole;
     FContent: string;
     FTag: string;
+    FName: string;
   public
+    /// <summary>
+    /// The role of the author of this message. One of system, user, or assistant.
+    /// </summary>
     property Role: TMessageRole read FRole write FRole;
+    /// <summary>
+    /// The contents of the message.
+    /// </summary>
     property Content: string read FContent write FContent;
     /// <summary>
-    /// Tag - custom field for convenience. Not used in requests
+    /// The name of the author of this message. May contain a-z, A-Z, 0-9, and underscores, with a maximum length of 64 characters.
+    /// </summary>
+    property Name: string read FName write FName;
+    /// <summary>
+    /// Tag - custom field for convenience. Not used in requests!
     /// </summary>
     property Tag: string read FTag write FTag;
-    class function Create(Role: TMessageRole; Content: string): TChatMessageBuild; static;
-    class function User(Content: string): TChatMessageBuild; static;
-    class function System(Content: string): TChatMessageBuild; static;
-    class function Assistant(Content: string): TChatMessageBuild; static;
+    class function Create(Role: TMessageRole; const Content: string; const Name: string = ''): TChatMessageBuild; static;
+    class function User(const Content: string; const Name: string = ''): TChatMessageBuild; static;
+    class function System(const Content: string; const Name: string = ''): TChatMessageBuild; static;
+    class function Assistant(const Content: string; const Name: string = ''): TChatMessageBuild; static;
   end;
 
   TChatParams = class(TJSONParam)
@@ -289,6 +300,9 @@ begin
     JSON := TJSONObject.Create;
     JSON.AddPair('role', Item.Role.ToString);
     JSON.AddPair('content', Item.Content);
+    if not Item.Name.IsEmpty then
+      JSON.AddPair('name', Item.Name);
+
     Items.Add(JSON);
   end;
   Result := TChatParams(Add('messages', Items));
@@ -326,28 +340,32 @@ end;
 
 { TChatMessageBuild }
 
-class function TChatMessageBuild.Assistant(Content: string): TChatMessageBuild;
+class function TChatMessageBuild.Assistant(const Content: string; const Name: string = ''): TChatMessageBuild;
 begin
   Result.FRole := TMessageRole.Assistant;
   Result.FContent := Content;
+  Result.FName := Name;
 end;
 
-class function TChatMessageBuild.Create(Role: TMessageRole; Content: string): TChatMessageBuild;
+class function TChatMessageBuild.Create(Role: TMessageRole; const Content: string; const Name: string = ''): TChatMessageBuild;
 begin
   Result.FRole := Role;
   Result.FContent := Content;
+  Result.FName := Name;
 end;
 
-class function TChatMessageBuild.System(Content: string): TChatMessageBuild;
+class function TChatMessageBuild.System(const Content: string; const Name: string = ''): TChatMessageBuild;
 begin
   Result.FRole := TMessageRole.System;
   Result.FContent := Content;
+  Result.FName := Name;
 end;
 
-class function TChatMessageBuild.User(Content: string): TChatMessageBuild;
+class function TChatMessageBuild.User(const Content: string; const Name: string = ''): TChatMessageBuild;
 begin
   Result.FRole := TMessageRole.User;
   Result.FContent := Content;
+  Result.FName := Name;
 end;
 
 { TMessageRoleHelper }

@@ -386,12 +386,7 @@ begin
   Error := nil;
   try
     try
-      {$IFDEF ANDROID OR IOS OR IOS64}
       Error := TJson.JsonToObject<TErrorResponse>(ResponseText);
-      {$ELSE}
-      Error := TJson.JsonToObject<TErrorResponse>(ResponseText);
-      //Error := TJson.JsonToObject<TErrorResponse>(UTF8ToString(RawByteString(ResponseText)));
-      {$ENDIF}
     except
       Error := nil;
     end;
@@ -410,12 +405,7 @@ begin
   case Code of
     200..299:
       try
-        {$IFDEF ANDROID OR IOS OR IOS64}
         Result := TJson.JsonToObject<T>(ResponseText);
-        {$ELSE}
-        //Result := TJson.JsonToObject<T>(UTF8ToString(RawByteString(ResponseText)));
-        Result := TJson.JsonToObject<T>(ResponseText);
-        {$ENDIF}
       except
         Result := nil;
       end;

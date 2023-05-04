@@ -78,11 +78,15 @@ end;
 procedure TChatHistory.SetMaxTokensForQuery(const Value: Int64);
 begin
   FMaxTokensForQuery := Value;
+  if FMaxTokensForQuery <= 0 then
+    FMaxTokensForQuery := DEFULT_MAX_TOKENS;
 end;
 
 procedure TChatHistory.SetMaxTokensOfModel(const Value: Int64);
 begin
   FMaxTokensOfModel := Value;
+  if FMaxTokensOfModel <= 0 then
+    FMaxTokensOfModel := DEFULT_MODEL_TOKENS_LIMIT;
 end;
 
 procedure TChatHistory.SetOnCalcContentTokens(const Value: TOnCalcTokens);
