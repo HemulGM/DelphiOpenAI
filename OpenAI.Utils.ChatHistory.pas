@@ -66,7 +66,15 @@ begin
   if FAutoTrim and (Action = TCollectionNotification.cnAdded) then
   begin
     while TextLength + FMaxTokensForQuery > FMaxTokensOfModel do
-      Delete(0);
+      if Count = 1 then
+      begin
+        var LastItem := Items[0];
+        var NeedLen := LastItem.Content.Length - FMaxTokensForQuery;
+        LastItem.Content := LastItem.Content.Substring(LastItem.Content.Length - NeedLen, NeedLen);
+        Items[0] := LastItem;
+      end
+      else
+        Delete(0);
   end;
 end;
 
