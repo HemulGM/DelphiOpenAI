@@ -150,7 +150,7 @@ end;
 
 function TAudioTranscription.Temperature(const Value: Single): TAudioTranscription;
 begin
-  AddField('temperature', FormatFloat('0.0', Value));
+  AddField('temperature', FormatFloat('0,0', Value));
   Result := Self;
 end;
 
@@ -198,7 +198,7 @@ end;
 
 function TAudioTranslation.Temperature(const Value: Single): TAudioTranslation;
 begin
-  AddField('temperature', FormatFloat('0.0', Value));
+  AddField('temperature', FormatFloat('0,0', Value));
   Result := Self;
 end;
 
