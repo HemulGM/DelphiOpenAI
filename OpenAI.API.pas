@@ -56,6 +56,7 @@ type
 
   {$WARNINGS OFF}
   TOpenAIAPI = class
+  public
     const
       URL_BASE = 'https://api.openai.com/v1';
   private
