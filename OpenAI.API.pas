@@ -68,12 +68,14 @@ type
     FIsAzure: Boolean;
     FAzureApiVersion: string;
     FAzureDeployment: string;
+    FCustomHeaders: TNetHeaders;
 
     procedure SetToken(const Value: string);
     procedure SetBaseUrl(const Value: string);
     procedure SetOrganization(const Value: string);
     procedure ParseAndRaiseError(Error: TError; Code: Int64);
     procedure ParseError(const Code: Int64; const ResponseText: string);
+    procedure SetCustomHeaders(const Value: TNetHeaders);
   protected
     function GetHeaders: TNetHeaders;
     function GetRequestURL(const Path: string): string;
@@ -104,6 +106,7 @@ type
     property IsAzure: Boolean read FIsAzure write FIsAzure;
     property AzureApiVersion: string read FAzureApiVersion write FAzureApiVersion;
     property AzureDeployment: string read FAzureDeployment write FAzureDeployment;
+    property CustomHeaders: TNetHeaders read FCustomHeaders write SetCustomHeaders;
   end;
   {$WARNINGS ON}
 
@@ -337,7 +340,7 @@ begin
   if IsAzure then
     Exit;
 
-  Result := [TNetHeader.Create('Authorization', 'Bearer ' + FToken)];
+  Result := [TNetHeader.Create('Authorization', 'Bearer ' + FToken)] + FCustomHeaders;
   if not FOrganization.IsEmpty then
     Result := Result + [TNetHeader.Create('OpenAI-Organization', FOrganization)];
 end;
@@ -420,6 +423,11 @@ end;
 procedure TOpenAIAPI.SetBaseUrl(const Value: string);
 begin
   FBaseUrl := Value;
+end;
+
+procedure TOpenAIAPI.SetCustomHeaders(const Value: TNetHeaders);
+begin
+  FCustomHeaders := Value;
 end;
 
 procedure TOpenAIAPI.SetOrganization(const Value: string);

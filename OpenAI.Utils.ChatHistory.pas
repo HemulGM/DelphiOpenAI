@@ -33,6 +33,7 @@ type
     property MaxTokensForQuery: Int64 read FMaxTokensForQuery write SetMaxTokensForQuery;
     property MaxTokensOfModel: Int64 read FMaxTokensOfModel write SetMaxTokensOfModel;
     property OnCalcContentTokens: TOnCalcTokens read FOnCalcContentTokens write SetOnCalcContentTokens;
+    procedure DeleteByTag(const Tag: string);
     constructor Create;
   end;
 
@@ -49,6 +50,16 @@ begin
   inherited;
   FMaxTokensForQuery := DEFULT_MAX_TOKENS;
   FMaxTokensOfModel := DEFULT_MODEL_TOKENS_LIMIT;
+end;
+
+procedure TChatHistory.DeleteByTag(const Tag: string);
+begin
+  for var i := 0 to Count - 1 do
+    if Items[i].Tag = Tag then
+    begin
+      Delete(i);
+      Exit;
+    end;
 end;
 
 procedure TChatHistory.New(Role: TMessageRole; Content, Tag: string);
