@@ -83,12 +83,9 @@ begin
     '{' +
     '  "type": "object",' +
     '  "properties": {' +
-    '    "location": {' +                                                   // First parameter
-      '      "type": "string",' +
-    '      "description": "The city and state, e.g. San Francisco, CA"' +
-    '    },' +
-    '    "unit": {"type": "string", "enum": ["celsius", "fahrenheit"]}' +  // Two parameter
-      '  },' +
+    '    "location": {"type": "string", "description": "The city and state, e.g. San Francisco, CA"},' +
+    '    "unit": {"type": "string", "enum": ["celsius", "fahrenheit"]}' +
+    '  },' +
     '  "required": ["location"]' +
     '}';
 end;
