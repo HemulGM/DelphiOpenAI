@@ -79,22 +79,18 @@ end;
 
 function TChatFunctionWeather.GetParameters: string;
 begin
-  var JSON := TJSONObject.Create;
-  try
-    JSON.AddPair('type', 'object');
-    JSON.AddPair('required', TJSONArray.Create(TJSONString.Create('location')));
-    var Props := TJSONObject.Create;
-    JSON.AddPair('properties', Props);
-    var Prop := TJSONObject.Create(TJSONPair.Create('type', 'string'));
-    Prop.AddPair('description', 'The city and state, e.g. San Francisco, CA');
-    Props.AddPair('location', Prop);
-    Prop := TJSONObject.Create(TJSONPair.Create('type', 'string'));
-    Prop.AddPair('enum', TJSONArray.Create('celsius', 'fahrenheit'));
-    Props.AddPair('unit', Prop);
-    Result := JSON.ToJSON;
-  finally
-    JSON.Free;
-  end;
+  Result :=
+    '{' +
+    '  "type": "object",' +
+    '  "properties": {' +
+    '    "location": {' +                                                   // First parameter
+      '      "type": "string",' +
+    '      "description": "The city and state, e.g. San Francisco, CA"' +
+    '    },' +
+    '    "unit": {"type": "string", "enum": ["celsius", "fahrenheit"]}' +  // Two parameter
+      '  },' +
+    '  "required": ["location"]' +
+    '}';
 end;
 
 end.
