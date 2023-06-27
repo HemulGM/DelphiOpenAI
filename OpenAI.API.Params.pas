@@ -3,7 +3,15 @@
 interface
 
 uses
-  System.Classes, System.JSON;
+  System.Classes, System.JSON, System.SysUtils, TypInfo, System.Types,
+  System.RTTI, REST.JsonReflect, REST.Json.Interceptors;
+
+type
+  TJSONInterceptorStringToString = class(TJSONInterceptor)
+    constructor Create; reintroduce;
+  protected
+    RTTI: TRttiContext;
+  end;
 
 type
   TJSONParam = class
@@ -44,7 +52,15 @@ const
 implementation
 
 uses
-  System.SysUtils, System.DateUtils;
+  System.DateUtils;
+
+{ TJSONInterceptorStringToString }
+
+constructor TJSONInterceptorStringToString.Create;
+begin
+  ConverterType := ctString;
+  ReverterType := rtString;
+end;
 
 { Fetch }
 

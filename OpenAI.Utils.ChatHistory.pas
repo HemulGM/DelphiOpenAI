@@ -28,6 +28,8 @@ type
     procedure Notify(const Item: TChatMessageBuild; Action: TCollectionNotification); override;
   public
     procedure New(Role: TMessageRole; Content, Tag: string);
+    procedure NewFunc(const FuncName, FuncResult, Tag: string);
+    procedure NewAsistantFunc(const FuncName, Args, Tag: string);
     function TextLength: Int64;
     property AutoTrim: Boolean read FAutoTrim write SetAutoTrim;
     property MaxTokensForQuery: Int64 read FMaxTokensForQuery write SetMaxTokensForQuery;
@@ -67,6 +69,24 @@ var
   Item: TChatMessageBuild;
 begin
   Item := TChatMessageBuild.Create(Role, Content);
+  Item.Tag := Tag;
+  Add(Item);
+end;
+
+procedure TChatHistory.NewAsistantFunc(const FuncName, Args, Tag: string);
+var
+  Item: TChatMessageBuild;
+begin
+  Item := TChatMessageBuild.AssistantFunc(FuncName, Args);
+  Item.Tag := Tag;
+  Add(Item);
+end;
+
+procedure TChatHistory.NewFunc(const FuncName, FuncResult, Tag: string);
+var
+  Item: TChatMessageBuild;
+begin
+  Item := TChatMessageBuild.Func(FuncResult, FuncName);
   Item.Tag := Tag;
   Add(Item);
 end;
