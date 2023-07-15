@@ -35,6 +35,8 @@ var
   UnitKind: string;
 begin
   Result := '';
+  Location := '';
+  UnitKind := '';
   // Parse arguments
   try
     JSON := TJSONObject.ParseJSONValue(Args) as TJSONObject;
@@ -46,10 +48,10 @@ begin
       JSON.Free;
     end;
   except
-    JSON := nil;
+    Location := '';
   end;
   // Invalid arguments
-  if (not Assigned(JSON)) or Location.IsEmpty then
+  if Location.IsEmpty then
     Exit;
 
   // Generate response

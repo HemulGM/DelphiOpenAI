@@ -4,7 +4,7 @@ interface
 
 uses
   System.SysUtils, OpenAI.API.Params, OpenAI.API, OpenAI.Chat.Functions,
-  System.Classes, REST.JsonReflect, Vk.Wrap.Interceptors;
+  System.Classes, REST.JsonReflect;
 
 {$SCOPEDENUMS ON}
 
@@ -273,6 +273,8 @@ type
     /// <summary>
     /// Creates a completion for the chat message
     /// </summary>
+    /// <exception cref="OpenAIExceptionAPI"></exception>
+    /// <exception cref="OpenAIExceptionInvalidRequestError"></exception>
     function Create(ParamProc: TProc<TChatParams>): TChat;
     /// <summary>
     /// Creates a completion for the chat message
