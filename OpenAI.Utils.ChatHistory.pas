@@ -30,6 +30,7 @@ type
     procedure New(Role: TMessageRole; Content, Tag: string);
     procedure NewFunc(const FuncName, FuncResult, Tag: string);
     procedure NewAsistantFunc(const FuncName, Args, Tag: string);
+    procedure SetContentByTag(const Tag, Text: string);
     function TextLength: Int64;
     property AutoTrim: Boolean read FAutoTrim write SetAutoTrim;
     property MaxTokensForQuery: Int64 read FMaxTokensForQuery write SetMaxTokensForQuery;
@@ -60,6 +61,18 @@ begin
     if Items[i].Tag = Tag then
     begin
       Delete(i);
+      Exit;
+    end;
+end;
+
+procedure TChatHistory.SetContentByTag(const Tag, Text: string);
+begin
+  for var i := 0 to Count - 1 do
+    if Items[i].Tag = Tag then
+    begin
+      var Item := Items[i];
+      Item.Content := Text;
+      Items[i] := Item;
       Exit;
     end;
 end;
