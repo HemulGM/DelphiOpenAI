@@ -21,6 +21,7 @@ This repositorty contains Delphi implementation over [OpenAI](https://beta.opena
     - [Completions](#completions)
     - [Chats](#chats)
     - [Images](#images)
+    - [Function calling](#function-calling)
     - [Errors](#errors)
     - [Exceptions](#exceptions)
     - [Usage proxy](#proxy)
@@ -194,7 +195,7 @@ end;
 
 Review [Images Documentation](https://platform.openai.com/docs/api-reference/images) for more info.
 
-### Function calling
+### Function Calling
 In an API call, you can describe functions to gpt-3.5-turbo-0613 and gpt-4-0613, and have the model intelligently choose to output a JSON object containing arguments to call those functions. The Chat Completions API does not call the function; instead, the model generates JSON that you can use to call the function in your code.
 
 The latest models (gpt-3.5-turbo-0613 and gpt-4-0613) have been fine-tuned to both detect when a function should to be called (depending on the input) and to respond with JSON that adheres to the function signature. With this capability also comes potential risks. We strongly recommend building in user confirmation flows before taking actions that impact the world on behalf of users (sending an email, posting something online, making a purchase, etc).
