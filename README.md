@@ -194,6 +194,57 @@ end;
 
 Review [Images Documentation](https://platform.openai.com/docs/api-reference/images) for more info.
 
+### Function calling
+In an API call, you can describe functions to gpt-3.5-turbo-0613 and gpt-4-0613, and have the model intelligently choose to output a JSON object containing arguments to call those functions. The Chat Completions API does not call the function; instead, the model generates JSON that you can use to call the function in your code.
+
+The latest models (gpt-3.5-turbo-0613 and gpt-4-0613) have been fine-tuned to both detect when a function should to be called (depending on the input) and to respond with JSON that adheres to the function signature. With this capability also comes potential risks. We strongly recommend building in user confirmation flows before taking actions that impact the world on behalf of users (sending an email, posting something online, making a purchase, etc).
+
+```Pascal
+var Chat := OpenAI.Chat.Create(
+  procedure(Params: TChatParams)
+  begin
+    Params.Functions(Funcs);  //list of functions (TArray<IChatFunction>)
+    Params.FunctionCall(TFunctionCall.Auto);
+    Params.Messages([TChatMessageBuild.User(Text)]);
+    Params.MaxTokens(1024);
+  end);
+try
+  for var Choice in Chat.Choices do
+    if Choice.FinishReason = TFinishReason.FunctionCall then
+      ProcFunction(Choice.Message.FunctionCall)  // execute function (send result to chat, and continue)
+    else
+      MemoChat.Lines.Add(Choice.Message.Content);
+finally
+  Chat.Free;
+end;
+
+...
+
+procedure ProcFunction(Func: TChatFunctionCall);
+begin
+  var FuncResult := Execute(Func.Name, Func.Arguments);  //execute function and get result (json)
+  var Chat := OpenAI.Chat.Create(
+    procedure(Params: TChatParams)
+    begin
+      Params.Functions(Funcs);  //list of functions (TArray<IChatFunction>)
+      Params.FunctionCall(TFunctionCall.Auto);
+      Params.Messages([  //need all history
+         TChatMessageBuild.User(Text), 
+         TChatMessageBuild.NewAsistantFunc(Func.Name, Func.Arguments), 
+         TChatMessageBuild.Func(FuncResult, Func.Name)]);
+      Params.MaxTokens(1024);
+    end);
+  try
+    for var Choice in Chat.Choices do
+      MemoChat.Lines.Add(Choice.Message.Content);
+  finally
+    Chat.Free;
+  end;
+end;
+```
+
+Review [Functions Documentation](https://platform.openai.com/docs/guides/gpt/function-calling) for more info.
+
 ### Errors
 
 ```Pascal

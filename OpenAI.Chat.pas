@@ -98,6 +98,7 @@ type
     /// </summary>
     property Tag: string read FTag write FTag;
     class function Create(Role: TMessageRole; const Content: string; const Name: string = ''): TChatMessageBuild; static;
+    //Help functions
     class function User(const Content: string; const Name: string = ''): TChatMessageBuild; static;
     class function System(const Content: string; const Name: string = ''): TChatMessageBuild; static;
     class function Assistant(const Content: string; const Name: string = ''): TChatMessageBuild; static;
@@ -140,9 +141,10 @@ type
     /// </summary>
     function Functions(const Value: TArray<IChatFunction>): TChatParams;
     /// <summary>
-    /// Controls how the model responds to function calls.
-    /// "none" is the default when no functions are present.
-    /// "auto" is the default if functions are present
+    /// Controls how the model responds to function calls. "none" means the model does not call a function,
+    /// and responds to the end-user. "auto" means the model can pick between an end-user or calling a function.
+    /// Specifying a particular function via {"name":\ "my_function"} forces the model to call that function.
+    /// "none" is the default when no functions are present. "auto" is the default if functions are present.
     /// </summary>
     function FunctionCall(const Value: TFunctionCall): TChatParams;
     /// <summary>
