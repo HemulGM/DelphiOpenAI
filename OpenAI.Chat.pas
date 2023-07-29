@@ -363,8 +363,8 @@ end;
 constructor TChatParams.Create;
 begin
   inherited;
-  // Model('gpt-3.5-turbo');
-  Model('gpt-3.5-turbo-0613');
+  Model('gpt-3.5-turbo');
+  // Model('gpt-3.5-turbo-0613');
   // Model('gpt-3.5-turbo-16k');
 end;
 

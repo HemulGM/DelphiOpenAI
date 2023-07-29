@@ -56,8 +56,10 @@ begin
 end;
 
 procedure TChatHistory.DeleteByTag(const Tag: string);
+var
+  i: Integer;
 begin
-  for var i := 0 to Count - 1 do
+  for i := 0 to Count - 1 do
     if Items[i].Tag = Tag then
     begin
       Delete(i);
@@ -66,11 +68,14 @@ begin
 end;
 
 procedure TChatHistory.SetContentByTag(const Tag, Text: string);
+var
+  i: Integer;
+  Item: TChatMessageBuild;
 begin
-  for var i := 0 to Count - 1 do
+  for i := 0 to Count - 1 do
     if Items[i].Tag = Tag then
     begin
-      var Item := Items[i];
+      Item := Items[i];
       Item.Content := Text;
       Items[i] := Item;
       Exit;
@@ -105,6 +110,9 @@ begin
 end;
 
 procedure TChatHistory.Notify(const Item: TChatMessageBuild; Action: TCollectionNotification);
+var
+  LastItem: TChatMessageBuild;
+  NeedLen: Int64;
 begin
   inherited;
   if FAutoTrim and (Action = TCollectionNotification.cnAdded) then
@@ -112,8 +120,8 @@ begin
     while TextLength + FMaxTokensForQuery > FMaxTokensOfModel do
       if Count = 1 then
       begin
-        var LastItem := Items[0];
-        var NeedLen := LastItem.Content.Length - FMaxTokensForQuery;
+        LastItem := Items[0];
+        NeedLen := LastItem.Content.Length - FMaxTokensForQuery;
         LastItem.Content := LastItem.Content.Substring(LastItem.Content.Length - NeedLen, NeedLen);
         Items[0] := LastItem;
       end

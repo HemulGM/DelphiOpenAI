@@ -81,7 +81,7 @@ end;
 
 function TChatFunctionWeather.GetParameters: string;
 begin
-  Result :=
+  Result := // json scheme
     '{' +
     '  "type": "object",' +
     '  "properties": {' +

@@ -33,6 +33,9 @@ type
 
 implementation
 
+uses
+  System.SysUtils;
+
 { TChatFunction }
 
 constructor TChatFunction.Create;
@@ -48,9 +51,17 @@ end;
 class function TChatFunction.ToJson(Value: IChatFunction): TJSONObject;
 begin
   Result := TJSONObject.Create;
-  Result.AddPair('name', Value.GetName);
-  Result.AddPair('description', Value.GetDescription);
-  Result.AddPair('parameters', TJSONObject.ParseJSONValue(Value.GetParameters));
+  try
+    Result.AddPair('name', Value.GetName);
+    Result.AddPair('description', Value.GetDescription);
+    Result.AddPair('parameters', TJSONObject.ParseJSONValue(Value.GetParameters));
+  except
+    on E: Exception do
+    begin
+      Result.Free;
+      raise;
+    end;
+  end;
 end;
 
 end.
