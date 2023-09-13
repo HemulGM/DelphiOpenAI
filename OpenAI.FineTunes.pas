@@ -180,32 +180,33 @@ type
     /// Creates a job that fine-tunes a specified model from a given dataset.
     /// Response includes details of the enqueued job including job status and the name of the fine-tuned models once complete.
     /// </summary>
-    function Create(ParamProc: TProc<TFineTuneCreateParams>): TFineTune;
+    function Create(ParamProc: TProc<TFineTuneCreateParams>): TFineTune; deprecated 'Use FineTuning';
     /// <summary>
     /// List your organization's fine-tuning jobs
     /// </summary>
-    function List: TFineTunes;
+    function List: TFineTunes; deprecated 'Use FineTuning';
     /// <summary>
     /// Gets info about the fine-tune job.
     /// </summary>
-    function Retrieve(const FineTuneId: string): TFineTune;
+    function Retrieve(const FineTuneId: string): TFineTune; deprecated 'Use FineTuning';
     /// <summary>
     /// Immediately cancel a fine-tune job.
     /// </summary>
-    function Cancel(const FineTuneId: string): TFineTune;
+    function Cancel(const FineTuneId: string): TFineTune; deprecated 'Use FineTuning';
     /// <summary>
     /// Get fine-grained status updates for a fine-tune job.
     /// </summary>
+    /// <param name="FineTuneId">Id of FineTune</param>
     /// <param name="Stream">Whether to stream events for the fine-tune job.
     /// If set to true, events will be sent as data-only server-sent events as they become available.
     /// The stream will terminate with a data: [DONE] message when the job is finished (succeeded, cancelled, or failed).
     /// If set to false, only events generated so far will be returned.
     /// </param>
-    function ListEvents(const FineTuneId: string; Stream: Boolean = False): TFineTuneEvents;
+    function ListEvents(const FineTuneId: string; Stream: Boolean = False): TFineTuneEvents; deprecated 'Use FineTuning';
     /// <summary>
     /// Delete a fine-tuned model. You must have the Owner role in your organization.
     /// </summary>
-    function Delete(const Model: string): TDeletedInfo;
+    function Delete(const Model: string): TDeletedInfo; deprecated 'Use FineTuning';
   end;
 
 implementation

@@ -9,22 +9,59 @@ uses
 {$SCOPEDENUMS ON}
 
 type
-  TMessageRole = (System, User, Assistant, Func);
+  /// <summary>
+  ///   Type of message role
+  /// </summary>
+  TMessageRole = (
+    /// <summary>
+    ///   System message
+    /// </summary>
+    System,
+    /// <summary>
+    ///   User message
+    /// </summary>
+    User,
+    /// <summary>
+    ///   Assistant message
+    /// </summary>
+    Assistant,
+    /// <summary>
+    ///   Func message. For models avaliable functions
+    /// </summary>
+    Func);
 
+  /// <summary>
+  ///   Helper for TMassageRole enum
+  /// </summary>
   TMessageRoleHelper = record helper for TMessageRole
     function ToString: string;
     class function FromString(const Value: string): TMessageRole; static;
   end;
 
   /// <summary>
-  /// The possible values for finish_reason are:
-  ///   stop: API returned complete model output
-  ///   length: Incomplete model output due to max_tokens parameter or token limit
-  ///   function_call: The model decided to call a function
-  ///   content_filter: Omitted content due to a flag from our content filters
-  ///   null: API response still in progress or incomplete
+  ///   Finish reason
   /// </summary>
-  TFinishReason = (Stop, Length, FunctionCall, ContentFilter, Null);
+  TFinishReason = (
+    /// <summary>
+    ///   API returned complete model output
+    /// </summary>
+    Stop,
+    /// <summary>
+    ///   Incomplete model output due to max_tokens parameter or token limit
+    /// </summary>
+    Length,
+    /// <summary>
+    ///   The model decided to call a function
+    /// </summary>
+    FunctionCall,
+    /// <summary>
+    ///   Omitted content due to a flag from our content filters
+    /// </summary>
+    ContentFilter,
+    /// <summary>
+    ///   API response still in progress or incomplete
+    /// </summary>
+    Null);
 
   TFinishReasonHelper = record helper for TFinishReason
     function ToString: string;
@@ -39,6 +76,9 @@ type
 
   TFunctionCallType = (None, Auto, Func);
 
+  /// <summary>
+  ///   Class of function call
+  /// </summary>
   TFunctionCall = record
   private
     FFuncName: string;

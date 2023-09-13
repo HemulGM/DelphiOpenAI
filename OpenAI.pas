@@ -2,9 +2,11 @@
 
 interface
 
-uses System.SysUtils, System.Classes, OpenAI.Completions, OpenAI.Edits, OpenAI.Images,
-  OpenAI.Models, OpenAI.Embeddings, OpenAI.API, OpenAI.Moderations, OpenAI.Engines, OpenAI.Files,
-  OpenAI.FineTunes, OpenAI.Chat, OpenAI.Audio;
+uses
+  System.SysUtils, System.Classes, OpenAI.Completions, OpenAI.Edits,
+  OpenAI.Images, OpenAI.Models, OpenAI.Embeddings, OpenAI.API,
+  OpenAI.Moderations, OpenAI.Engines, OpenAI.Files, OpenAI.FineTunes,
+  OpenAI.Chat, OpenAI.Audio, OpenAI.FineTuning;
 
 type
   IOpenAI = interface
@@ -25,6 +27,7 @@ type
     function GetEnginesRoute: TEnginesRoute;
     function GetFilesRoute: TFilesRoute;
     function GetFineTunesRoute: TFineTunesRoute;
+    function GetFineTuningRoute: TFineTuningRoute;
     function GetChatRoute: TChatRoute;
     function GetAudioRoute: TAudioRoute;
     /// <summary>
@@ -86,10 +89,16 @@ type
     /// </summary>
     property &File: TFilesRoute read GetFilesRoute;
     /// <summary>
+    /// Manage legacy fine-tuning jobs to tailor a model to your specific training data.
+    /// We recommend transitioning to the updating FineTuning API.
     /// Creates a job that fine-tunes a specified model from a given dataset.
     /// Response includes details of the enqueued job including job status and the name of the fine-tuned models once complete.
     /// </summary>
     property FineTune: TFineTunesRoute read GetFineTunesRoute;
+    /// <summary>
+    /// Manage fine-tuning jobs to tailor a model to your specific training data.
+    /// </summary>
+    property FineTuning: TFineTuningRoute read GetFineTuningRoute;
     /// <summary>
     /// Given a chat conversation, the model will return a chat completion response.
     /// </summary>
@@ -113,6 +122,7 @@ type
     FEnginesRoute: TEnginesRoute;
     FFilesRoute: TFilesRoute;
     FFineTunesRoute: TFineTunesRoute;
+    FFineTuningRoute: TFineTuningRoute;
     FChatRoute: TChatRoute;
     FAudioRoute: TAudioRoute;
     procedure SetToken(const Value: string);
@@ -140,6 +150,7 @@ type
     procedure SetAzureDeployment(const Value: string);
     procedure SetIsAzure(const Value: Boolean);
     function GetImagesAzureRoute: TImagesAzureRoute;
+    function GetFineTuningRoute: TFineTuningRoute;
   public
     constructor Create; overload;
     constructor Create(const AToken: string); overload;
@@ -213,10 +224,16 @@ type
     /// </summary>
     property &File: TFilesRoute read GetFilesRoute;
     /// <summary>
+    /// Manage legacy fine-tuning jobs to tailor a model to your specific training data.
+    /// We recommend transitioning to the updating FineTuning API.
     /// Creates a job that fine-tunes a specified model from a given dataset.
     /// Response includes details of the enqueued job including job status and the name of the fine-tuned models once complete.
     /// </summary>
     property FineTune: TFineTunesRoute read GetFineTunesRoute;
+    /// <summary>
+    /// Manage fine-tuning jobs to tailor a model to your specific training data.
+    /// </summary>
+    property FineTuning: TFineTuningRoute read GetFineTuningRoute;
     /// <summary>
     /// Given a chat conversation, the model will return a chat completion response.
     /// </summary>
@@ -248,6 +265,7 @@ type
     function GetFineTunesRoute: TFineTunesRoute;
     function GetChatRoute: TChatRoute;
     function GetAudioRoute: TAudioRoute;
+    function GetFineTuningRoute: TFineTuningRoute;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -312,10 +330,16 @@ type
     /// </summary>
     property &File: TFilesRoute read GetFilesRoute;
     /// <summary>
+    /// Manage legacy fine-tuning jobs to tailor a model to your specific training data.
+    /// We recommend transitioning to the updating FineTuning API.
     /// Creates a job that fine-tunes a specified model from a given dataset.
     /// Response includes details of the enqueued job including job status and the name of the fine-tuned models once complete.
     /// </summary>
     property FineTune: TFineTunesRoute read GetFineTunesRoute;
+    /// <summary>
+    /// Manage fine-tuning jobs to tailor a model to your specific training data.
+    /// </summary>
+    property FineTuning: TFineTuningRoute read GetFineTuningRoute;
     /// <summary>
     /// Given a chat conversation, the model will return a chat completion response.
     /// </summary>
@@ -364,6 +388,8 @@ begin
     FFilesRoute.Free;
   if Assigned(FFineTunesRoute) then
     FFineTunesRoute.Free;
+  if Assigned(FFineTuningRoute) then
+    FFineTuningRoute.Free;
   if Assigned(FChatRoute) then
     FChatRoute.Free;
   if Assigned(FAudioRoute) then
@@ -446,6 +472,13 @@ begin
   if not Assigned(FFineTunesRoute) then
     FFineTunesRoute := TFineTunesRoute.CreateRoute(API);
   Result := FFineTunesRoute;
+end;
+
+function TOpenAI.GetFineTuningRoute: TFineTuningRoute;
+begin
+  if not Assigned(FFineTuningRoute) then
+    FFineTuningRoute := TFineTuningRoute.CreateRoute(API);
+  Result := FFineTuningRoute;
 end;
 
 function TOpenAI.GetImagesAzureRoute: TImagesAzureRoute;
@@ -585,6 +618,11 @@ begin
   Result := FOpenAI.GetFineTunesRoute;
 end;
 
+function TOpenAIComponent.GetFineTuningRoute: TFineTuningRoute;
+begin
+  Result := FOpenAI.GetFineTuningRoute;
+end;
+
 function TOpenAIComponent.GetImagesRoute: TImagesRoute;
 begin
   Result := FOpenAI.GetImagesRoute;
@@ -626,3 +664,4 @@ begin
 end;
 
 end.
+

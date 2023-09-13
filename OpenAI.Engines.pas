@@ -38,7 +38,7 @@ type
     /// <summary>
     /// Retrieves a model instance, providing basic information about it such as the owner and availability.
     /// </summary>
-    /// <param name="const Name: string">The ID of the engine to use for this request</param>
+    /// <param name="EngineId">The ID of the engine to use for this request</param>
     function Retrieve(const EngineId: string): TEngine; deprecated 'The Engines endpoints are deprecated. Please use their replacement, Models, instead.';
   end;
 

@@ -70,7 +70,7 @@ type
     /// <summary>
     /// Retrieves a model instance, providing basic information about the model such as the owner and permissioning.
     /// </summary>
-    /// <param name="const Name: string">The ID of the model to use for this request</param>
+    /// <param name="Model">The ID of the model to use for this request</param>
     function Retrieve(const Model: string): TModel;
   end;
 

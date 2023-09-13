@@ -4,7 +4,8 @@ interface
 
 uses
   System.Classes, System.JSON, System.SysUtils, TypInfo, System.Types,
-  System.RTTI, REST.JsonReflect, REST.Json.Interceptors;
+  System.RTTI, REST.JsonReflect, REST.Json.Interceptors,
+  System.Generics.Collections;
 
 type
   TJSONInterceptorStringToString = class(TJSONInterceptor)
@@ -41,6 +42,7 @@ type
     property Count: Integer read GetCount;
     property JSON: TJSONObject read FJSON write SetJSON;
     function ToJsonString(FreeObject: Boolean = False): string; virtual;
+    function ToStringPairs: TArray<TPair<string, string>>;
     function ToStream: TStringStream;
   end;
 
@@ -263,6 +265,12 @@ begin
     Result.Free;
     raise;
   end;
+end;
+
+function TJSONParam.ToStringPairs: TArray<TPair<string, string>>;
+begin
+  for var Pair in FJSON do
+    Result := Result + [TPair<string, string>.Create(Pair.JsonString.Value, Pair.JsonValue.AsType<string>)];
 end;
 
 end.

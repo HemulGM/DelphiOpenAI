@@ -88,6 +88,7 @@ type
     procedure CheckAPI;
   public
     function Get<TResult: class, constructor>(const Path: string): TResult; overload;
+    function Get<TResult: class, constructor; TParams: TJSONParam>(const Path: string; ParamProc: TProc<TParams>): TResult; overload;
     procedure GetFile(const Path: string; Response: TStream); overload;
     function Delete<TResult: class, constructor>(const Path: string): TResult; overload;
     function Post<TParams: TJSONParam>(const Path: string; ParamProc: TProc<TParams>; Response: TStringStream; Event: TReceiveDataCallback): Boolean; overload;
@@ -289,6 +290,31 @@ begin
     if Assigned(ParamProc) then
       ParamProc(Params);
     Code := Post(Path, Params, Response);
+    Result := ParseResponse<TResult>(Code, Response.DataString);
+  finally
+    Params.Free;
+    Response.Free;
+  end;
+end;
+
+function TOpenAIAPI.Get<TResult, TParams>(const Path: string; ParamProc: TProc<TParams>): TResult;
+var
+  Response: TStringStream;
+  Params: TParams;
+  Code: Integer;
+begin
+  Response := TStringStream.Create('', TEncoding.UTF8);
+  Params := TParams.Create;
+  try
+    if Assigned(ParamProc) then
+      ParamProc(Params);
+    var Pairs: TArray<string> := [];
+    for var Pair in Params.ToStringPairs do
+      Pairs := Pairs + [Pair.Key + '=' + Pair.Value];
+    var QPath := Path;
+    if Length(Pairs) > 0 then
+      QPath := QPath + '?' + string.Join('&', Pairs);
+    Code := Get(QPath, Response);
     Result := ParseResponse<TResult>(Code, Response.DataString);
   finally
     Params.Free;
