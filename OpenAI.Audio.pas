@@ -17,14 +17,17 @@ type
 
   TAudioTranscription = class(TMultipartFormData)
     /// <summary>
-    /// The audio file to transcribe, in one of these formats: mp3, mp4, mpeg, mpga, m4a, wav, or webm.
+    /// Required.
+    /// The audio file object (not file name) to transcribe, in one of these formats: flac, mp3, mp4, mpeg, mpga, m4a, ogg, wav, or webm.
     /// </summary>
     function &File(const FileName: string): TAudioTranscription; overload;
     /// <summary>
-    /// The audio file to transcribe, in one of these formats: mp3, mp4, mpeg, mpga, m4a, wav, or webm.
+    /// Required.
+    /// The audio file object (not file name) to transcribe, in one of these formats: flac, mp3, mp4, mpeg, mpga, m4a, ogg, wav, or webm.
     /// </summary>
     function &File(const Stream: TStream; const FileName: string): TAudioTranscription; overload;
     /// <summary>
+    /// Required.
     /// ID of the model to use. Only whisper-1 is currently available.
     /// </summary>
     function Model(const Value: string): TAudioTranscription; overload;
@@ -57,14 +60,17 @@ type
 
   TAudioTranslation = class(TMultipartFormData)
     /// <summary>
-    /// The audio file to translate, in one of these formats: mp3, mp4, mpeg, mpga, m4a, wav, or webm.
+    /// Required.
+    /// The audio file object (not file name) translate, in one of these formats: flac, mp3, mp4, mpeg, mpga, m4a, ogg, wav, or webm.
     /// </summary>
     function &File(const FileName: string): TAudioTranslation; overload;
     /// <summary>
-    /// The audio file to transcribe, in one of these formats: mp3, mp4, mpeg, mpga, m4a, wav, or webm.
+    /// Required.
+    /// The audio file object (not file name) translate, in one of these formats: flac, mp3, mp4, mpeg, mpga, m4a, ogg, wav, or webm.
     /// </summary>
     function &File(const Stream: TStream; const FileName: string): TAudioTranslation; overload;
     /// <summary>
+    /// Required.
     /// ID of the model to use. Only whisper-1 is currently available.
     /// </summary>
     function Model(const Value: string): TAudioTranslation; overload;

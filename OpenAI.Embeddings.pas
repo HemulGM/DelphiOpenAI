@@ -45,8 +45,18 @@ type
     FObject: string;
     FEmbedding: TArray<Extended>;
   public
-    property &Object: string read FObject write FObject;
+    /// <summary>
+    /// The index of the embedding in the list of embeddings.
+    /// </summary>
     property Index: Int64 read FIndex write FIndex;
+    /// <summary>
+    /// The object type, which is always "embedding".
+    /// </summary>
+    property &Object: string read FObject write FObject;
+    /// <summary>
+    /// The embedding vector, which is a list of floats. The length of vector depends on the model as listed in the embedding guide.
+    /// </summary>
+    /// <seealso>https://platform.openai.com/docs/guides/embeddings</seealso>
     property Embedding: TArray<Extended> read FEmbedding write FEmbedding;
   end;
 
@@ -87,8 +97,7 @@ destructor TEmbeddings.Destroy;
 var
   Item: TEmbeddingData;
 begin
-  if Assigned(FUsage) then
-    FUsage.Free;
+  FUsage.Free;
   for Item in FData do
     Item.Free;
   inherited;

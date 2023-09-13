@@ -15,34 +15,34 @@ type
     function ToString: string;
   end;
 
-  TFileCreateParams = class(TMultipartFormData)
+  TFileUploadParams = class(TMultipartFormData)
     /// <summary>
     /// Name of the JSON Lines file to be uploaded.
-    /// If the purpose is set to "fine-tune", each line is a JSON record with "prompt" and "completion"
-    /// fields representing your training examples.
+    /// If the purpose is set to "fine-tune", the file will be used for fine-tuning.
     /// </summary>
-    function &File(const FileName: string): TFileCreateParams; overload;
+    function &File(const FileName: string): TFileUploadParams; overload;
     /// <summary>
     /// Name of the JSON Lines file to be uploaded.
-    /// If the purpose is set to "fine-tune", each line is a JSON record with "prompt" and "completion"
-    /// fields representing your training examples.
+    /// If the purpose is set to "fine-tune", the file will be used for fine-tuning.
     /// </summary>
-    function &File(const Stream: TStream; const FileName: string): TFileCreateParams; overload;
+    function &File(const Stream: TStream; const FileName: string): TFileUploadParams; overload;
+    /// <summary>
+    /// The intended purpose of the uploaded documents.
+    /// Use "fine-tune" for fine-tuning. This allows us to validate the format of the uploaded file.
+    /// Variants: ['fine-tune', 'answers', 'search', 'classifications']
+    /// </summary>
+    function Purpose(const Value: string): TFileUploadParams; overload;
     /// <summary>
     /// The intended purpose of the uploaded documents.
     /// Use "fine-tune" for Fine-tuning. This allows us to validate the format of the uploaded file.
-    /// Variants: ['fine-tune', 'answers', 'search', 'classifications']
     /// </summary>
-    function Purpose(const Value: string): TFileCreateParams; overload;
-    /// <summary>
-    /// The intended purpose of the uploaded documents.
-    /// Use "fine-tune" for Fine-tuning. This allows us to validate the format of the uploaded file.
-    /// Variants: ['fine-tune', 'answers', 'search', 'classifications']
-    /// </summary>
-    function Purpose(const Value: TFileCreatePurpose): TFileCreateParams; overload;
-    constructor Create;  reintroduce;
+    function Purpose(const Value: TFileCreatePurpose): TFileUploadParams; overload;
+    constructor Create; reintroduce;
   end;
 
+  /// <summary>
+  /// The File object represents a document that has been uploaded to OpenAI.
+  /// </summary>
   TFile = class
   private
     FBytes: Int64;
@@ -51,13 +51,42 @@ type
     FId: string;
     FObject: string;
     FPurpose: string;
+    FStatus: string;
+    FStatus_details: string;
   public
-    property Bytes: Int64 read FBytes write FBytes;
-    property CreatedAt: Int64 read FCreated_at write FCreated_at;
-    property FileName: string read FFilename write FFilename;
+    /// <summary>
+    /// The file identifier, which can be referenced in the API endpoints.
+    /// </summary>
     property Id: string read FId write FId;
+    /// <summary>
+    /// The object type, which is always "file".
+    /// </summary>
     property &Object: string read FObject write FObject;
+    /// <summary>
+    /// The size of the file in bytes.
+    /// </summary>
+    property Bytes: Int64 read FBytes write FBytes;
+    /// <summary>
+    /// The Unix timestamp (in seconds) for when the file was created.
+    /// </summary>
+    property CreatedAt: Int64 read FCreated_at write FCreated_at;
+    /// <summary>
+    /// The name of the file.
+    /// </summary>
+    property FileName: string read FFilename write FFilename;
+    /// <summary>
+    /// The intended purpose of the file. Currently, only "fine-tune" is supported.
+    /// </summary>
     property Purpose: string read FPurpose write FPurpose;
+    /// <summary>
+    /// The current status of the file, which can be either uploaded, processed, pending, error, deleting or deleted.
+    /// </summary>
+    property Status: string read FStatus write FStatus;
+    /// <summary>
+    /// Additional details about the status of the file. If the file is in the error state,
+    /// this will include a message describing the error.
+    /// </summary>
+    property StatusDetails: string read FStatus_details write FStatus_details;
   end;
 
   TFiles = class
@@ -92,15 +121,15 @@ type
     /// Currently, the size of all the files uploaded by one organization can be up to 1 GB.
     /// Please contact us if you need to increase the storage limit.
     /// </summary>
-    function Create(ParamProc: TProc<TFileCreateParams>): TFile;
+    function Upload(ParamProc: TProc<TFileUploadParams>): TFile;
     /// <summary>
     /// Delete a file.
     /// </summary>
-    function Delete(const FileId: string): TDeletedInfo;
+    function Delete(const FileId: string = ''): TDeletedInfo;
     /// <summary>
     /// Returns information about a specific file.
     /// </summary>
-    function Retrieve(const FileId: string): TFile;
+    function Retrieve(const FileId: string = ''): TFile;
     /// <summary>
     /// Returns the contents of the specified file
     /// </summary>
@@ -111,9 +140,9 @@ implementation
 
 { TFilesRoute }
 
-function TFilesRoute.Create(ParamProc: TProc<TFileCreateParams>): TFile;
+function TFilesRoute.Upload(ParamProc: TProc<TFileUploadParams>): TFile;
 begin
-  Result := API.PostForm<TFile, TFileCreateParams>('files', ParamProc);
+  Result := API.PostForm<TFile, TFileUploadParams>('files', ParamProc);
 end;
 
 function TFilesRoute.Delete(const FileId: string): TDeletedInfo;
@@ -148,31 +177,31 @@ begin
   inherited;
 end;
 
-{ TFileCreateParams }
+{ TFileUploadParams }
 
-function TFileCreateParams.&File(const FileName: string): TFileCreateParams;
+function TFileUploadParams.&File(const FileName: string): TFileUploadParams;
 begin
   AddFile('file', FileName);
   Result := Self;
 end;
 
-constructor TFileCreateParams.Create;
+constructor TFileUploadParams.Create;
 begin
   inherited Create(True);
 end;
 
-function TFileCreateParams.&File(const Stream: TStream; const FileName: string): TFileCreateParams;
+function TFileUploadParams.&File(const Stream: TStream; const FileName: string): TFileUploadParams;
 begin
   AddStream('file', Stream, FileName);
   Result := Self;
 end;
 
-function TFileCreateParams.Purpose(const Value: TFileCreatePurpose): TFileCreateParams;
+function TFileUploadParams.Purpose(const Value: TFileCreatePurpose): TFileUploadParams;
 begin
   Result := Purpose(Value.ToString);
 end;
 
-function TFileCreateParams.Purpose(const Value: string): TFileCreateParams;
+function TFileUploadParams.Purpose(const Value: string): TFileUploadParams;
 begin
   AddField('purpose', Value);
   Result := Self;

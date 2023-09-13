@@ -23,9 +23,13 @@ type
 
   TImageCreateParams = class(TJSONParam)
     /// <summary>
-    /// A text description of the desired image(s) for the openaid-environment. The maximum length is 1000 characters.
+    /// A text description of the desired image(s). The maximum length is 1000 characters.
     /// </summary>
     function Prompt(const Value: string): TImageCreateParams; overload;
+    /// <summary>
+    /// The number of images to generate. Must be between 1 and 10.
+    /// </summary>
+    function N(const Value: Integer = 1): TImageCreateParams;
     /// <summary>
     /// The size of the generated images. Must be one of 256x256, 512x512, or 1024x1024.
     /// </summary>
@@ -43,12 +47,9 @@ type
     /// </summary>
     function ResponseFormat(const Value: TImageResponseFormat = TImageResponseFormat.Url): TImageCreateParams; overload;
     /// <summary>
-    /// The number of images to generate. Must be between 1 and 10.
-    /// </summary>
-    function N(const Value: Integer = 1): TImageCreateParams;
-    /// <summary>
     /// A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse.
     /// </summary>
+    /// <seealso>https://platform.openai.com/docs/guides/safety-best-practices/end-user-ids</seealso>
     function User(const Value: string): TImageCreateParams;
   end;
 
@@ -80,6 +81,7 @@ type
     /// <summary>
     /// A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse.
     /// </summary>
+    /// <seealso>https://platform.openai.com/docs/guides/safety-best-practices/end-user-ids</seealso>
     function User(const Value: string): TImageAzureCreateParams;
   end;
 
@@ -131,6 +133,7 @@ type
     /// <summary>
     /// A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse.
     /// </summary>
+    /// <seealso>https://platform.openai.com/docs/guides/safety-best-practices/end-user-ids</seealso>
     function User(const Value: string): TImageEditParams;
     constructor Create; reintroduce;
   end;
@@ -167,6 +170,7 @@ type
     /// <summary>
     /// A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse.
     /// </summary>
+    /// <seealso>https://platform.openai.com/docs/guides/safety-best-practices/end-user-ids</seealso>
     function User(const Value: string): TImageVariationParams;
     constructor Create; reintroduce;
   end;
@@ -176,7 +180,13 @@ type
     FUrl: string;
     FB64_json: string;
   public
+    /// <summary>
+    /// The URL of the generated image, if response_format is url (default).
+    /// </summary>
     property Url: string read FUrl write FUrl;
+    /// <summary>
+    /// The base64-encoded JSON of the generated image, if response_format is b64_json.
+    /// </summary>
     property B64Json: string read FB64_json write FB64_json;
   end;
 
@@ -527,8 +537,13 @@ begin
       Exit;
     // Check timeout - current documentation is not precise what to expect when the state is "inProgress"
     // but the result at this point should contain all relevant information
-    if TThread.{$IF CompilerVersion > 34}GetTickCount64{$ELSE}GetTickCount{$ENDIF} - StartTime > Timeout then
+    {$IF CompilerVersion > 34}
+    if TThread.GetTickCount64 - StartTime > Timeout then
       Exit;
+    {$ELSE}
+    if TThread.GetTickCount - StartTime > Timeout then
+      Exit;
+    {$ENDIF}
     Sleep(PollInterval);
     if Assigned(CancelCallback) then
       CancelCallback(Cancel);

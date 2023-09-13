@@ -33,6 +33,9 @@ type
     property Organization: string read FOrganization write FOrganization;
   end;
 
+  /// <summary>
+  /// Describes an OpenAI model offering that can be used with the API.
+  /// </summary>
   TModel = class
   private
     FCreated: Int64;
@@ -42,15 +45,36 @@ type
     FPermission: TArray<TModelPermission>;
     FRoot: string;
   public
+    /// <summary>
+    /// The Unix timestamp (in seconds) when the model was created.
+    /// </summary>
     property Created: Int64 read FCreated write FCreated;
+    /// <summary>
+    /// The model identifier, which can be referenced in the API endpoints.
+    /// </summary>
     property Id: string read FId write FId;
+    /// <summary>
+    /// The object type, which is always "model".
+    /// </summary>
     property &Object: string read FObject write FObject;
+    /// <summary>
+    /// The organization that owns the model.
+    /// </summary>
     property OwnedBy: string read FOwned_by write FOwned_by;
+    /// <summary>
+    /// May be depricated
+    /// </summary>
     property Permission: TArray<TModelPermission> read FPermission write FPermission;
+    /// <summary>
+    /// May be depricated
+    /// </summary>
     property Root: string read FRoot write FRoot;
     destructor Destroy; override;
   end;
 
+  /// <summary>
+  /// Lists the currently available models, and provides basic information about each one such as the owner and availability.
+  /// </summary>
   TModels = class
   private
     FData: TArray<TModel>;
@@ -59,6 +83,17 @@ type
     property Data: TArray<TModel> read FData write FData;
     property &Object: string read FObject write FObject;
     destructor Destroy; override;
+  end;
+
+  TDeletionStatus = class
+  private
+    FDeleted: Boolean;
+    FId: string;
+    FObject: string;
+  public
+    property Deleted: Boolean read FDeleted write FDeleted;
+    property Id: string read FId write FId;
+    property &Object: string read FObject write FObject;
   end;
 
   TModelsRoute = class(TOpenAIAPIRoute)
@@ -72,11 +107,20 @@ type
     /// </summary>
     /// <param name="Model">The ID of the model to use for this request</param>
     function Retrieve(const Model: string): TModel;
+    /// <summary>
+    /// Delete a fine-tuned model. You must have the Owner role in your organization to delete a model.
+    /// </summary>
+    function DeleteFineTuneModel(const Model: string): TDeletionStatus;
   end;
 
 implementation
 
 { TModelsRoute }
+
+function TModelsRoute.DeleteFineTuneModel(const Model: string): TDeletionStatus;
+begin
+  Result := API.Delete<TDeletionStatus>('models/' + Model);
+end;
 
 function TModelsRoute.List: TModels;
 begin
@@ -85,7 +129,7 @@ end;
 
 function TModelsRoute.Retrieve(const Model: string): TModel;
 begin
-  Result := API.Get<TModel>('models' + '/' + Model);
+  Result := API.Get<TModel>('models/' + Model);
 end;
 
 { TModels }
