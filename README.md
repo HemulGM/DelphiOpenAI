@@ -43,7 +43,8 @@ This repositorty contains Delphi implementation over [OpenAI](https://beta.opena
 |Embeddings|🟢 Done|
 |Audio|🟢 Done|
 |Files|🟢 Done|
-|Fine-tunes|🟢 Done|
+|Fine-tunes (Depricated)|🟢 Done|
+|Fine-tuning|🟢 Done|
 |Moderations|🟢 Done|
 |Engines (Depricated)|🟢 Done|
 
