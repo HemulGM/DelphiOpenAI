@@ -254,7 +254,7 @@ end;
 
 function TFineTuningCreateParams.Hyperparameters(const NEpochs: Integer): TFineTuningCreateParams;
 begin
-  Result := TFineTuningCreateParams(Add('hyperparameters', TJSONObject.Create(TJSONPair.Create('n_epochs', NEpochs))));
+  Result := TFineTuningCreateParams(Add('hyperparameters', TJSONObject.Create(TJSONPair.Create('n_epochs', TJSONNumber.Create(NEpochs)))));
 end;
 
 function TFineTuningCreateParams.Model(const Value: string): TFineTuningCreateParams;
