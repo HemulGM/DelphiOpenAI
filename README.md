@@ -278,10 +278,9 @@ OpenAI.API.Client.ProxySettings := TProxySettings.Create(ProxyHost, ProxyPort, P
 ```
 
 ## Examples
-|Source|Preview|Source|Preview|
-|---|---|---|---|
-|[Playground (FMX)](https://github.com/HemulGM/DelphiOpenAIPlayground)|<img src="https://github.com/HemulGM/DelphiOpenAIPlayground/blob/main/preview.png?raw=true" height="150" align="right">|[ChatGPT (FMX)](https://github.com/HemulGM/ChatGPT)|<img src="https://github.com/HemulGM/ChatGPT/raw/main/preview.png?raw=true" height="150" align="right">|
-|[DALL-E (FMX)](https://github.com/HemulGM/DALL-E)|<img src="https://github.com/HemulGM/DALL-E/raw/main/Res/preview.jpg?raw=true" height="150" align="right">|||
+<img src="https://github.com/HemulGM/ChatGPT/raw/main/preview.png?raw=true" height="400">
+
+[ChatGPT (FMX)](https://github.com/HemulGM/ChatGPT)
 
 ## Requirements
 This library does not require any 3rd party library. It works on recent Delphi versions (10.3+). Althought not fully tested, it should also work on all supported platforms (Windows, Linux, macOS, Android, iOS).
