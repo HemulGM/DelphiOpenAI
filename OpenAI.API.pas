@@ -60,7 +60,6 @@ type
     const
       URL_BASE = 'https://api.openai.com/v1';
   private
-    FHTTPClient: THTTPClient;
     FToken: string;
     FBaseUrl: string;
     FOrganization: string;
@@ -69,6 +68,10 @@ type
     FAzureApiVersion: string;
     FAzureDeployment: string;
     FCustomHeaders: TNetHeaders;
+    FProxySettings: TProxySettings;
+    FConnectionTimeout: Integer;
+    FSendTimeout: Integer;
+    FResponseTimeout: Integer;
 
     procedure SetToken(const Value: string);
     procedure SetBaseUrl(const Value: string);
@@ -76,8 +79,13 @@ type
     procedure ParseAndRaiseError(Error: TError; Code: Int64);
     procedure ParseError(const Code: Int64; const ResponseText: string);
     procedure SetCustomHeaders(const Value: TNetHeaders);
+    procedure SetProxySettings(const Value: TProxySettings);
+    procedure SetConnectionTimeout(const Value: Integer);
+    procedure SetResponseTimeout(const Value: Integer);
+    procedure SetSendTimeout(const Value: Integer);
   protected
-    function GetHeaders: TNetHeaders;
+    function GetHeaders: TNetHeaders; virtual;
+    function GetClient: THTTPClient; virtual;
     function GetRequestURL(const Path: string): string;
     function Get(const Path: string; Response: TStringStream): Integer; overload;
     function Delete(const Path: string; Response: TStringStream): Integer; overload;
@@ -102,7 +110,17 @@ type
     property Token: string read FToken write SetToken;
     property BaseUrl: string read FBaseUrl write SetBaseUrl;
     property Organization: string read FOrganization write SetOrganization;
-    property Client: THTTPClient read FHTTPClient;
+    property ProxySettings: TProxySettings read FProxySettings write SetProxySettings;
+
+    /// <summary> Property to set/get the ConnectionTimeout. Value is in milliseconds.
+    ///  -1 - Infinite timeout. 0 - platform specific timeout. Supported by Windows, Linux, Android platforms. </summary>
+    property ConnectionTimeout: Integer read FConnectionTimeout write SetConnectionTimeout;
+    /// <summary> Property to set/get the SendTimeout. Value is in milliseconds.
+    ///  -1 - Infinite timeout. 0 - platform specific timeout. Supported by Windows, macOS platforms. </summary>
+    property SendTimeout: Integer read FSendTimeout write SetSendTimeout;
+    /// <summary> Property to set/get the ResponseTimeout. Value is in milliseconds.
+    ///  -1 - Infinite timeout. 0 - platform specific timeout. Supported by all platforms. </summary>
+    property ResponseTimeout: Integer read FResponseTimeout write SetResponseTimeout;
 
     property IsAzure: Boolean read FIsAzure write FIsAzure;
     property AzureApiVersion: string read FAzureApiVersion write FAzureApiVersion;
@@ -128,11 +146,10 @@ uses
 constructor TOpenAIAPI.Create;
 begin
   inherited;
-  FHTTPClient := THTTPClient.Create;
   // Defaults
   FToken := '';
   FBaseUrl := URL_BASE;
-  FIsAzure := false;
+  FIsAzure := False;
   FAzureApiVersion := '';
   FAzureDeployment := '';
 end;
@@ -145,7 +162,6 @@ end;
 
 destructor TOpenAIAPI.Destroy;
 begin
-  FHTTPClient.Free;
   inherited;
 end;
 
@@ -153,51 +169,63 @@ function TOpenAIAPI.Post(const Path: string; Body: TJSONObject; Response: TStrin
 var
   Headers: TNetHeaders;
   Stream: TStringStream;
+  Client: THTTPClient;
 begin
   CheckAPI;
-  Headers := GetHeaders + [TNetHeader.Create('Content-Type', 'application/json')];
-  Stream := TStringStream.Create;
-  FHTTPClient.ReceiveDataCallBack := OnReceiveData;
+  Client := GetClient;
   try
-    Stream.WriteString(Body.ToJSON);
-    Stream.Position := 0;
-    Result := FHTTPClient.Post(GetRequestURL(Path), Stream, Response, Headers).StatusCode;
+    Headers := GetHeaders + [TNetHeader.Create('Content-Type', 'application/json')];
+    Stream := TStringStream.Create;
+    Client.ReceiveDataCallBack := OnReceiveData;
+    try
+      Stream.WriteString(Body.ToJSON);
+      Stream.Position := 0;
+      Result := Client.Post(GetRequestURL(Path), Stream, Response, Headers).StatusCode;
+    finally
+      Client.OnReceiveData := nil;
+      Stream.Free;
+    end;
   finally
-    FHTTPClient.OnReceiveData := nil;
-    Stream.Free;
+    Client.Free;
   end;
 end;
 
 function TOpenAIAPI.Get(const Path: string; Response: TStringStream): Integer;
 var
-  Headers: TNetHeaders;
+  Client: THTTPClient;
 begin
   CheckAPI;
-  Headers := GetHeaders;
-  Result := FHTTPClient.Get(GetRequestURL(Path), Response, Headers).StatusCode;
+  Client := GetClient;
+  try
+    Result := Client.Get(GetRequestURL(Path), Response, GetHeaders).StatusCode;
+  finally
+    Client.Free;
+  end;
 end;
 
 function TOpenAIAPI.Post(const Path: string; Body: TMultipartFormData; Response: TStringStream): Integer;
 var
-  Headers: TNetHeaders;
+  Client: THTTPClient;
 begin
   CheckAPI;
-  Headers := GetHeaders;
-  Result := FHTTPClient.Post(GetRequestURL(Path), Body, Response, Headers).StatusCode;
+  Client := GetClient;
+  try
+    Result := Client.Post(GetRequestURL(Path), Body, Response, GetHeaders).StatusCode;
+  finally
+    Client.Free;
+  end;
 end;
 
 function TOpenAIAPI.Post(const Path: string; Response: TStringStream): Integer;
 var
-  Headers: TNetHeaders;
-  Stream: TStringStream;
+  Client: THTTPClient;
 begin
   CheckAPI;
-  Headers := GetHeaders;
-  Stream := nil;
+  Client := GetClient;
   try
-    Result := FHTTPClient.Post(GetRequestURL(Path), Stream, Response, Headers).StatusCode;
+    Result := Client.Post(GetRequestURL(Path), TStream(nil), Response, GetHeaders).StatusCode;
   finally
-    //Stream.Free;
+    Client.Free;
   end;
 end;
 
@@ -257,11 +285,15 @@ end;
 
 function TOpenAIAPI.Delete(const Path: string; Response: TStringStream): Integer;
 var
-  Headers: TNetHeaders;
+  Client: THTTPClient;
 begin
   CheckAPI;
-  Headers := GetHeaders;
-  Result := FHTTPClient.Delete(GetRequestURL(Path), Response, Headers).StatusCode;
+  Client := GetClient;
+  try
+    Result := Client.Delete(GetRequestURL(Path), Response, GetHeaders).StatusCode;
+  finally
+    Client.Free;
+  end;
 end;
 
 function TOpenAIAPI.Delete<TResult>(const Path: string): TResult;
@@ -336,27 +368,40 @@ begin
   end;
 end;
 
+function TOpenAIAPI.GetClient: THTTPClient;
+begin
+  Result := THTTPClient.Create;
+  Result.ProxySettings := FProxySettings;
+  Result.ConnectionTimeout := FConnectionTimeout;
+  Result.ResponseTimeout := FResponseTimeout;
+  Result.SendTimeout := FSendTimeout;
+end;
+
 procedure TOpenAIAPI.GetFile(const Path: string; Response: TStream);
 var
-  Headers: TNetHeaders;
   Code: Integer;
   Strings: TStringStream;
+  Client: THTTPClient;
 begin
   CheckAPI;
-  Headers := GetHeaders;
-  Code := FHTTPClient.Get(GetRequestURL(Path), Response, Headers).StatusCode;
-  case Code of
-    200..299:
-      ; {success}
-  else
-    Strings := TStringStream.Create;
-    try
-      Response.Position := 0;
-      Strings.LoadFromStream(Response);
-      ParseError(Code, Strings.DataString);
-    finally
-      Strings.Free;
+  Client := GetClient;
+  try
+    Code := Client.Get(GetRequestURL(Path), Response, GetHeaders).StatusCode;
+    case Code of
+      200..299:
+        ; {success}
+    else
+      Strings := TStringStream.Create;
+      try
+        Response.Position := 0;
+        Strings.LoadFromStream(Response);
+        ParseError(Code, Strings.DataString);
+      finally
+        Strings.Free;
+      end;
     end;
+  finally
+    Client.Free;
   end;
 end;
 
@@ -451,6 +496,11 @@ begin
   FBaseUrl := Value;
 end;
 
+procedure TOpenAIAPI.SetConnectionTimeout(const Value: Integer);
+begin
+  FConnectionTimeout := Value;
+end;
+
 procedure TOpenAIAPI.SetCustomHeaders(const Value: TNetHeaders);
 begin
   FCustomHeaders := Value;
@@ -459,6 +509,21 @@ end;
 procedure TOpenAIAPI.SetOrganization(const Value: string);
 begin
   FOrganization := Value;
+end;
+
+procedure TOpenAIAPI.SetProxySettings(const Value: TProxySettings);
+begin
+  FProxySettings := Value;
+end;
+
+procedure TOpenAIAPI.SetResponseTimeout(const Value: Integer);
+begin
+  FResponseTimeout := Value;
+end;
+
+procedure TOpenAIAPI.SetSendTimeout(const Value: Integer);
+begin
+  FSendTimeout := Value;
 end;
 
 procedure TOpenAIAPI.SetToken(const Value: string);
