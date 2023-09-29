@@ -36,7 +36,7 @@ This repositorty contains Delphi implementation over [OpenAI](https://beta.opena
 |API|Status|
 |---|---|
 |Models|🟢 Done|
-|Completions|🟢 Done|
+|Completions (Legacy)|🟢 Done|
 |Chat|🟢 Done|
 |Edits|🟢 Done|
 |Images|🟢 Done|
