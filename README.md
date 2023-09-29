@@ -278,7 +278,7 @@ OpenAI.API.Client.ProxySettings := TProxySettings.Create(ProxyHost, ProxyPort, P
 ```
 
 ## Examples
-<img src="https://github.com/HemulGM/ChatGPT/raw/main/preview.png?raw=true" height="400">
+<img src="https://github.com/HemulGM/ChatGPT/raw/main/preview.png?raw=true" width="100%">
 
 [ChatGPT (FMX)](https://github.com/HemulGM/ChatGPT)
 
