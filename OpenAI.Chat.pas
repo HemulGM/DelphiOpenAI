@@ -373,7 +373,7 @@ type
     destructor Destroy; override;
   end;
 
-  TChatEvent = reference to procedure(Chat: TChat; IsDone: Boolean; var Cancel: Boolean);
+  TChatEvent = reference to procedure(var Chat: TChat; IsDone: Boolean; var Cancel: Boolean);
 
   /// <summary>
   /// Given a chat conversation, the model will return a chat completion response.
@@ -389,6 +389,9 @@ type
     /// <summary>
     /// Creates a completion for the chat message
     /// </summary>
+    /// <remarks>
+    /// The Chat object will be nil if all data is received!
+    /// </remarks>
     function CreateStream(ParamProc: TProc<TChatParams>; Event: TChatEvent): Boolean;
   end;
 
@@ -422,7 +425,13 @@ begin
         Line: string;
         Ret: Integer;
       begin
-        TextBuffer := Response.DataString;
+        try
+          TextBuffer := Response.DataString;
+        except
+          // If there is an encoding error, then the data is definitely not all
+          on E: EEncodingError do
+            Exit;
+        end;
         repeat
           Ret := TextBuffer.IndexOf(#10, RetPos);
           if Ret < 0 then

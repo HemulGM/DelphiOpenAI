@@ -111,7 +111,6 @@ type
     property BaseUrl: string read FBaseUrl write SetBaseUrl;
     property Organization: string read FOrganization write SetOrganization;
     property ProxySettings: TProxySettings read FProxySettings write SetProxySettings;
-
     /// <summary> Property to set/get the ConnectionTimeout. Value is in milliseconds.
     ///  -1 - Infinite timeout. 0 - platform specific timeout. Supported by Windows, Linux, Android platforms. </summary>
     property ConnectionTimeout: Integer read FConnectionTimeout write SetConnectionTimeout;
@@ -121,7 +120,6 @@ type
     /// <summary> Property to set/get the ResponseTimeout. Value is in milliseconds.
     ///  -1 - Infinite timeout. 0 - platform specific timeout. Supported by all platforms. </summary>
     property ResponseTimeout: Integer read FResponseTimeout write SetResponseTimeout;
-
     property IsAzure: Boolean read FIsAzure write FIsAzure;
     property AzureApiVersion: string read FAzureApiVersion write FAzureApiVersion;
     property AzureDeployment: string read FAzureDeployment write FAzureDeployment;
@@ -141,12 +139,15 @@ type
 implementation
 
 uses
-  REST.Json;
+  REST.Json, System.NetConsts;
 
 constructor TOpenAIAPI.Create;
 begin
   inherited;
   // Defaults
+  FConnectionTimeout := TURLClient.DefaultConnectionTimeout;
+  FSendTimeout := TURLClient.DefaultSendTimeout;
+  FResponseTimeout := TURLClient.DefaultResponseTimeout;
   FToken := '';
   FBaseUrl := URL_BASE;
   FIsAzure := False;
@@ -375,6 +376,7 @@ begin
   Result.ConnectionTimeout := FConnectionTimeout;
   Result.ResponseTimeout := FResponseTimeout;
   Result.SendTimeout := FSendTimeout;
+  Result.AcceptCharSet := 'utf-8';
 end;
 
 procedure TOpenAIAPI.GetFile(const Path: string; Response: TStream);
