@@ -3,7 +3,7 @@
 interface
 
 uses
-  System.SysUtils, OpenAI.API, OpenAI.API.Params, OpenAI.Files;
+  System.SysUtils, OpenAI.API, OpenAI.API.Params, OpenAI.Files, OpenAI.Types;
 
 type
   TFineTuneCreateParams = class(TJSONParam)
@@ -206,7 +206,7 @@ type
     /// <summary>
     /// Delete a fine-tuned model. You must have the Owner role in your organization.
     /// </summary>
-    function Delete(const Model: string): TDeletedInfo; deprecated 'Use FineTuning';
+    function Delete(const Model: string): TDeletionStatus; deprecated 'Use FineTuning';
   end;
 
 implementation
@@ -226,9 +226,9 @@ begin
   Result := API.Post<TFineTune, TFineTuneCreateParams>('fine-tunes', ParamProc);
 end;
 
-function TFineTunesRoute.Delete(const Model: string): TDeletedInfo;
+function TFineTunesRoute.Delete(const Model: string): TDeletionStatus;
 begin
-  Result := API.Delete<TDeletedInfo>('models/' + Model);
+  Result := API.Delete<TDeletionStatus>('models/' + Model);
 end;
 
 function TFineTunesRoute.List: TFineTunes;

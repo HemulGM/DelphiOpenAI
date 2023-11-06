@@ -1,0 +1,54 @@
+digraph SimpleChat {
+	SimpleChat -> { "Chat.Main" "OpenAI.API.Params" "OpenAI.API" "OpenAI.Audio" "OpenAI.Chat.Functions" "OpenAI.Chat.Functions.Samples" "OpenAI.Chat" "OpenAI.Completions" "OpenAI.Component.Chat" "OpenAI.Edits" "OpenAI.Embeddings" "OpenAI.Engines" "OpenAI.Errors" "OpenAI.Files" "OpenAI.FineTunes" "OpenAI.FineTuning" "OpenAI.Images" "OpenAI.Models" "OpenAI.Moderations" OpenAI "OpenAI.Utils.ChatHistory" "OpenAI.Component.Functions" }
+	"Chat.Main" -> { "REST.Types" "Data.Bind.Components" "Data.Bind.ObjectScope" "REST.Client" OpenAI "OpenAI.Component.Chat" "OpenAI.Component.Functions" "OpenAI.Chat" }
+	"REST.Types" -> "REST.Consts" [arrowhead=open,style=dashed]
+	"REST.Consts"
+	"Data.Bind.Components" -> { "Data.Bind.Consts" "Data.Bind.ObserverLinks" "Data.Bind.Editors" } [arrowhead=open,style=dashed]
+	"Data.Bind.Consts"
+	"Data.Bind.ObserverLinks" -> "Data.Bind.Components"
+	"Data.Bind.ObserverLinks" -> "Data.Bind.Consts" [arrowhead=open,style=dashed]
+	"Data.Bind.Editors" -> "Data.Bind.Components"
+	"Data.Bind.Editors" -> "Data.Bind.Grid" [arrowhead=open,style=dashed]
+	"Data.Bind.Grid" -> "Data.Bind.Components"
+	"Data.Bind.Grid" -> "Data.Bind.Consts" [arrowhead=open,style=dashed]
+	"Data.Bind.ObjectScope" -> "Data.Bind.Components"
+	"Data.Bind.ObjectScope" -> "Data.Bind.Consts" [arrowhead=open,style=dashed]
+	"REST.Client" -> { "Data.Bind.ObjectScope" "Data.Bind.Components" "REST.HttpClient" "REST.Types" "REST.BindSource" }
+	"REST.Client" -> { "Data.Bind.JSON" "REST.Json" "REST.Consts" "REST.Utils" } [arrowhead=open,style=dashed]
+	"REST.HttpClient"
+	"REST.BindSource" -> { "Data.Bind.Components" "Data.Bind.ObjectScope" }
+	"REST.BindSource" -> { "REST.Consts" "REST.Types" } [arrowhead=open,style=dashed]
+	"Data.Bind.JSON"
+	"REST.Json" -> { "REST.Json.Types" "REST.JsonReflect" }
+	"REST.Json.Types" -> "REST.Consts"
+	"REST.JsonReflect" -> "REST.Json.Types"
+	"REST.JsonReflect" -> "REST.Json.Interceptors" [arrowhead=open,style=dashed]
+	"REST.Json.Interceptors" -> "REST.JsonReflect"
+	"REST.Json.Interceptors" -> "REST.Json.Types" [arrowhead=open,style=dashed]
+	"REST.Utils"
+	OpenAI -> { "OpenAI.Completions" "OpenAI.Edits" "OpenAI.Images" "OpenAI.Models" "OpenAI.Embeddings" "OpenAI.API" "OpenAI.Moderations" "OpenAI.Engines" "OpenAI.Files" "OpenAI.FineTunes" "OpenAI.Chat" "OpenAI.Audio" "OpenAI.FineTuning" }
+	"OpenAI.Completions" -> { "OpenAI.API.Params" "OpenAI.API" }
+	"OpenAI.Completions" -> "REST.Json" [arrowhead=open,style=dashed]
+	"OpenAI.API.Params" -> { "REST.JsonReflect" "REST.Json.Interceptors" }
+	"OpenAI.API" -> { "OpenAI.Errors" "OpenAI.API.Params" }
+	"OpenAI.API" -> "REST.Json" [arrowhead=open,style=dashed]
+	"OpenAI.Errors"
+	"OpenAI.Edits" -> { "OpenAI.API.Params" "OpenAI.API" }
+	"OpenAI.Images" -> { "OpenAI.API.Params" "OpenAI.API" }
+	"OpenAI.Models" -> "OpenAI.API"
+	"OpenAI.Embeddings" -> { "OpenAI.API.Params" "OpenAI.API" }
+	"OpenAI.Moderations" -> { "OpenAI.API.Params" "OpenAI.API" "REST.Json.Types" }
+	"OpenAI.Engines" -> "OpenAI.API"
+	"OpenAI.Files" -> { "OpenAI.API.Params" "OpenAI.API" }
+	"OpenAI.FineTunes" -> { "OpenAI.API" "OpenAI.API.Params" "OpenAI.Files" }
+	"OpenAI.Chat" -> { "OpenAI.API.Params" "OpenAI.API" "OpenAI.Chat.Functions" "REST.JsonReflect" }
+	"OpenAI.Chat" -> "REST.Json" [arrowhead=open,style=dashed]
+	"OpenAI.Chat.Functions"
+	"OpenAI.Audio" -> { "OpenAI.API.Params" "OpenAI.API" }
+	"OpenAI.FineTuning" -> { "REST.Json" "OpenAI.API" "OpenAI.API.Params" }
+	"OpenAI.Component.Chat" -> { OpenAI "OpenAI.Chat" "OpenAI.Component.Functions" }
+	"OpenAI.Component.Chat" -> "OpenAI.Chat.Functions" [arrowhead=open,style=dashed]
+	"OpenAI.Component.Functions" -> "OpenAI.Chat.Functions"
+	"OpenAI.Chat.Functions.Samples" -> "OpenAI.Chat.Functions"
+	"OpenAI.Utils.ChatHistory" -> "OpenAI.Chat"
+}

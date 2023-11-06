@@ -3,7 +3,7 @@
 interface
 
 uses
-  System.SysUtils, OpenAI.API;
+  System.SysUtils, OpenAI.API, OpenAI.Types;
 
 type
   TModelPermission = class
@@ -83,17 +83,6 @@ type
     property Data: TArray<TModel> read FData write FData;
     property &Object: string read FObject write FObject;
     destructor Destroy; override;
-  end;
-
-  TDeletionStatus = class
-  private
-    FDeleted: Boolean;
-    FId: string;
-    FObject: string;
-  public
-    property Deleted: Boolean read FDeleted write FDeleted;
-    property Id: string read FId write FId;
-    property &Object: string read FObject write FObject;
   end;
 
   TModelsRoute = class(TOpenAIAPIRoute)

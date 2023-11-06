@@ -4,7 +4,7 @@ interface
 
 uses
   System.Classes, System.SysUtils, System.Net.Mime, OpenAI.API.Params,
-  OpenAI.API;
+  OpenAI.API, OpenAI.Types;
 
 {$SCOPEDENUMS ON}
 
@@ -79,10 +79,12 @@ type
     /// </summary>
     property Purpose: string read FPurpose write FPurpose;
     /// <summary>
+    /// DEPRECATED
     /// The current status of the file, which can be either uploaded, processed, pending, error, deleting or deleted.
     /// </summary>
     property Status: string read FStatus write FStatus;
     /// <summary>
+    /// DEPRECATED
     /// Additional details about the status of the file. If the file is in the error state,
     /// this will include a message describing the error.
     /// </summary>
@@ -97,17 +99,6 @@ type
     property Data: TArray<TFile> read FData write FData;
     property &Object: string read FObject write FObject;
     destructor Destroy; override;
-  end;
-
-  TDeletedInfo = class
-  private
-    FDeleted: Boolean;
-    FId: string;
-    FObject: string;
-  public
-    property Deleted: Boolean read FDeleted write FDeleted;
-    property Id: string read FId write FId;
-    property &Object: string read FObject write FObject;
   end;
 
   TFilesRoute = class(TOpenAIAPIRoute)
@@ -125,7 +116,7 @@ type
     /// <summary>
     /// Delete a file.
     /// </summary>
-    function Delete(const FileId: string = ''): TDeletedInfo;
+    function Delete(const FileId: string = ''): TDeletionStatus;
     /// <summary>
     /// Returns information about a specific file.
     /// </summary>
@@ -145,9 +136,9 @@ begin
   Result := API.PostForm<TFile, TFileUploadParams>('files', ParamProc);
 end;
 
-function TFilesRoute.Delete(const FileId: string): TDeletedInfo;
+function TFilesRoute.Delete(const FileId: string): TDeletionStatus;
 begin
-  Result := API.Delete<TDeletedInfo>('files/' + FileId);
+  Result := API.Delete<TDeletionStatus>('files/' + FileId);
 end;
 
 procedure TFilesRoute.Download(const FileId: string; Stream: TStream);

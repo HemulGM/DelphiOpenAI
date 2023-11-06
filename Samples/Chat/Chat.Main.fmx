@@ -1,0 +1,92 @@
+object FormChat: TFormChat
+  Left = 0
+  Top = 0
+  Caption = 'Simple Chat GPT'
+  ClientHeight = 289
+  ClientWidth = 641
+  FormFactor.Width = 320
+  FormFactor.Height = 480
+  FormFactor.Devices = [Desktop]
+  OnCreate = FormCreate
+  DesignerMasterStyle = 0
+  object MemoMessages: TMemo
+    Touch.InteractiveGestures = [Pan, LongTap, DoubleTap]
+    DataDetectorTypes = []
+    TextSettings.WordWrap = True
+    Position.X = 8.000000000000000000
+    Position.Y = 8.000000000000000000
+    Size.Width = 625.000000000000000000
+    Size.Height = 217.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 2
+    Viewport.Width = 621.000000000000000000
+    Viewport.Height = 213.000000000000000000
+  end
+  object MemoMessage: TMemo
+    Touch.InteractiveGestures = [Pan, LongTap, DoubleTap]
+    DataDetectorTypes = []
+    TextSettings.WordWrap = True
+    Position.X = 8.000000000000000000
+    Position.Y = 233.000000000000000000
+    Size.Width = 537.000000000000000000
+    Size.Height = 50.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 3
+    Viewport.Width = 533.000000000000000000
+    Viewport.Height = 46.000000000000000000
+  end
+  object ButtonSend: TButton
+    Position.X = 553.000000000000000000
+    Position.Y = 233.000000000000000000
+    TabOrder = 5
+    Text = 'Send'
+    OnClick = ButtonSendClick
+  end
+  object ButtonStreamSend: TButton
+    Position.X = 553.000000000000000000
+    Position.Y = 259.000000000000000000
+    TabOrder = 4
+    Text = 'StreamSend'
+    OnClick = ButtonStreamSendClick
+  end
+  object AniIndicatorBusy: TAniIndicator
+    Align = Center
+    Enabled = True
+    Visible = False
+  end
+  object OpenAIClient1: TOpenAIClient
+    Token = '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'
+    BaseURL = 'https://api.openai.com/v1'
+    Left = 168
+    Top = 104
+  end
+  object OpenAIChat1: TOpenAIChat
+    Client = OpenAIClient1
+    Functions = OpenAIChatFunctions1
+    Model = 'gpt-3.5-turbo'
+    Temperature = 1.000000000000000000
+    TopP = 1.000000000000000000
+    OnChat = OpenAIChat1Chat
+    OnChatDelta = OpenAIChat1ChatDelta
+    OnError = OpenAIChat1Error
+    OnBeginWork = OpenAIChat1BeginWork
+    OnEndWork = OpenAIChat1EndWork
+    Left = 264
+    Top = 104
+  end
+  object OpenAIChatFunctions1: TOpenAIChatFunctions
+    Items = <
+      item
+        Description = 'Get the current weather in a given location'
+        Name = 'get_current_weather'
+        Parameters = 
+          '{'#13#10'  "type": "object",'#13#10'  "properties": {'#13#10'      "location": {"t' +
+          'ype": "string", "description": "The city and state, e.g. San Fra' +
+          'ncisco, CA"},'#13#10'      "unit": {"type": "string", "enum": ["celsiu' +
+          's", "fahrenheit"]}'#13#10'  },'#13#10'  "required": ["location"]'#13#10'}'
+        OnFunctionExecute = OpenAIChatFunctions1Items0FunctionExecute
+      end>
+    Left = 384
+    Top = 104
+  end
+end

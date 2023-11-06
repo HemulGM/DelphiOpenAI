@@ -99,8 +99,9 @@ type
     function Get<TResult: class, constructor; TParams: TJSONParam>(const Path: string; ParamProc: TProc<TParams>): TResult; overload;
     procedure GetFile(const Path: string; Response: TStream); overload;
     function Delete<TResult: class, constructor>(const Path: string): TResult; overload;
-    function Post<TParams: TJSONParam>(const Path: string; ParamProc: TProc<TParams>; Response: TStringStream; Event: TReceiveDataCallback): Boolean; overload;
+    function Post<TParams: TJSONParam>(const Path: string; ParamProc: TProc<TParams>; Response: TStringStream; Event: TReceiveDataCallback = nil): Boolean; overload;
     function Post<TResult: class, constructor; TParams: TJSONParam>(const Path: string; ParamProc: TProc<TParams>): TResult; overload;
+    procedure Post<TParams: TJSONParam>(const Path: string; ParamProc: TProc<TParams>; Response: TStream; Event: TReceiveDataCallback = nil); overload;
     function Post<TResult: class, constructor>(const Path: string): TResult; overload;
     function PostForm<TResult: class, constructor; TParams: TMultipartFormData, constructor>(const Path: string; ParamProc: TProc<TParams>): TResult; overload;
   public
@@ -227,6 +228,54 @@ begin
     Result := Client.Post(GetRequestURL(Path), TStream(nil), Response, GetHeaders).StatusCode;
   finally
     Client.Free;
+  end;
+end;
+
+procedure TOpenAIAPI.Post<TParams>(const Path: string; ParamProc: TProc<TParams>; Response: TStream; Event: TReceiveDataCallback);
+var
+  Params: TParams;
+  Code: Integer;
+  Headers: TNetHeaders;
+  Stream, Strings: TStringStream;
+  Client: THTTPClient;
+begin
+  Params := TParams.Create;
+  try
+    if Assigned(ParamProc) then
+      ParamProc(Params);
+
+    CheckAPI;
+    Client := GetClient;
+    try
+      Client.ReceiveDataCallBack := Event;
+      Headers := GetHeaders + [TNetHeader.Create('Content-Type', 'application/json')];
+      Stream := TStringStream.Create;
+      try
+        Stream.WriteString(Params.JSON.ToJSON);
+        Stream.Position := 0;
+        Code := Client.Post(GetRequestURL(Path), Stream, Response, Headers).StatusCode;
+        case Code of
+          200..299:
+            ; {success}
+        else
+          Strings := TStringStream.Create;
+          try
+            Response.Position := 0;
+            Strings.LoadFromStream(Response);
+            ParseError(Code, Strings.DataString);
+          finally
+            Strings.Free;
+          end;
+        end;
+      finally
+        Client.OnReceiveData := nil;
+        Stream.Free;
+      end;
+    finally
+      Client.Free;
+    end;
+  finally
+    Params.Free;
   end;
 end;
 

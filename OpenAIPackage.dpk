@@ -1,0 +1,60 @@
+﻿package OpenAIPackage;
+
+{$R *.res}
+{$IFDEF IMPLICITBUILDING This IFDEF should not be used by users}
+{$ALIGN 8}
+{$ASSERTIONS ON}
+{$BOOLEVAL OFF}
+{$DEBUGINFO OFF}
+{$EXTENDEDSYNTAX ON}
+{$IMPORTEDDATA ON}
+{$IOCHECKS ON}
+{$LOCALSYMBOLS ON}
+{$LONGSTRINGS ON}
+{$OPENSTRINGS ON}
+{$OPTIMIZATION OFF}
+{$OVERFLOWCHECKS ON}
+{$RANGECHECKS ON}
+{$REFERENCEINFO ON}
+{$SAFEDIVIDE OFF}
+{$STACKFRAMES ON}
+{$TYPEDADDRESS OFF}
+{$VARSTRINGCHECKS ON}
+{$WRITEABLECONST OFF}
+{$MINENUMSIZE 1}
+{$IMAGEBASE $400000}
+{$DEFINE DEBUG}
+{$ENDIF IMPLICITBUILDING}
+{$IMPLICITBUILD ON}
+
+requires
+  rtl,
+  RESTComponents;
+
+contains
+  OpenAI.API.Params in 'OpenAI.API.Params.pas',
+  OpenAI.API in 'OpenAI.API.pas',
+  OpenAI.Audio in 'OpenAI.Audio.pas',
+  OpenAI.Chat.Functions in 'OpenAI.Chat.Functions.pas',
+  OpenAI.Chat.Functions.Samples in 'OpenAI.Chat.Functions.Samples.pas',
+  OpenAI.Chat in 'OpenAI.Chat.pas',
+  OpenAI.Completions in 'OpenAI.Completions.pas',
+  OpenAI.Component.Chat in 'OpenAI.Component.Chat.pas',
+  OpenAI.Component.Reg in 'OpenAI.Component.Reg.pas',
+  OpenAI.Edits in 'OpenAI.Edits.pas',
+  OpenAI.Embeddings in 'OpenAI.Embeddings.pas',
+  OpenAI.Engines in 'OpenAI.Engines.pas',
+  OpenAI.Errors in 'OpenAI.Errors.pas',
+  OpenAI.Files in 'OpenAI.Files.pas',
+  OpenAI.FineTunes in 'OpenAI.FineTunes.pas',
+  OpenAI.FineTuning in 'OpenAI.FineTuning.pas',
+  OpenAI.Images in 'OpenAI.Images.pas',
+  OpenAI.Models in 'OpenAI.Models.pas',
+  OpenAI.Moderations in 'OpenAI.Moderations.pas',
+  OpenAI in 'OpenAI.pas',
+  OpenAI.Utils.ChatHistory in 'OpenAI.Utils.ChatHistory.pas',
+  OpenAI.Component.Functions in 'OpenAI.Component.Functions.pas',
+  OpenAI.Assistants in 'OpenAI.Assistants.pas';
+
+end.
+

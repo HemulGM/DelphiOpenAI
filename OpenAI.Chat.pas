@@ -10,56 +10,53 @@ uses
 
 type
   /// <summary>
-  ///   Type of message role
+  /// Type of message role
   /// </summary>
   TMessageRole = (
     /// <summary>
-    ///   System message
+    /// System message
     /// </summary>
     System,
     /// <summary>
-    ///   User message
+    /// User message
     /// </summary>
     User,
     /// <summary>
-    ///   Assistant message
+    /// Assistant message
     /// </summary>
     Assistant,
     /// <summary>
-    ///   Func message. For models avaliable functions
+    /// Func message. For models avaliable functions
     /// </summary>
     Func);
 
-  /// <summary>
-  ///   Helper for TMassageRole enum
-  /// </summary>
   TMessageRoleHelper = record helper for TMessageRole
     function ToString: string;
     class function FromString(const Value: string): TMessageRole; static;
   end;
 
   /// <summary>
-  ///   Finish reason
+  /// Finish reason
   /// </summary>
   TFinishReason = (
     /// <summary>
-    ///   API returned complete model output
+    /// API returned complete model output
     /// </summary>
     Stop,
     /// <summary>
-    ///   Incomplete model output due to max_tokens parameter or token limit
+    /// Incomplete model output due to max_tokens parameter or token limit
     /// </summary>
     Length,
     /// <summary>
-    ///   The model decided to call a function
+    /// The model decided to call a function
     /// </summary>
     FunctionCall,
     /// <summary>
-    ///   Omitted content due to a flag from our content filters
+    /// Omitted content due to a flag from our content filters
     /// </summary>
     ContentFilter,
     /// <summary>
-    ///   API response still in progress or incomplete
+    /// API response still in progress or incomplete
     /// </summary>
     Null);
 
@@ -76,9 +73,6 @@ type
 
   TFunctionCallType = (None, Auto, Func);
 
-  /// <summary>
-  ///   Class of function call
-  /// </summary>
   TFunctionCall = record
   private
     FFuncName: string;
@@ -139,10 +133,25 @@ type
     property Tag: string read FTag write FTag;
     class function Create(Role: TMessageRole; const Content: string; const Name: string = ''): TChatMessageBuild; static;
     //Help functions
+    /// <summary>
+    /// From user
+    /// </summary>
     class function User(const Content: string; const Name: string = ''): TChatMessageBuild; static;
+    /// <summary>
+    /// From system
+    /// </summary>
     class function System(const Content: string; const Name: string = ''): TChatMessageBuild; static;
+    /// <summary>
+    /// From assistant
+    /// </summary>
     class function Assistant(const Content: string; const Name: string = ''): TChatMessageBuild; static;
+    /// <summary>
+    /// Function result
+    /// </summary>
     class function Func(const Content: string; const Name: string = ''): TChatMessageBuild; static;
+    /// <summary>
+    /// Assistant want call function
+    /// </summary>
     class function AssistantFunc(const Name, Arguments: string): TChatMessageBuild; static;
   end;
 
@@ -428,7 +437,8 @@ begin
         try
           TextBuffer := Response.DataString;
         except
-          // If there is an encoding error, then the data is definitely not all
+          // If there is an encoding error, then the data is definitely not all.
+          // This is necessary because the data from the server may not be complete for successful encoding
           on E: EEncodingError do
             Exit;
         end;
@@ -452,8 +462,7 @@ begin
           try
             Event(Chat, IsDone, AAbort);
           finally
-            if Assigned(Chat) then
-              Chat.Free;
+            Chat.Free;
           end;
         until Ret < 0;
       end);
