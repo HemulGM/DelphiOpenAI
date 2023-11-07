@@ -50,6 +50,10 @@ begin
   MemoMessages.Lines.Add('');
   OpenAIChat1.Stream := False;
   OpenAIChat1.Send([TChatMessageBuild.User(MemoMessage.Text)]);
+  {
+  TChatMessageBuild.AssistantTool('', [
+    TChatToolCallBuild.Create('1', 'function', TFunctionCallBuild.Create('func', '[]'))
+    ])   }
 end;
 
 procedure TFormChat.ButtonStreamSendClick(Sender: TObject);

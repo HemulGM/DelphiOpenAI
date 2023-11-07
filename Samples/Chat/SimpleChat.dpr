@@ -26,7 +26,8 @@ uses
   OpenAI.Utils.ChatHistory in '..\..\OpenAI.Utils.ChatHistory.pas',
   OpenAI.Component.Functions in '..\..\OpenAI.Component.Functions.pas',
   OpenAI.Assistants in '..\..\OpenAI.Assistants.pas',
-  OpenAI.Types in '..\..\OpenAI.Types.pas';
+  OpenAI.Types in '..\..\OpenAI.Types.pas',
+  OpenAI.API.ObjectHolder in '..\..\OpenAI.API.ObjectHolder.pas';
 
 {$R *.res}
 

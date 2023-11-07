@@ -286,6 +286,7 @@
         <DCCReference Include="..\..\OpenAI.Component.Functions.pas"/>
         <DCCReference Include="..\..\OpenAI.Assistants.pas"/>
         <DCCReference Include="..\..\OpenAI.Types.pas"/>
+        <DCCReference Include="..\..\OpenAI.API.ObjectHolder.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

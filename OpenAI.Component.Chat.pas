@@ -4,7 +4,8 @@ interface
 
 uses
   System.SysUtils, System.Classes, System.SyncObjs, System.Generics.Collections,
-  System.Threading, OpenAI, OpenAI.Chat, OpenAI.Component.Functions;
+  System.Threading, OpenAI, OpenAI.Chat, OpenAI.Component.Functions,
+  OpenAI.API.ObjectHolder;
 
 type
   TChat = OpenAI.Chat.TChat;
@@ -18,12 +19,6 @@ type
   TOnError = procedure(Sender: TObject; Error: Exception) of object;
 
   ExceptionChatBusy = class(Exception);
-
-  TOpenAIChatCustom = class;
-
-  TOpenAIChatCustomList = class(TThreadList<TOpenAIChatCustom>)
-    function Contains(const Value: TOpenAIChatCustom): Boolean;
-  end;
 
   TOpenAIChatCustom = class(TComponent)
   private
@@ -172,9 +167,6 @@ implementation
 uses
   OpenAI.Chat.Functions;
 
-var
-  FChats: TOpenAIChatCustomList;
-
 { TOpenAIChatCustom }
 
 procedure TOpenAIChatCustom.CheckTask;
@@ -196,13 +188,11 @@ begin
   FPresencePenalty := 0;
   FFrequencyPenalty := 0;
   FSynchronize := True;
-  FChats.Add(Self);
 end;
 
 destructor TOpenAIChatCustom.Destroy;
 begin
   FDoStreamStop := True;
-  FChats.Remove(Self);
   if Assigned(FTask) then
   begin
     var WTask := FTask;
@@ -271,11 +261,14 @@ begin
   var FPresencePenalty := Self.FPresencePenalty;
   var FFrequencyPenalty := Self.FFrequencyPenalty;
   var FUser := Self.FUser;
-  var FFunctions: TArray<IChatFunction> := [];
-  if Assigned(Self.FFunctions) then
-    FFunctions := Self.FFunctions.GetList;
-  FTask := TTask.Create(
-    procedure
+  var FChatTools: TArray<TChatToolParam> := [];
+
+  if Assigned(FFunctions) then
+    for var Item in FFunctions.GetList do
+      FChatTools := FChatTools + [TChatToolFunctionParam.Create(Item)];
+
+  FTask := TaskRun(Self,
+    procedure(Holder: IComponentHolder)
     begin
       try
         var Chat: TChat;
@@ -293,10 +286,10 @@ begin
               Params.PresencePenalty(FPresencePenalty);
               Params.FrequencyPenalty(FFrequencyPenalty);
               Params.User(FUser);
-              if Length(FFunctions) > 0 then
-                Params.Functions(FFunctions);
+              if Length(FChatTools) > 0 then
+                Params.Tools(FChatTools);
             end);
-          if not FChats.Contains(CurrentChat) then
+          if not Holder.IsLive then
           begin
             Chat.Free;
             Exit;
@@ -307,11 +300,11 @@ begin
             if FSync then
             begin
               var Err := AcquireExceptionObject;
-              TThread.ForceQueue(nil,
+              Queue(
                 procedure
                 begin
                   try
-                    if FChats.Contains(CurrentChat) then
+                    if Holder.IsLive then
                       CurrentChat.DoError(E);
                   finally
                     Err.Free;
@@ -320,18 +313,18 @@ begin
             end
             else
             begin
-              if FChats.Contains(CurrentChat) then
+              if Holder.IsLive then
                 CurrentChat.DoError(E);
             end;
             Exit;
           end;
         end;
         if FSync then
-          TThread.ForceQueue(nil,
+          Queue(
             procedure
             begin
               try
-                if FChats.Contains(CurrentChat) then
+                if Holder.IsLive then
                   CurrentChat.DoChat(Chat);
               finally
                 Chat.Free;
@@ -339,13 +332,13 @@ begin
             end)
         else
         try
-          if FChats.Contains(CurrentChat) then
+          if Holder.IsLive then
             CurrentChat.DoChat(Chat);
         finally
           Chat.Free;
         end;
       finally
-        if FChats.Contains(CurrentChat) then
+        if Holder.IsLive then
           CurrentChat.DoEndWork;
       end;
     end);
@@ -367,13 +360,15 @@ begin
   var FPresencePenalty := Self.FPresencePenalty;
   var FFrequencyPenalty := Self.FFrequencyPenalty;
   var FUser := Self.FUser;
-  var FFunctions: TArray<IChatFunction> := [];
-  if Assigned(Self.FFunctions) then
-    FFunctions := Self.FFunctions.GetList;
+  var FChatTools: TArray<TChatToolParam> := [];
+
+  if Assigned(FFunctions) then
+    for var Item in FFunctions.GetList do
+      FChatTools := FChatTools + [TChatToolFunctionParam.Create(Item)];
 
   FDoStreamStop := False;
-  FTask := TTask.Create(
-    procedure
+  FTask := TaskRun(Self,
+    procedure(Holder: IComponentHolder)
     begin
       try
         try
@@ -391,8 +386,8 @@ begin
               Params.PresencePenalty(FPresencePenalty);
               Params.FrequencyPenalty(FFrequencyPenalty);
               Params.User(FUser);
-              if Length(FFunctions) > 0 then
-                Params.Functions(FFunctions);
+              if Length(FChatTools) > 0 then
+                Params.Tools(FChatTools);
             end,
             procedure(var Chat: TChat; IsDone: Boolean; var Cancel: Boolean)
             begin
@@ -401,7 +396,7 @@ begin
                 Cancel := True;
                 Exit;
               end;
-              if not FChats.Contains(CurrentChat) then
+              if not Holder.IsLive then
               begin
                 Cancel := True;
                 Exit;
@@ -410,11 +405,11 @@ begin
               begin
                 var FChat := Chat;
                 Chat := nil;
-                TThread.ForceQueue(nil,
+                Queue(
                   procedure
                   begin
                     try
-                      if FChats.Contains(CurrentChat) then
+                      if Holder.IsLive then
                         CurrentChat.DoChatDelta(FChat, IsDone);
                     finally
                       FChat.Free;
@@ -423,7 +418,7 @@ begin
               end
               else
               begin
-                if FChats.Contains(CurrentChat) then
+                if Holder.IsLive then
                   CurrentChat.DoChatDelta(Chat, IsDone);
               end;
             end);
@@ -435,11 +430,11 @@ begin
             if FSync then
             begin
               var Err := AcquireExceptionObject;
-              TThread.ForceQueue(nil,
+              Queue(
                 procedure
                 begin
                   try
-                    if FChats.Contains(CurrentChat) then
+                    if Holder.IsLive then
                       CurrentChat.DoError(E);
                   finally
                     Err.Free;
@@ -448,14 +443,14 @@ begin
             end
             else
             begin
-              if FChats.Contains(CurrentChat) then
+              if Holder.IsLive then
                 CurrentChat.DoError(E);
             end;
             Exit;
           end;
         end;
       finally
-        if FChats.Contains(CurrentChat) then
+        if Holder.IsLive then
           CurrentChat.DoEndWork;
       end;
     end);
@@ -552,24 +547,6 @@ procedure TOpenAIChatCustom.StopSream;
 begin
   FDoStreamStop := True;
 end;
-
-{ TOpenAIChatCustomList }
-
-function TOpenAIChatCustomList.Contains(const Value: TOpenAIChatCustom): Boolean;
-begin
-  var List := LockList;
-  try
-    Result := List.Contains(Value);
-  finally
-    UnlockList;
-  end;
-end;
-
-initialization
-  FChats := TOpenAIChatCustomList.Create;
-
-finalization
-  FChats.Free;
 
 end.
 
