@@ -176,6 +176,47 @@ type
     class function Create(const Name, Description: string; const ParametersJSON: string): TChatFunctionBuild; static;
   end;
 
+  TChatResponseFormat = (Text, JSONObject);
+
+  TChatResponseFormatHelper = record helper for TChatResponseFormat
+    function ToString: string; inline;
+  end;
+
+  TChatToolParam = class(TJSONParam)
+  protected
+    /// <summary>
+    /// The type of the tool. Currently, only function is supported.
+    /// </summary>
+    function &Type(const Value: string): TChatToolParam;
+  end;
+
+  TChatToolFunctionParam = class(TChatToolParam)
+    /// <summary>
+    /// The type of the tool. Currently, only function is supported.
+    /// </summary>
+    function &Function(const Value: IChatFunction): TChatToolFunctionParam;
+    constructor Create; override;
+  end;
+
+  TChatToolChoiceParam = record
+  private
+    FFuncName: string;
+    FType: TFunctionCallType;
+  public
+    /// <summary>
+    /// The model does not call a function, and responds to the end-user
+    /// </summary>
+    class function None: TChatToolChoiceParam; static;
+    /// <summary>
+    /// The model can pick between an end-user or calling a function
+    /// </summary>
+    class function Auto: TChatToolChoiceParam; static;
+    /// <summary>
+    /// Forces the model to call that function
+    /// </summary>
+    class function Func(const Name: string): TChatToolChoiceParam; static;
+  end;
+
   TChatParams = class(TJSONParam)
     /// <summary>
     /// ID of the model to use. See the model endpoint compatibility table for details on which models work with the Chat API.
@@ -189,20 +230,34 @@ type
     /// <summary>
     /// A list of functions the model may generate JSON inputs for.
     /// </summary>
-    function Functions(const Value: TArray<IChatFunction>): TChatParams;
+    function Functions(const Value: TArray<IChatFunction>): TChatParams; deprecated;
     /// <summary>
     /// Controls how the model responds to function calls. none means the model does not call a function,
     /// and responds to the end-user. auto means the model can pick between an end-user or calling a function.
     /// Specifying a particular function via {"name": "my_function"} forces the model to call that function.
     /// none is the default when no functions are present. auto is the default if functions are present.
     /// </summary>
-    function FunctionCall(const Value: TFunctionCall): TChatParams;
+    function FunctionCall(const Value: TFunctionCall): TChatParams; deprecated;
     /// <summary>
     /// What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random,
     /// while lower values like 0.2 will make it more focused and deterministic.
     /// We generally recommend altering this or top_p but not both.
     /// </summary>
     function Temperature(const Value: Single = 1): TChatParams;
+    /// <summary>
+    /// A list of tools the model may call. Currently, only functions are supported as a tool.
+    /// Use this to provide a list of functions the model may generate JSON inputs for.
+    /// </summary>
+    function Tools(const Value: TArray<TChatToolParam>): TChatParams;
+    /// <summary>
+    /// Controls which (if any) function is called by the model.
+    /// "none" means the model will not call a function and instead generates a message.
+    /// "auto" means the model can pick between generating a message or calling a function.
+    /// Specifying a particular function via {"type: "function", "function": {"name": "my_function"}}
+    /// forces the model to call that function.
+    /// "none" is the default when no functions are present. "auto" is the default if functions are present.
+    /// </summary>
+    function ToolChoice(const Value: TChatToolChoiceParam): TChatParams;
     /// <summary>
     /// An alternative to sampling with temperature, called nucleus sampling, where the model considers the
     /// results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10%
@@ -219,6 +274,25 @@ type
     /// data-only server-sent events as they become available, with the stream terminated by a data: [DONE] message.
     /// </summary>
     function Stream(const Value: Boolean = True): TChatParams;
+    /// <summary>
+    /// An object specifying the format that the model must output. Used to enable JSON mode.
+    /// Setting to json_object enables JSON mode. This guarantees that the message the
+    /// model generates is valid JSON.
+    /// Note that your system prompt must still instruct the model to produce JSON,
+    /// and to help ensure you don't forget, the API will throw an error if the string JSON
+    /// does not appear in your system message. Also note that the message content may be
+    /// partial (i.e. cut off) if finish_reason="length", which indicates the generation
+    /// exceeded max_tokens or the conversation exceeded the max context length.
+    /// Must be one of text or json_object.
+    /// </summary>
+    function ResponseFormat(const Value: TChatResponseFormat): TChatParams;
+    /// <summary>
+    /// This feature is in Beta. If specified, our system will make a best effort to sample
+    /// deterministically, such that repeated requests with the same seed and parameters
+    /// should return the same result. Determinism is not guaranteed, and you should refer
+    /// to the system_fingerprint response parameter to monitor changes in the backend.
+    /// </summary>
+    function Seed(const Value: Integer): TChatParams;
     /// <summary>
     /// Up to 4 sequences where the API will stop generating further tokens.
     /// </summary>
@@ -540,6 +614,13 @@ begin
   Result := TChatParams(Add('presence_penalty', Value));
 end;
 
+function TChatParams.ResponseFormat(const Value: TChatResponseFormat): TChatParams;
+begin
+  var VJO := TJSONParam.Create;
+  VJO.Add('type', Value.ToString);
+  Result := TChatParams(Add('response_format', VJO));
+end;
+
 function TChatParams.Messages(const Value: TArray<TChatMessageBuild>): TChatParams;
 var
   Item: TChatMessageBuild;
@@ -568,6 +649,11 @@ begin
   Result := TChatParams(Add('messages', Items));
 end;
 
+function TChatParams.Seed(const Value: Integer): TChatParams;
+begin
+  Result := TChatParams(Add('seed', Value));
+end;
+
 function TChatParams.Stop(const Value: TArray<string>): TChatParams;
 begin
   Result := TChatParams(Add('stop', Value));
@@ -586,6 +672,32 @@ end;
 function TChatParams.Temperature(const Value: Single): TChatParams;
 begin
   Result := TChatParams(Add('temperature', Value));
+end;
+
+function TChatParams.ToolChoice(const Value: TChatToolChoiceParam): TChatParams;
+begin
+  case Value.FType of
+    TFunctionCallType.None:
+      Result := TChatParams(Add('tool_choice', 'none'));
+    TFunctionCallType.Auto:
+      Result := TChatParams(Add('tool_choice', 'auto'));
+    TFunctionCallType.Func:
+      begin
+        var VJO := TJSONParam.Create;
+        var VJF := TJSONParam.Create;
+        VJO.Add('type', 'function');
+        VJF.Add('name', Value.FFuncName);
+        VJO.Add('function', VJF);
+        Result := TChatParams(Add('tool_choice', VJO));
+      end;
+  else
+    Result := Self;
+  end;
+end;
+
+function TChatParams.Tools(const Value: TArray<TChatToolParam>): TChatParams;
+begin
+  Result := TChatParams(Add('tools', TArray<TJSONParam>(Value)));
 end;
 
 function TChatParams.TopP(const Value: Single): TChatParams;
@@ -784,6 +896,56 @@ begin
     TFinishReason.Null:
       Exit('null');
   end;
+end;
+
+{ TChatResponseFormatHelper }
+
+function TChatResponseFormatHelper.ToString: string;
+begin
+  case Self of
+    TChatResponseFormat.Text:
+      Exit('text');
+    TChatResponseFormat.JSONObject:
+      Exit('json_object');
+  end;
+end;
+
+{ TChatToolParam }
+
+function TChatToolParam.&Type(const Value: string): TChatToolParam;
+begin
+  Result := TChatToolParam(Add('type', Value));
+end;
+
+{ TChatToolFunctionParam }
+
+constructor TChatToolFunctionParam.Create;
+begin
+  inherited;
+  &Type('function');
+end;
+
+function TChatToolFunctionParam.&Function(const Value: IChatFunction): TChatToolFunctionParam;
+begin
+  Result := TChatToolFunctionParam(Add('function', TChatFunction.ToJson(Value)));
+end;
+
+{ TChatToolChoiceParam }
+
+class function TChatToolChoiceParam.Auto: TChatToolChoiceParam;
+begin
+  Result.FType := TFunctionCallType.Auto;
+end;
+
+class function TChatToolChoiceParam.Func(const Name: string): TChatToolChoiceParam;
+begin
+  Result.FType := TFunctionCallType.Func;
+  Result.FFuncName := Name;
+end;
+
+class function TChatToolChoiceParam.None: TChatToolChoiceParam;
+begin
+  Result.FType := TFunctionCallType.None;
 end;
 
 end.
