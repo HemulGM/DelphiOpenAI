@@ -15,7 +15,8 @@ type
     function ToString: string;
   end;
 
-  TImageSize = (x256, x512, x1024);
+  {             |       dall-e-2         |          dall-e-3         | }
+  TImageSize = (s256x256, s512x512, s1024x1024, s1792x1024, s1024x1792);
 
   TImageSizeHelper = record helper for TImageSize
     function ToString: string;
@@ -23,29 +24,49 @@ type
 
   TImageCreateParams = class(TJSONParam)
     /// <summary>
-    /// A text description of the desired image(s). The maximum length is 1000 characters.
+    /// A text description of the desired image(s).
+    /// The maximum length is 1000 characters for "dall-e-2" and 4000 characters for "dall-e-3".
     /// </summary>
     function Prompt(const Value: string): TImageCreateParams; overload;
     /// <summary>
-    /// The number of images to generate. Must be between 1 and 10.
+    /// The model to use for image generation.  Defaults to "dall-e-2".
     /// </summary>
-    function N(const Value: Integer = 1): TImageCreateParams;
+    function Model(const Value: string): TImageCreateParams; overload;
     /// <summary>
-    /// The size of the generated images. Must be one of 256x256, 512x512, or 1024x1024.
+    /// The number of images to generate. Must be between 1 and 10. For "dall-e-3", only "n=1" is supported.
+    /// </summary>
+    /// <summary>
+    function N(const Value: Integer = 1): TImageCreateParams;
+    /// The quality of the image that will be generated.
+    /// "hd" creates images with finer details and greater consistency across the image.
+    /// This param is only supported for "dall-e-3".
+    /// </summary>
+    function Quality(const Value: string): TImageCreateParams; overload;
+    /// <summary>
+    /// The size of the generated images. Must be one of "256x256", "512x512", or "1024x1024" for "dall-e-2".
+    /// Must be one of "1024x1024", "1792x1024", or "1024x1792" for "dall-e-3" models.
     /// </summary>
     function Size(const Value: string): TImageCreateParams; overload;
     /// <summary>
-    /// The size of the generated images. Must be one of 256x256, 512x512, or 1024x1024.
+    /// The size of the generated images. Must be one of "256x256", "512x512", or "1024x1024" for "dall-e-2".
+    /// Must be one of "1024x1024", "1792x1024", or "1024x1792" for "dall-e-3" models.
     /// </summary>
-    function Size(const Value: TImageSize = TImageSize.x256): TImageCreateParams; overload;
+    function Size(const Value: TImageSize = TImageSize.s1024x1024): TImageCreateParams; overload;
     /// <summary>
-    /// The format in which the generated images are returned. Must be one of url or b64_json
+    /// The format in which the generated images are returned. Must be one of "url" or "b64_json"
     /// </summary>
     function ResponseFormat(const Value: string): TImageCreateParams; overload;
     /// <summary>
-    /// The format in which the generated images are returned. Must be one of url or b64_json
+    /// The format in which the generated images are returned. Must be one of "url" or "b64_json"
     /// </summary>
     function ResponseFormat(const Value: TImageResponseFormat = TImageResponseFormat.Url): TImageCreateParams; overload;
+    /// <summary>
+    /// The style of the generated images. Must be one of "vivid" or "natural".
+    /// Vivid causes the model to lean towards generating hyper-real and dramatic images.
+    /// Natural causes the model to produce more natural, less hyper-real looking images.
+    /// This param is only supported for "dall-e-3". Defaults to "vivid".
+    /// </summary>
+    function Style(const Value: string): TImageCreateParams; overload;
     /// <summary>
     /// A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse.
     /// </summary>
@@ -65,7 +86,7 @@ type
     /// <summary>
     /// The size of the generated images. Must be one of 256x256, 512x512, or 1024x1024.
     /// </summary>
-    function Resolution(const Value: TImageSize = TImageSize.x256): TImageAzureCreateParams; overload;
+    function Resolution(const Value: TImageSize = TImageSize.s256x256): TImageAzureCreateParams; overload;
     /// <summary>
     /// The format in which the generated images are returned. Must be one of url or b64_json
     /// </summary>
@@ -107,6 +128,10 @@ type
     /// </summary>
     function Mask(const Stream: TStream; const FileName: string): TImageEditParams; overload;
     /// <summary>
+    /// The model to use for image generation. Only "dall-e-2" is supported at this time.
+    /// </summary>
+    function Model(const Value: string): TImageEditParams; overload;
+    /// <summary>
     /// A text description of the desired image(s). The maximum length is 1000 characters.
     /// </summary>
     function Prompt(const Value: string): TImageEditParams; overload;
@@ -115,19 +140,19 @@ type
     /// </summary>
     function N(const Value: Integer = 1): TImageEditParams;
     /// <summary>
-    /// The size of the generated images. Must be one of 256x256, 512x512, or 1024x1024.
+    /// The size of the generated images. Must be one of "256x256", "512x512", or "1024x1024".
     /// </summary>
     function Size(const Value: string): TImageEditParams; overload;
     /// <summary>
-    /// The size of the generated images. Must be one of 256x256, 512x512, or 1024x1024.
+    /// The size of the generated images. Must be one of "256x256", "512x512", or "1024x1024".
     /// </summary>
-    function Size(const Value: TImageSize = TImageSize.x256): TImageEditParams; overload;
+    function Size(const Value: TImageSize = TImageSize.s256x256): TImageEditParams; overload;
     /// <summary>
-    /// The format in which the generated images are returned. Must be one of url or b64_json
+    /// The format in which the generated images are returned. Must be one of "url" or "b64_json".
     /// </summary>
     function ResponseFormat(const Value: string): TImageEditParams; overload;
     /// <summary>
-    /// The format in which the generated images are returned. Must be one of url or b64_json.
+    /// The format in which the generated images are returned. Must be one of "url" or "b64_json".
     /// </summary>
     function ResponseFormat(const Value: TImageResponseFormat = TImageResponseFormat.Url): TImageEditParams; overload;
     /// <summary>
@@ -148,23 +173,27 @@ type
     /// </summary>
     function Image(const Stream: TStream; const FileName: string): TImageVariationParams; overload;
     /// <summary>
-    /// The number of images to generate. Must be between 1 and 10.
+    /// The model to use for image generation. Only "dall-e-2" is supported at this time.
+    /// </summary>
+    function Model(const Value: string): TImageVariationParams; overload;
+    /// <summary>
+    /// The number of images to generate. Must be between 1 and 10. For "dall-e-3", only "n=1" is supported.
     /// </summary>
     function N(const Value: Integer = 1): TImageVariationParams;
     /// <summary>
-    /// The size of the generated images. Must be one of 256x256, 512x512, or 1024x1024.
+    /// The size of the generated images. Must be one of "256x256", "512x512", or "1024x1024".
     /// </summary>
     function Size(const Value: string): TImageVariationParams; overload;
     /// <summary>
-    /// The size of the generated images. Must be one of 256x256, 512x512, or 1024x1024.
+    /// The size of the generated images. Must be one of "256x256", "512x512", or "1024x1024".
     /// </summary>
-    function Size(const Value: TImageSize = TImageSize.x256): TImageVariationParams; overload;
+    function Size(const Value: TImageSize = TImageSize.s256x256): TImageVariationParams; overload;
     /// <summary>
-    /// The format in which the generated images are returned. Must be one of url or b64_json
+    /// The format in which the generated images are returned. Must be one of "url" or "b64_json".
     /// </summary>
     function ResponseFormat(const Value: string): TImageVariationParams; overload;
     /// <summary>
-    /// The format in which the generated images are returned. Must be one of url or b64_json.
+    /// The format in which the generated images are returned. Must be one of "url" or "b64_json".
     /// </summary>
     function ResponseFormat(const Value: TImageResponseFormat = TImageResponseFormat.Url): TImageVariationParams; overload;
     /// <summary>
@@ -175,10 +204,14 @@ type
     constructor Create; reintroduce;
   end;
 
+  /// <summary>
+  /// Represents the url or the content of an image generated by the OpenAI API.
+  /// </summary>
   TImageData = class
   private
     FUrl: string;
     FB64_json: string;
+    FRevised_prompt: string;
   public
     /// <summary>
     /// The URL of the generated image, if response_format is url (default).
@@ -188,6 +221,10 @@ type
     /// The base64-encoded JSON of the generated image, if response_format is b64_json.
     /// </summary>
     property B64Json: string read FB64_json write FB64_json;
+    /// <summary>
+    /// The prompt that was used to generate the image, if there was any revision to the prompt.
+    /// </summary>
+    property RevisedPrompt: string read FRevised_prompt write FRevised_prompt;
   end;
 
   TImageGenerations = class
@@ -298,6 +335,11 @@ end;
 
 { TImageCreateParams }
 
+function TImageCreateParams.Model(const Value: string): TImageCreateParams;
+begin
+  Result := TImageCreateParams(Add('model', Value));
+end;
+
 function TImageCreateParams.N(const Value: Integer): TImageCreateParams;
 begin
   Result := TImageCreateParams(Add('n', Value));
@@ -308,6 +350,11 @@ begin
   Result := TImageCreateParams(Add('prompt', Value));
 end;
 
+function TImageCreateParams.Quality(const Value: string): TImageCreateParams;
+begin
+  Result := TImageCreateParams(Add('quality', Value));
+end;
+
 function TImageCreateParams.ResponseFormat(const Value: TImageResponseFormat): TImageCreateParams;
 begin
   Result := ResponseFormat(Value.ToString);
@@ -316,6 +363,11 @@ end;
 function TImageCreateParams.Size(const Value: TImageSize): TImageCreateParams;
 begin
   Result := Size(Value.ToString);
+end;
+
+function TImageCreateParams.Style(const Value: string): TImageCreateParams;
+begin
+  Result := TImageCreateParams(Add('style', Value));
 end;
 
 function TImageCreateParams.Size(const Value: string): TImageCreateParams;
@@ -355,6 +407,12 @@ end;
 function TImageEditParams.Mask(const Stream: TStream; const FileName: string): TImageEditParams;
 begin
   AddStream('mask', Stream, FileName);
+  Result := Self;
+end;
+
+function TImageEditParams.Model(const Value: string): TImageEditParams;
+begin
+  AddFile('model', Value);
   Result := Self;
 end;
 
@@ -425,6 +483,12 @@ begin
   Result := Self;
 end;
 
+function TImageVariationParams.Model(const Value: string): TImageVariationParams;
+begin
+  AddField('model', Value);
+  Result := Self;
+end;
+
 function TImageVariationParams.N(const Value: Integer): TImageVariationParams;
 begin
   AddField('n', Value.ToString);
@@ -449,7 +513,7 @@ begin
   Result := Self;
 end;
 
-function TImageVariationParams.Size(const Value: TImageSize = TImageSize.x256): TImageVariationParams;
+function TImageVariationParams.Size(const Value: TImageSize = TImageSize.s256x256): TImageVariationParams;
 begin
   AddField('size', Value.ToString);
   Result := Self;
@@ -478,12 +542,16 @@ end;
 function TImageSizeHelper.ToString: string;
 begin
   case Self of
-    TImageSize.x256:
+    TImageSize.s256x256:
       Result := '256x256';
-    TImageSize.x512:
+    TImageSize.s512x512:
       Result := '512x512';
-    TImageSize.x1024:
+    TImageSize.s1024x1024:
       Result := '1024x1024';
+    TImageSize.s1792x1024:
+      Result := '1792x1024';
+    TImageSize.s1024x1792:
+      Result := '1024x1792';
   end;
 end;
 
@@ -526,7 +594,7 @@ begin
   Cancel := False;
 
   OperationID := Result.ID;
-  
+
   // Repeat GET requesting the operations-endpoint until we have a "succeeded" response
   while not Cancel do
   begin
