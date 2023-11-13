@@ -36,7 +36,7 @@ This repositorty contains Delphi implementation over [OpenAI](https://beta.opena
 |API|Status|
 |---|---|
 |Models|🟢 Done|
-|Completions|🟢 Done|
+|Completions (Legacy)|🟢 Done|
 |Chat|🟢 Done|
 |Edits|🟢 Done|
 |Images|🟢 Done|
@@ -278,7 +278,7 @@ OpenAI.API.Client.ProxySettings := TProxySettings.Create(ProxyHost, ProxyPort, P
 ```
 
 ## Examples
-<img src="https://github.com/HemulGM/ChatGPT/raw/main/preview.png?raw=true" height="400">
+<img src="https://github.com/HemulGM/ChatGPT/raw/main/preview.png?raw=true" width="100%">
 
 [ChatGPT (FMX)](https://github.com/HemulGM/ChatGPT)
 
