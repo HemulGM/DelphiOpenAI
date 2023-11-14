@@ -38,6 +38,7 @@ This repositorty contains Delphi implementation over [OpenAI](https://beta.opena
 |Models|🟢 Done|
 |Completions (Legacy)|🟢 Done|
 |Chat|🟢 Done|
+|Chat Vision|🟢 Done|
 |Edits|🟢 Done|
 |Images|🟢 Done|
 |Embeddings|🟢 Done|
@@ -47,6 +48,10 @@ This repositorty contains Delphi implementation over [OpenAI](https://beta.opena
 |Fine-tuning|🟢 Done|
 |Moderations|🟢 Done|
 |Engines (Depricated)|🟢 Done|
+|Assistants|🟠 In progress|
+|Threads|🟠 In progress|
+|Messages|🟠 In progress|
+|Runs|🟠 In progress|
 
 </details>
 
