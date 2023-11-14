@@ -130,7 +130,24 @@ type
 
   TMessageContentType = (Text, ImageUrl);
 
-  TImageDetail = (Auto, Low, High);
+  TImageDetail = (
+  /// <summary>
+  /// By default, the model will use the auto setting which will look at the image input size
+  /// and decide if it should use the low or high setting
+  /// </summary>
+    Auto,
+  /// <summary>
+  /// Will disable the “high res” model. The model will receive a low-res 512px x 512px version of the image,
+  /// and represent the image with a budget of 65 tokens. This allows the API to return faster responses and
+  /// consume fewer input tokens for use cases that do not require high detail.
+  /// </summary>
+    Low,
+  /// <summary>
+  /// Will enable “high res” mode, which first allows the model to see the low res image and then
+  /// creates detailed crops of input images as 512px squares based on the input image size.
+  /// Each of the detailed crops uses twice the token budget (65 tokens) for a total of 129 tokens.
+  /// </summary>
+    High);
 
   TImageDetailHelper = record helper for TImageDetail
     function ToString: string; inline;
