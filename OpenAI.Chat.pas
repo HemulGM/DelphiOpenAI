@@ -130,6 +130,12 @@ type
 
   TMessageContentType = (Text, ImageUrl);
 
+  TImageDetail = (Auto, Low, High);
+
+  TImageDetailHelper = record helper for TImageDetail
+    function ToString: string; inline;
+  end;
+
   TMessageContent = record
     /// <summary>
     /// The type of the content part.
@@ -147,11 +153,11 @@ type
     /// Specifies the detail level of the image. Learn more in the Vision guide.
     /// </summary>
     /// <seealso>https://platform.openai.com/docs/guides/vision/low-or-high-fidelity-image-understanding</seealso>
-    Detail: string;
+    Detail: TImageDetail;
 
     class function CreateText(const Text: string): TMessageContent; static;
-    class function CreateImage(const Url: string; const Detail: string = ''): TMessageContent; static;
-    class function CreateImageBase64(const Data: TBase64Data; const Detail: string = ''): TMessageContent; static;
+    class function CreateImage(const Url: string; const Detail: TImageDetail = TImageDetail.Auto): TMessageContent; static;
+    class function CreateImageBase64(const Data: TBase64Data; const Detail: TImageDetail = TImageDetail.Auto): TMessageContent; static;
   end;
 
   TChatMessageBuild = record
@@ -781,8 +787,8 @@ begin
                 var ImageUrl := TJSONObject.Create;
                 ContentItem.AddPair('image_url', ImageUrl);
                 ImageUrl.AddPair('url', Content.Url);
-                if not Content.Detail.IsEmpty then
-                  ImageUrl.AddPair('detail', Content.Detail);
+                if Content.Detail <> TImageDetail.Auto then
+                  ImageUrl.AddPair('detail', Content.Detail.ToString);
               end;
           end;
         end;
@@ -1200,14 +1206,14 @@ end;
 
 { TMessageContent }
 
-class function TMessageContent.CreateImage(const Url, Detail: string): TMessageContent;
+class function TMessageContent.CreateImage(const Url: string; const Detail: TImageDetail): TMessageContent;
 begin
   Result.ContentType := TMessageContentType.ImageUrl;
   Result.Url := Url;
   Result.Detail := Detail;
 end;
 
-class function TMessageContent.CreateImageBase64(const Data: TBase64Data; const Detail: string): TMessageContent;
+class function TMessageContent.CreateImageBase64(const Data: TBase64Data; const Detail: TImageDetail): TMessageContent;
 begin
   Result.ContentType := TMessageContentType.ImageUrl;
   Result.Url := Data.ToString;
@@ -1218,6 +1224,20 @@ class function TMessageContent.CreateText(const Text: string): TMessageContent;
 begin
   Result.ContentType := TMessageContentType.Text;
   Result.Text := Text;
+end;
+
+{ TImageDetailHelper }
+
+function TImageDetailHelper.ToString: string;
+begin
+  case Self of
+    TImageDetail.Auto:
+      Exit('auto');
+    TImageDetail.Low:
+      Exit('low');
+    TImageDetail.High:
+      Exit('high');
+  end;
 end;
 
 end.
