@@ -131,22 +131,22 @@ type
   TMessageContentType = (Text, ImageUrl);
 
   TImageDetail = (
-  /// <summary>
-  /// By default, the model will use the auto setting which will look at the image input size
-  /// and decide if it should use the low or high setting
-  /// </summary>
+    /// <summary>
+    /// By default, the model will use the auto setting which will look at the image input size
+    /// and decide if it should use the low or high setting
+    /// </summary>
     Auto,
-  /// <summary>
-  /// Will disable the “high res” model. The model will receive a low-res 512px x 512px version of the image,
-  /// and represent the image with a budget of 65 tokens. This allows the API to return faster responses and
-  /// consume fewer input tokens for use cases that do not require high detail.
-  /// </summary>
+    /// <summary>
+    /// Will disable the “high res” model. The model will receive a low-res 512px x 512px version of the image,
+    /// and represent the image with a budget of 65 tokens. This allows the API to return faster responses and
+    /// consume fewer input tokens for use cases that do not require high detail.
+    /// </summary>
     Low,
-  /// <summary>
-  /// Will enable “high res” mode, which first allows the model to see the low res image and then
-  /// creates detailed crops of input images as 512px squares based on the input image size.
-  /// Each of the detailed crops uses twice the token budget (65 tokens) for a total of 129 tokens.
-  /// </summary>
+    /// <summary>
+    /// Will enable “high res” mode, which first allows the model to see the low res image and then
+    /// creates detailed crops of input images as 512px squares based on the input image size.
+    /// Each of the detailed crops uses twice the token budget (65 tokens) for a total of 129 tokens.
+    /// </summary>
     High);
 
   TImageDetailHelper = record helper for TImageDetail
@@ -171,10 +171,46 @@ type
     /// </summary>
     /// <seealso>https://platform.openai.com/docs/guides/vision/low-or-high-fidelity-image-understanding</seealso>
     Detail: TImageDetail;
-
+    //helpers
     class function CreateText(const Text: string): TMessageContent; static;
+    /// <summary>
+    /// The Chat Completions API, unlike the Assistants API, is not stateful.
+    /// That means you have to manage the messages (including images) you pass to the model yourself.
+    /// If you want to pass the same image to the model multiple times, you will have to pass the image each time
+    /// you make a request to the API.
+    ///
+    /// For long running conversations, we suggest passing images via URL's instead of base64.
+    /// The latency of the model can also be improved by downsizing your images ahead of time to be less than
+    /// the maximum size they are expected them to be. For low res mode, we expect a 512px x 512px image.
+    /// For high rest mode, the short side of the image should be less than 768px and the long side should be less
+    /// than 2,000px.
+    /// </summary>
     class function CreateImage(const Url: string; const Detail: TImageDetail = TImageDetail.Auto): TMessageContent; overload; static;
+    /// <summary>
+    /// The Chat Completions API, unlike the Assistants API, is not stateful.
+    /// That means you have to manage the messages (including images) you pass to the model yourself.
+    /// If you want to pass the same image to the model multiple times, you will have to pass the image each time
+    /// you make a request to the API.
+    ///
+    /// For long running conversations, we suggest passing images via URL's instead of base64.
+    /// The latency of the model can also be improved by downsizing your images ahead of time to be less than
+    /// the maximum size they are expected them to be. For low res mode, we expect a 512px x 512px image.
+    /// For high rest mode, the short side of the image should be less than 768px and the long side should be less
+    /// than 2,000px.
+    /// </summary>
     class function CreateImage(const Data: TBase64Data; const Detail: TImageDetail = TImageDetail.Auto): TMessageContent; overload; static;
+    /// <summary>
+    /// The Chat Completions API, unlike the Assistants API, is not stateful.
+    /// That means you have to manage the messages (including images) you pass to the model yourself.
+    /// If you want to pass the same image to the model multiple times, you will have to pass the image each time
+    /// you make a request to the API.
+    ///
+    /// For long running conversations, we suggest passing images via URL's instead of base64.
+    /// The latency of the model can also be improved by downsizing your images ahead of time to be less than
+    /// the maximum size they are expected them to be. For low res mode, we expect a 512px x 512px image.
+    /// For high rest mode, the short side of the image should be less than 768px and the long side should be less
+    /// than 2,000px.
+    /// </summary>
     class function CreateImage(const Data: TStream; const FileContentType: string; const Detail: TImageDetail = TImageDetail.Auto): TMessageContent; overload; static;
   end;
 
@@ -190,21 +226,23 @@ type
     FContents: TArray<TMessageContent>;
   public
     /// <summary>
-    /// The role of the messages author. One of system, user, assistant, or function.
+    /// The role of the messages author. One of "system", "user", "assistant", "tool".
     /// </summary>
     property Role: TMessageRole read FRole write FRole;
     /// <summary>
-    /// The contents of the message. content is required for all messages, and may be null for assistant messages with function calls.
+    /// The contents of the message. content is required for all messages, and may be null
+    /// for assistant messages with function calls.
     /// </summary>
     property Content: string read FContent write FContent;
     /// <summary>
-    /// An array of content parts with a defined type, each can be of type text or image_url when passing in images.
-    /// You can pass multiple images by adding multiple image_url content parts.
-    /// Image input is only supported when using the gpt-4-visual-preview model.
+    /// An array of content parts with a defined type, each can be of type "text" or "image_url"
+    /// when passing in images.
+    /// You can pass multiple images by adding multiple "image_url" content parts.
+    /// Image input is only supported when using the "gpt-4-vision-preview" model.
     /// </summary>
     property Contents: TArray<TMessageContent> read FContents write FContents;
     /// <summary>
-    /// The name of the author of this message. name is required if role is function,
+    /// The name of the author of this message. "name" is required if role is "function",
     /// and it should be the name of the function whose response is in the content.
     /// May contain a-z, A-Z, 0-9, and underscores, with a maximum length of 64 characters.
     /// </summary>
