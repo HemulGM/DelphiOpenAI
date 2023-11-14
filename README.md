@@ -174,6 +174,28 @@ OpenAI.Chat.CreateStream(
   end);
 ```
 
+#### Vision
+```Pascal
+var Chat := OpenAI.Chat.Create(
+  procedure(Params: TChatParams)
+  begin
+    Params.Model('gpt-4-vision-preview');
+
+    var Content: TArray<TMessageContent>;
+    Content := Content + [TMessageContent.CreateText(Text)];
+    Content := Content + [TMessageContent.CreateImage(FileToBase64('file path'))];
+
+    Params.Messages([TChatMessageBuild.User(Content)]);
+    Params.MaxTokens(1024);
+  end);
+try
+  for var Choice in Chat.Choices do
+    MemoChat.Lines.Add(Choice.Message.Content);
+finally
+  Chat.Free;
+end;
+```
+
 Review [Chat Documentation](https://platform.openai.com/docs/api-reference/chat) for more info.
 
 ### Images
