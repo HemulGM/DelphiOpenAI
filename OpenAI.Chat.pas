@@ -173,8 +173,9 @@ type
     Detail: TImageDetail;
 
     class function CreateText(const Text: string): TMessageContent; static;
-    class function CreateImage(const Url: string; const Detail: TImageDetail = TImageDetail.Auto): TMessageContent; static;
-    class function CreateImageBase64(const Data: TBase64Data; const Detail: TImageDetail = TImageDetail.Auto): TMessageContent; static;
+    class function CreateImage(const Url: string; const Detail: TImageDetail = TImageDetail.Auto): TMessageContent; overload; static;
+    class function CreateImage(const Data: TBase64Data; const Detail: TImageDetail = TImageDetail.Auto): TMessageContent; overload; static;
+    class function CreateImage(const Data: TStream; const FileContentType: string; const Detail: TImageDetail = TImageDetail.Auto): TMessageContent; overload; static;
   end;
 
   TChatMessageBuild = record
@@ -624,7 +625,7 @@ type
 implementation
 
 uses
-  Rest.Json, System.Rtti;
+  Rest.Json, System.Rtti, OpenAI.Utils.Base64;
 
 { TChatRoute }
 
@@ -1230,7 +1231,12 @@ begin
   Result.Detail := Detail;
 end;
 
-class function TMessageContent.CreateImageBase64(const Data: TBase64Data; const Detail: TImageDetail): TMessageContent;
+class function TMessageContent.CreateImage(const Data: TStream; const FileContentType: string; const Detail: TImageDetail): TMessageContent;
+begin
+  Result := CreateImage(StreamToBase64(Data, FileContentType), Detail);
+end;
+
+class function TMessageContent.CreateImage(const Data: TBase64Data; const Detail: TImageDetail): TMessageContent;
 begin
   Result.ContentType := TMessageContentType.ImageUrl;
   Result.Url := Data.ToString;

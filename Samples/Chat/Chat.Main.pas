@@ -74,7 +74,7 @@ begin
     Content := Content + [TMessageContent.CreateText(MemoMessage.Text)];
 
   for var i := 0 to ListBox1.Count - 1 do
-    Content := Content + [TMessageContent.CreateImageBase64(FileToBase64(ListBox1.ListItems[i].TagString))];
+    Content := Content + [TMessageContent.CreateImage(FileToBase64(ListBox1.ListItems[i].TagString))];
 
   OpenAIChat1.Send([TChatMessageBuild.User(Content)]);
 end;
