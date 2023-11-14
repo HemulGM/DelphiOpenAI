@@ -59,6 +59,7 @@ type
     FItems: TFunctionCollection;
   public
     constructor Create(AOwner: TComponent); override;
+    destructor Destroy; override;
     function GetList: TArray<IChatFunction>;
   published
     property Items: TFunctionCollection read FItems write FItems;
@@ -72,6 +73,12 @@ constructor TOpenAIChatFunctions.Create(AOwner: TComponent);
 begin
   inherited;
   FItems := TFunctionCollection.Create(Self, TFunctionCollectionItem);
+end;
+
+destructor TOpenAIChatFunctions.Destroy;
+begin
+  FItems.Free;
+  inherited;
 end;
 
 function TOpenAIChatFunctions.GetList: TArray<IChatFunction>;

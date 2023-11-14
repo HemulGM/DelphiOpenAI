@@ -14,7 +14,20 @@ type
     property &Object: string read FObject write FObject;
   end;
 
+  TBase64Data = record
+    ContentType: string;
+    Data: string;
+    function ToString: string;
+  end;
+
 implementation
+
+{ TBase64Data }
+
+function TBase64Data.ToString: string;
+begin
+  Result := 'data:' + ContentType + ';base64,' + Data;
+end;
 
 end.
 

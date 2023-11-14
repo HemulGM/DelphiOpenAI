@@ -281,7 +281,8 @@ begin
               Params.Temperature(FTemperature);
               Params.TopP(FTopP);
               Params.N(FN);
-              Params.Stop(FStop);
+              if Length(FStop) > 0 then
+                Params.Stop(FStop);
               Params.MaxTokens(FMaxTokens);
               Params.PresencePenalty(FPresencePenalty);
               Params.FrequencyPenalty(FFrequencyPenalty);
@@ -380,7 +381,8 @@ begin
               Params.Temperature(FTemperature);
               Params.TopP(FTopP);
               Params.N(FN);
-              Params.Stop(FStop);
+              if Length(FStop) > 0 then
+                Params.Stop(FStop);
               Params.Stream;
               Params.MaxTokens(FMaxTokens);
               Params.PresencePenalty(FPresencePenalty);

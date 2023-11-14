@@ -27,7 +27,8 @@ uses
   OpenAI.Component.Functions in '..\..\OpenAI.Component.Functions.pas',
   OpenAI.Assistants in '..\..\OpenAI.Assistants.pas',
   OpenAI.Types in '..\..\OpenAI.Types.pas',
-  OpenAI.API.ObjectHolder in '..\..\OpenAI.API.ObjectHolder.pas';
+  OpenAI.API.ObjectHolder in '..\..\OpenAI.API.ObjectHolder.pas',
+  OpenAI.Utils.Base64 in '..\..\OpenAI.Utils.Base64.pas';
 
 {$R *.res}
 

@@ -302,6 +302,7 @@ function TOpenAIAPI.Post<TParams>(const Path: string; ParamProc: TProc<TParams>;
 var
   Params: TParams;
   Code: Integer;
+  Strings: TStringStream;
 begin
   Params := TParams.Create;
   try
@@ -313,6 +314,14 @@ begin
         Result := True;
     else
       Result := False;
+      Strings := TStringStream.Create;
+      try
+        Response.Position := 0;
+        Strings.LoadFromStream(Response);
+        ParseError(Code, Strings.DataString);
+      finally
+        Strings.Free;
+      end;
     end;
   finally
     Params.Free;

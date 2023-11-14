@@ -287,6 +287,8 @@
         <DCCReference Include="..\..\OpenAI.Assistants.pas"/>
         <DCCReference Include="..\..\OpenAI.Types.pas"/>
         <DCCReference Include="..\..\OpenAI.API.ObjectHolder.pas"/>
+        <DCCReference Include="..\..\OpenAI.Utils.Base64.pas"/>
+        <None Include="token.txt"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>
@@ -327,6 +329,12 @@
                 <DeployFile LocalName="Win32\Debug\SimpleChat.exe" Configuration="Debug" Class="ProjectOutput">
                     <Platform Name="Win32">
                         <RemoteName>SimpleChat.exe</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="token.txt" Configuration="Debug" Class="ProjectFile">
+                    <Platform Name="Win32">
+                        <RemoteDir>.\</RemoteDir>
                         <Overwrite>true</Overwrite>
                     </Platform>
                 </DeployFile>

@@ -4,7 +4,7 @@ interface
 
 uses
   System.SysUtils, OpenAI.API.Params, OpenAI.API, OpenAI.Chat.Functions,
-  System.Classes, REST.JsonReflect, System.JSON;
+  System.Classes, REST.JsonReflect, System.JSON, OpenAI.Types;
 
 {$SCOPEDENUMS ON}
 
@@ -128,6 +128,32 @@ type
     class function Create(const Id, &Type: string; &Function: TFunctionCallBuild): TChatToolCallBuild; static;
   end;
 
+  TMessageContentType = (Text, ImageUrl);
+
+  TMessageContent = record
+    /// <summary>
+    /// The type of the content part.
+    /// </summary>
+    ContentType: TMessageContentType;
+    /// <summary>
+    /// The text content.
+    /// </summary>
+    Text: string;
+    /// <summary>
+    /// Either a URL of the image or the base64 encoded image data.
+    /// </summary>
+    Url: string;
+    /// <summary>
+    /// Specifies the detail level of the image. Learn more in the Vision guide.
+    /// </summary>
+    /// <seealso>https://platform.openai.com/docs/guides/vision/low-or-high-fidelity-image-understanding</seealso>
+    Detail: string;
+
+    class function CreateText(const Text: string): TMessageContent; static;
+    class function CreateImage(const Url: string; const Detail: string = ''): TMessageContent; static;
+    class function CreateImageBase64(const Data: TBase64Data; const Detail: string = ''): TMessageContent; static;
+  end;
+
   TChatMessageBuild = record
   private
     FRole: TMessageRole;
@@ -137,6 +163,7 @@ type
     FTool_calls: TArray<TChatToolCallBuild>;
     FTag: string;
     FName: string;
+    FContents: TArray<TMessageContent>;
   public
     /// <summary>
     /// The role of the messages author. One of system, user, assistant, or function.
@@ -146,6 +173,12 @@ type
     /// The contents of the message. content is required for all messages, and may be null for assistant messages with function calls.
     /// </summary>
     property Content: string read FContent write FContent;
+    /// <summary>
+    /// An array of content parts with a defined type, each can be of type text or image_url when passing in images.
+    /// You can pass multiple images by adding multiple image_url content parts.
+    /// Image input is only supported when using the gpt-4-visual-preview model.
+    /// </summary>
+    property Contents: TArray<TMessageContent> read FContents write FContents;
     /// <summary>
     /// The name of the author of this message. name is required if role is function,
     /// and it should be the name of the function whose response is in the content.
@@ -174,7 +207,11 @@ type
     /// <summary>
     /// From user
     /// </summary>
-    class function User(const Content: string; const Name: string = ''): TChatMessageBuild; static;
+    class function User(const Content: string; const Name: string = ''): TChatMessageBuild; overload; static;
+    /// <summary>
+    /// From user
+    /// </summary>
+    class function User(const Content: TArray<TMessageContent>; const Name: string = ''): TChatMessageBuild; overload; static;
     /// <summary>
     /// From system
     /// </summary>
@@ -723,7 +760,33 @@ begin
 
       //content
       if not Item.Content.IsEmpty then
-        JSON.AddPair('content', Item.Content);
+        JSON.AddPair('content', Item.Content)
+      else if Length(Item.Contents) > 0 then
+      begin
+        var Contents := TJSONArray.Create;
+        JSON.AddPair('content', Contents);
+        for var Content in Item.Contents do
+        begin
+          var ContentItem := TJSONObject.Create;
+          Contents.Add(ContentItem);
+          case Content.ContentType of
+            TMessageContentType.Text:
+              begin
+                ContentItem.AddPair('type', 'text');
+                ContentItem.AddPair('text', Content.Text);
+              end;
+            TMessageContentType.ImageUrl:
+              begin
+                ContentItem.AddPair('type', 'image_url');
+                var ImageUrl := TJSONObject.Create;
+                ContentItem.AddPair('image_url', ImageUrl);
+                ImageUrl.AddPair('url', Content.Url);
+                if not Content.Detail.IsEmpty then
+                  ImageUrl.AddPair('detail', Content.Detail);
+              end;
+          end;
+        end;
+      end;
 
       //name
       if not Item.Name.IsEmpty then
@@ -883,6 +946,13 @@ begin
   Result.FContent := Content;
   Result.FName := Name;
   Result.FTool_call_id := ToolCallId;
+end;
+
+class function TChatMessageBuild.User(const Content: TArray<TMessageContent>; const Name: string): TChatMessageBuild;
+begin
+  Result.FRole := TMessageRole.User;
+  Result.FContents := Content;
+  Result.FName := Name;
 end;
 
 class function TChatMessageBuild.User(const Content: string; const Name: string): TChatMessageBuild;
@@ -1126,6 +1196,28 @@ class function TFunctionCallBuild.Create(const Name, Arguments: string): TFuncti
 begin
   Result.Name := Name;
   Result.Arguments := Arguments;
+end;
+
+{ TMessageContent }
+
+class function TMessageContent.CreateImage(const Url, Detail: string): TMessageContent;
+begin
+  Result.ContentType := TMessageContentType.ImageUrl;
+  Result.Url := Url;
+  Result.Detail := Detail;
+end;
+
+class function TMessageContent.CreateImageBase64(const Data: TBase64Data; const Detail: string): TMessageContent;
+begin
+  Result.ContentType := TMessageContentType.ImageUrl;
+  Result.Url := Data.ToString;
+  Result.Detail := Detail;
+end;
+
+class function TMessageContent.CreateText(const Text: string): TMessageContent;
+begin
+  Result.ContentType := TMessageContentType.Text;
+  Result.Text := Text;
 end;
 
 end.

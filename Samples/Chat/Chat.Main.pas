@@ -7,7 +7,8 @@ uses
   FMX.Types, FMX.Controls, FMX.Forms, FMX.Graphics, FMX.Dialogs, REST.Types,
   Data.Bind.Components, Data.Bind.ObjectScope, REST.Client, OpenAI, FMX.Styles,
   OpenAI.Component.Chat, FMX.Memo.Types, FMX.StdCtrls, FMX.Controls.Presentation,
-  FMX.ScrollBox, FMX.Memo, OpenAI.Component.Functions;
+  FMX.ScrollBox, FMX.Memo, OpenAI.Component.Functions, FMX.Layouts, FMX.ListBox,
+  OpenAI.Types;
 
 type
   TFormChat = class(TForm)
@@ -19,6 +20,11 @@ type
     ButtonStreamSend: TButton;
     AniIndicatorBusy: TAniIndicator;
     OpenAIChatFunctions1: TOpenAIChatFunctions;
+    ListBox1: TListBox;
+    Button1: TButton;
+    Button2: TButton;
+    StyleBook1: TStyleBook;
+    OpenDialogImg: TOpenDialog;
     procedure FormCreate(Sender: TObject);
     procedure OpenAIChat1Chat(Sender: TObject; Event: TChat);
     procedure OpenAIChat1Error(Sender: TObject; Error: Exception);
@@ -28,6 +34,7 @@ type
     procedure OpenAIChat1ChatDelta(Sender: TObject; Event: TChat; IsDone: Boolean);
     procedure OpenAIChat1EndWork(Sender: TObject);
     procedure OpenAIChatFunctions1Items0FunctionExecute(Sender: TObject; const Args: string; out Result: string);
+    procedure Button1Click(Sender: TObject);
   private
     { Private declarations }
   public
@@ -40,20 +47,36 @@ var
 implementation
 
 uses
-  System.JSON, OpenAI.Chat;
+  System.JSON, System.IOUtils, OpenAI.Chat, OpenAI.Utils.Base64;
 
 {$R *.fmx}
+
+procedure TFormChat.Button1Click(Sender: TObject);
+begin
+  if OpenDialogImg.Execute then
+  begin
+    var Item := TListBoxItem.Create(ListBox1);
+    Item.Text := TPath.GetFileName(OpenDialogImg.FileName);
+    Item.TagString := OpenDialogImg.FileName;
+    Item.ItemData.Bitmap.LoadThumbnailFromFile(OpenDialogImg.FileName, 75, 75);
+    ListBox1.AddObject(Item);
+  end;
+end;
 
 procedure TFormChat.ButtonSendClick(Sender: TObject);
 begin
   MemoMessages.Lines.Add('User: ' + MemoMessage.Text);
   MemoMessages.Lines.Add('');
   OpenAIChat1.Stream := False;
-  OpenAIChat1.Send([TChatMessageBuild.User(MemoMessage.Text)]);
-  {
-  TChatMessageBuild.AssistantTool('', [
-    TChatToolCallBuild.Create('1', 'function', TFunctionCallBuild.Create('func', '[]'))
-    ])   }
+  var Content: TArray<TMessageContent>;
+
+  if not MemoMessage.Text.IsEmpty then
+    Content := Content + [TMessageContent.CreateText(MemoMessage.Text)];
+
+  for var i := 0 to ListBox1.Count - 1 do
+    Content := Content + [TMessageContent.CreateImageBase64(FileToBase64(ListBox1.ListItems[i].TagString))];
+
+  OpenAIChat1.Send([TChatMessageBuild.User(Content)]);
 end;
 
 procedure TFormChat.ButtonStreamSendClick(Sender: TObject);
@@ -69,6 +92,7 @@ procedure TFormChat.FormCreate(Sender: TObject);
 begin
   //
   //OpenAIClient1.Assistants.Retrieve('')
+  OpenAIClient1.Token := {$INCLUDE token.txt};
 end;
 
 procedure TFormChat.OpenAIChat1BeginWork(Sender: TObject);
