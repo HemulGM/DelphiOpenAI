@@ -29,7 +29,9 @@ type
   public
     procedure New(Role: TMessageRole; Content, Tag: string);
     procedure NewFunc(const FuncName, FuncResult, Tag: string);
+    procedure NewTool(const Content, ToolCallId, Name, Tag: string);
     procedure NewAsistantFunc(const FuncName, Args, Tag: string);
+    procedure NewAsistantTool(const Content: string; const ToolCalls: TArray<TChatToolCallBuild>; const Tag: string);
     procedure SetContentByTag(const Tag, Text: string);
     function TextLength: Int64;
     property AutoTrim: Boolean read FAutoTrim write SetAutoTrim;
@@ -100,11 +102,29 @@ begin
   Add(Item);
 end;
 
+procedure TChatHistory.NewAsistantTool(const Content: string; const ToolCalls: TArray<TChatToolCallBuild>; const Tag: string);
+var
+  Item: TChatMessageBuild;
+begin
+  Item := TChatMessageBuild.AssistantTool(Content, ToolCalls);
+  Item.Tag := Tag;
+  Add(Item);
+end;
+
 procedure TChatHistory.NewFunc(const FuncName, FuncResult, Tag: string);
 var
   Item: TChatMessageBuild;
 begin
   Item := TChatMessageBuild.Func(FuncResult, FuncName);
+  Item.Tag := Tag;
+  Add(Item);
+end;
+
+procedure TChatHistory.NewTool(const Content, ToolCallId, Name, Tag: string);
+var
+  Item: TChatMessageBuild;
+begin
+  Item := TChatMessageBuild.Tool(Content, ToolCallId, Name);
   Item.Tag := Tag;
   Add(Item);
 end;

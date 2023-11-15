@@ -15,16 +15,20 @@ function GetFileContentType(const FileName: string): string;
 implementation
 
 function GetFileContentType(const FileName: string): string;
+var
+  LKind: TMimeTypes.TKind;
 begin
-  var LKind: TMimeTypes.TKind;
   TMimeTypes.Default.GetFileInfo(FileName, Result, LKind);
 end;
 
 function FileToBase64(const FileName: string): TBase64Data;
+var
+  FS: TFileStream;
+  Base64: TStringStream;
 begin
-  var FS := TFileStream.Create(FileName, fmOpenRead);
+  FS := TFileStream.Create(FileName, fmOpenRead);
   try
-    var Base64 := TStringStream.Create('', TEncoding.UTF8);
+    Base64 := TStringStream.Create('', TEncoding.UTF8);
     try
       TBase64StringEncoding.Base64String.Encode(FS, Base64);
       Result.Data := Base64.DataString;
@@ -38,8 +42,10 @@ begin
 end;
 
 function StreamToBase64(Stream: TStream; const ContentType: string): TBase64Data;
+var
+  Base64: TStringStream;
 begin
-  var Base64 := TStringStream.Create('', TEncoding.UTF8);
+  Base64 := TStringStream.Create('', TEncoding.UTF8);
   try
     TBase64StringEncoding.Base64String.Encode(Stream, Base64);
     Result.Data := Base64.DataString;
