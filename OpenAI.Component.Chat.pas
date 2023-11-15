@@ -5,7 +5,7 @@ interface
 uses
   System.SysUtils, System.Classes, System.SyncObjs, System.Generics.Collections,
   System.Threading, OpenAI, OpenAI.Chat, OpenAI.Component.Functions,
-  OpenAI.API.ObjectHolder;
+  OpenAI.Utils.ObjectHolder;
 
 type
   TChat = OpenAI.Chat.TChat;
