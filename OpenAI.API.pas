@@ -433,7 +433,9 @@ begin
   Result.ProxySettings := FProxySettings;
   Result.ConnectionTimeout := FConnectionTimeout;
   Result.ResponseTimeout := FResponseTimeout;
+  {$IF RTLVersion >= 35.0}
   Result.SendTimeout := FSendTimeout;
+  {$ENDIF}
   Result.AcceptCharSet := 'utf-8';
 end;
 

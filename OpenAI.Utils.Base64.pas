@@ -30,7 +30,11 @@ begin
   try
     Base64 := TStringStream.Create('', TEncoding.UTF8);
     try
-      TBase64StringEncoding.Base64String.Encode(FS, Base64);
+      {$IF RTLVersion >= 35.0}
+      TNetEncoding.Base64String.Encode(FS, Base64);
+      {$ELSE}
+      TNetEncoding.Base64.Encode(FS, Base64);
+      {$ENDIF}
       Result.Data := Base64.DataString;
       Result.ContentType := GetFileContentType(FileName);
     finally
@@ -47,7 +51,11 @@ var
 begin
   Base64 := TStringStream.Create('', TEncoding.UTF8);
   try
-    TBase64StringEncoding.Base64String.Encode(Stream, Base64);
+    {$IF RTLVersion >= 35.0}
+    TNetEncoding.Base64String.Encode(Stream, Base64);
+    {$ELSE}
+    TNetEncoding.Base64.Encode(Stream, Base64);
+    {$ENDIF}
     Result.Data := Base64.DataString;
     Result.ContentType := ContentType;
   finally
