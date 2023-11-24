@@ -147,7 +147,7 @@ begin
   inherited;
   // Defaults
   FConnectionTimeout := TURLClient.DefaultConnectionTimeout;
-  FSendTimeout := TURLClient.DefaultSendTimeout;
+  FSendTimeout := {$IF RTLVersion >= 35.0}TURLClient.DefaultSendTimeout{$ELSE}60000{$ENDIF};
   FResponseTimeout := TURLClient.DefaultResponseTimeout;
   FToken := '';
   FBaseUrl := URL_BASE;

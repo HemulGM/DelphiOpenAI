@@ -482,7 +482,7 @@ type
     /// <summary> Property to set/get the SendTimeout. Value is in milliseconds.
     /// -1 - Infinite timeout. 0 - platform specific timeout. Supported by Windows, macOS platforms.
     /// </summary>
-    property SendTimeout default TURLClient.DefaultSendTimeout;
+    property SendTimeout default {$IF RTLVersion >= 35.0}TURLClient.DefaultSendTimeout{$ELSE}60000{$ENDIF};
     /// <summary> Property to set/get the ResponseTimeout. Value is in milliseconds.
     /// -1 - Infinite timeout. 0 - platform specific timeout. Supported by all platforms.
     /// </summary>
