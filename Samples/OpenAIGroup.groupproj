@@ -1,0 +1,48 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{AE251A2F-B3DA-4636-956F-25534F80B11A}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="Chat\SimpleChat.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="..\OpenAIPackage.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="SimpleChat">
+        <MSBuild Projects="Chat\SimpleChat.dproj"/>
+    </Target>
+    <Target Name="SimpleChat:Clean">
+        <MSBuild Projects="Chat\SimpleChat.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="SimpleChat:Make">
+        <MSBuild Projects="Chat\SimpleChat.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="OpenAIPackage">
+        <MSBuild Projects="..\OpenAIPackage.dproj"/>
+    </Target>
+    <Target Name="OpenAIPackage:Clean">
+        <MSBuild Projects="..\OpenAIPackage.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="OpenAIPackage:Make">
+        <MSBuild Projects="..\OpenAIPackage.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="SimpleChat;OpenAIPackage"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="SimpleChat:Clean;OpenAIPackage:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="SimpleChat:Make;OpenAIPackage:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>

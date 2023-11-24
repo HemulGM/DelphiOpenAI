@@ -6,7 +6,8 @@ uses
   System.SysUtils, System.Classes, OpenAI.Completions, OpenAI.Edits,
   OpenAI.Images, OpenAI.Models, OpenAI.Embeddings, OpenAI.API,
   OpenAI.Moderations, OpenAI.Engines, OpenAI.Files, OpenAI.FineTunes,
-  OpenAI.Chat, OpenAI.Audio, OpenAI.FineTuning;
+  OpenAI.Chat, OpenAI.Audio, OpenAI.FineTuning, System.Net.URLClient,
+  OpenAI.Assistants;
 
 type
   IOpenAI = interface
@@ -30,6 +31,7 @@ type
     function GetFineTuningRoute: TFineTuningRoute;
     function GetChatRoute: TChatRoute;
     function GetAudioRoute: TAudioRoute;
+    function GetAssistantsRoute: TAssistantsRoute;
     /// <summary>
     /// Direct access to queries
     /// </summary>
@@ -49,7 +51,7 @@ type
     /// <summary>
     /// For users who belong to multiple organizations, you can pass a header to specify which organization
     /// is used for an API request. Usage from these API requests will count against the specified organization's
-    // subscription quota.
+    /// subscription quota.
     /// </summary>
     property Organization: string read GetOrganization write SetOrganization;
     /// <summary>
@@ -107,6 +109,10 @@ type
     /// Learn how to turn audio into text.
     /// </summary>
     property Audio: TAudioRoute read GetAudioRoute;
+    /// <summary>
+    /// Build assistants that can call models and use tools to perform tasks.
+    /// </summary>
+    property Assistants: TAssistantsRoute read GetAssistantsRoute;
   end;
 
   TOpenAI = class(TInterfacedObject, IOpenAI)
@@ -125,6 +131,7 @@ type
     FFineTuningRoute: TFineTuningRoute;
     FChatRoute: TChatRoute;
     FAudioRoute: TAudioRoute;
+    FAssistantsRoute: TAssistantsRoute;
     procedure SetToken(const Value: string);
     function GetToken: string;
     function GetBaseUrl: string;
@@ -143,6 +150,7 @@ type
     function GetFineTunesRoute: TFineTunesRoute;
     function GetChatRoute: TChatRoute;
     function GetAudioRoute: TAudioRoute;
+    function GetAssistantsRoute: TAssistantsRoute;
     function GetAzureAPIVersion: string;
     function GetAzureDeployment: string;
     function GetIsAzure: Boolean;
@@ -157,7 +165,7 @@ type
     destructor Destroy; override;
   public
     /// <summary>
-    /// Direct access to queries
+    /// Direct access to API
     /// </summary>
     property API: TOpenAIAPI read GetAPI;
     /// <summary>
@@ -175,7 +183,7 @@ type
     /// <summary>
     /// For users who belong to multiple organizations, you can pass a header to specify which organization
     /// is used for an API request. Usage from these API requests will count against the specified organization's
-    // subscription quota.
+    /// subscription quota.
     /// </summary>
     property Organization: string read GetOrganization write SetOrganization;
 
@@ -242,11 +250,63 @@ type
     /// Learn how to turn audio into text.
     /// </summary>
     property Audio: TAudioRoute read GetAudioRoute;
+    /// <summary>
+    /// Build assistants that can call models and use tools to perform tasks.
+    /// </summary>
+    property Assistants: TAssistantsRoute read GetAssistantsRoute;
   end;
 
+  [ComponentPlatformsAttribute(pidAllPlatforms)]
   TOpenAIComponent = class(TComponent, IOpenAI)
   private
+    type
+      THTTPProxy = class(TPersistent)
+      private
+        FOwner: TOpenAIComponent;
+        procedure SetIP(const Value: string);
+        procedure SetPassword(const Value: string);
+        procedure SetPort(const Value: Integer);
+        procedure SetUserName(const Value: string);
+        function GetIP: string;
+        function GetPassword: string;
+        function GetPort: Integer;
+        function GetUserName: string;
+      public
+        constructor Create(AOwner: TOpenAIComponent);
+        procedure SetProxy(AIP: string; APort: Integer; AUserName: string = ''; APassword: string = '');
+      published
+        property IP: string read GetIP write SetIP;
+        property Port: Integer read GetPort write SetPort;
+        property UserName: string read GetUserName write SetUserName;
+        property Password: string read GetPassword write SetPassword;
+      end;
+
+
+      THTTPHeader = class(TCollectionItem)
+      private
+        FName: string;
+        FValue: string;
+        procedure SetName(const Value: string);
+        procedure SetValue(const Value: string);
+      published
+        property Name: string read FName write SetName;
+        property Value: string read FValue write SetValue;
+      end;
+
+
+      THTTPHeaders = class(TOwnedCollection)
+      private
+        FOnChange: TNotifyEvent;
+        procedure SetOnChange(const Value: TNotifyEvent);
+      protected
+        procedure Notify(Item: TCollectionItem; Action: TCollectionNotification); override;
+        property OnChange: TNotifyEvent read FOnChange write SetOnChange;
+      end;
+  private
     FOpenAI: TOpenAI;
+    FProxy: THTTPProxy;
+    FCustomHeaders: THTTPHeaders;
+    procedure FOnChangeHeaders(Sender: TObject);
     procedure SetToken(const Value: string);
     function GetToken: string;
     function GetBaseUrl: string;
@@ -265,7 +325,20 @@ type
     function GetFineTunesRoute: TFineTunesRoute;
     function GetChatRoute: TChatRoute;
     function GetAudioRoute: TAudioRoute;
+    function GetAssistantsRoute: TAssistantsRoute;
     function GetFineTuningRoute: TFineTuningRoute;
+    function GetConnectionTimeout: Integer;
+    function GetResponseTimeout: Integer;
+    function GetSendTimeout: Integer;
+    procedure SetConnectionTimeout(const Value: Integer);
+    procedure SetResponseTimeout(const Value: Integer);
+    procedure SetSendTimeout(const Value: Integer);
+    function GetAzureAPIVersion: string;
+    function GetAzureDeployment: string;
+    function GetIsAzure: Boolean;
+    procedure SetAzureAPIVersion(const Value: string);
+    procedure SetAzureDeployment(const Value: string);
+    procedure SetIsAzure(const Value: Boolean);
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -274,24 +347,6 @@ type
     /// Direct access to queries
     /// </summary>
     property API: TOpenAIAPI read GetAPI;
-    /// <summary>
-    /// The OpenAI API uses API keys for authentication.
-    /// Visit your API Keys page (https://beta.openai.com/account/api-keys) to retrieve the API key you'll use in your requests.
-    /// Remember that your API key is a secret! Do not share it with others or expose it in any client-side code (browsers, apps).
-    /// Production requests must be routed through your own backend server where your API key can be securely
-    /// loaded from an environment variable or key management service.
-    /// </summary>
-    property Token: string read GetToken write SetToken;
-    /// <summary>
-    /// Base Url (https://api.openai.com/v1)
-    /// </summary>
-    property BaseURL: string read GetBaseUrl write SetBaseUrl;
-    /// <summary>
-    /// For users who belong to multiple organizations, you can pass a header to specify which organization
-    /// is used for an API request. Usage from these API requests will count against the specified organization's
-    // subscription quota.
-    /// </summary>
-    property Organization: string read GetOrganization write SetOrganization;
   public
     /// <summary>
     /// Given a prompt, the model will return one or more predicted completions,
@@ -348,6 +403,94 @@ type
     /// Learn how to turn audio into text.
     /// </summary>
     property Audio: TAudioRoute read GetAudioRoute;
+    /// <summary>
+    /// Build assistants that can call models and use tools to perform tasks.
+    /// </summary>
+    property Assistants: TAssistantsRoute read GetAssistantsRoute;
+  published
+    /// <summary>
+    /// The OpenAI API uses API keys for authentication.
+    /// Visit your API Keys page (https://beta.openai.com/account/api-keys) to retrieve the API key you'll use in your requests.
+    /// Remember that your API key is a secret! Do not share it with others or expose it in any client-side code (browsers, apps).
+    /// Production requests must be routed through your own backend server where your API key can be securely
+    /// loaded from an environment variable or key management service.
+    /// </summary>
+    /// <seealso>https://beta.openai.com/account/api-keys</seealso>
+    property Token: string read GetToken write SetToken;
+    /// <summary>
+    /// Base Url (https://api.openai.com/v1)
+    /// </summary>
+    property BaseURL: string read GetBaseUrl write SetBaseUrl;
+    /// <summary>
+    /// For users who belong to multiple organizations, you can pass a header to specify which organization
+    /// is used for an API request. Usage from these API requests will count against the specified organization's
+    /// subscription quota.
+    /// </summary>
+    property Organization: string read GetOrganization write SetOrganization;
+    /// <summary>
+    /// Http client proxy
+    /// </summary>
+    property Proxy: THTTPProxy read FProxy;
+    /// <summary> Property to set/get the ConnectionTimeout. Value is in milliseconds.
+    /// -1 - Infinite timeout. 0 - platform specific timeout. Supported by Windows, Linux, Android platforms.
+    /// </summary>
+    property ConnectionTimeout: Integer read GetConnectionTimeout write SetConnectionTimeout;
+    /// <summary> Property to set/get the SendTimeout. Value is in milliseconds.
+    /// -1 - Infinite timeout. 0 - platform specific timeout. Supported by Windows, macOS platforms.
+    /// </summary>
+    property SendTimeout: Integer read GetSendTimeout write SetSendTimeout;
+    /// <summary> Property to set/get the ResponseTimeout. Value is in milliseconds.
+    /// -1 - Infinite timeout. 0 - platform specific timeout. Supported by all platforms.
+    /// </summary>
+    property ResponseTimeout: Integer read GetResponseTimeout write SetResponseTimeout;
+
+    property IsAzure: Boolean read GetIsAzure write SetIsAzure;
+    property AzureApiVersion: string read GetAzureAPIVersion write SetAzureAPIVersion;
+    property AzureDeployment: string read GetAzureDeployment write SetAzureDeployment;
+    property CustomHeaders: THTTPHeaders read FCustomHeaders;
+  end;
+
+  TOpenAIClient = class(TOpenAIComponent)
+  published
+    /// <summary>
+    /// The OpenAI API uses API keys for authentication.
+    /// Visit your API Keys page (https://beta.openai.com/account/api-keys) to retrieve the API key you'll use in your requests.
+    /// Remember that your API key is a secret! Do not share it with others or expose it in any client-side code (browsers, apps).
+    /// Production requests must be routed through your own backend server where your API key can be securely
+    /// loaded from an environment variable or key management service.
+    /// </summary>
+    /// <seealso>https://beta.openai.com/account/api-keys</seealso>
+    property Token;
+    /// <summary>
+    /// Base Url (https://api.openai.com/v1)
+    /// </summary>
+    property BaseURL;
+    /// <summary>
+    /// For users who belong to multiple organizations, you can pass a header to specify which organization
+    /// is used for an API request. Usage from these API requests will count against the specified organization's
+    /// subscription quota.
+    /// </summary>
+    property Organization;
+    /// <summary>
+    /// Http client proxy
+    /// </summary>
+    property Proxy;
+    /// <summary> Property to set/get the ConnectionTimeout. Value is in milliseconds.
+    /// -1 - Infinite timeout. 0 - platform specific timeout. Supported by Windows, Linux, Android platforms.
+    /// </summary>
+    property ConnectionTimeout default TURLClient.DefaultConnectionTimeout;
+    /// <summary> Property to set/get the SendTimeout. Value is in milliseconds.
+    /// -1 - Infinite timeout. 0 - platform specific timeout. Supported by Windows, macOS platforms.
+    /// </summary>
+    property SendTimeout default {$IF RTLVersion >= 35.0}TURLClient.DefaultSendTimeout{$ELSE}60000{$ENDIF};
+    /// <summary> Property to set/get the ResponseTimeout. Value is in milliseconds.
+    /// -1 - Infinite timeout. 0 - platform specific timeout. Supported by all platforms.
+    /// </summary>
+    property ResponseTimeout default TURLClient.DefaultResponseTimeout;
+    property IsAzure default False;
+    property AzureApiVersion;
+    property AzureDeployment;
+    property CustomHeaders;
   end;
 
 implementation
@@ -368,32 +511,19 @@ end;
 
 destructor TOpenAI.Destroy;
 begin
-  if Assigned(FCompletionsRoute) then
-    FCompletionsRoute.Free;
-  if Assigned(FEditsRoute) then
-    FEditsRoute.Free;
-  if Assigned(FImagesRoute) then
-    FImagesRoute.Free;
-  if Assigned(FImagesAzureRoute) then
-    FImagesAzureRoute.Free;
-  if Assigned(FModelsRoute) then
-    FModelsRoute.Free;
-  if Assigned(FEmbeddingsRoute) then
-    FEmbeddingsRoute.Free;
-  if Assigned(FModerationsRoute) then
-    FModerationsRoute.Free;
-  if Assigned(FEnginesRoute) then
-    FEnginesRoute.Free;
-  if Assigned(FFilesRoute) then
-    FFilesRoute.Free;
-  if Assigned(FFineTunesRoute) then
-    FFineTunesRoute.Free;
-  if Assigned(FFineTuningRoute) then
-    FFineTuningRoute.Free;
-  if Assigned(FChatRoute) then
-    FChatRoute.Free;
-  if Assigned(FAudioRoute) then
-    FAudioRoute.Free;
+  FCompletionsRoute.Free;
+  FEditsRoute.Free;
+  FImagesRoute.Free;
+  FImagesAzureRoute.Free;
+  FModelsRoute.Free;
+  FEmbeddingsRoute.Free;
+  FModerationsRoute.Free;
+  FEnginesRoute.Free;
+  FFilesRoute.Free;
+  FFineTunesRoute.Free;
+  FFineTuningRoute.Free;
+  FChatRoute.Free;
+  FAudioRoute.Free;
   FAPI.Free;
   inherited;
 end;
@@ -401,6 +531,13 @@ end;
 function TOpenAI.GetAPI: TOpenAIAPI;
 begin
   Result := FAPI;
+end;
+
+function TOpenAI.GetAssistantsRoute: TAssistantsRoute;
+begin
+  if not Assigned(FAssistantsRoute) then
+    FAssistantsRoute := TAssistantsRoute.CreateRoute(API);
+  Result := FAssistantsRoute;
 end;
 
 function TOpenAI.GetAudioRoute: TAudioRoute;
@@ -560,12 +697,29 @@ constructor TOpenAIComponent.Create(AOwner: TComponent);
 begin
   inherited;
   FOpenAI := TOpenAI.Create;
+  FCustomHeaders := THTTPHeaders.Create(Self, THTTPHeader);
+  FCustomHeaders.OnChange := FOnChangeHeaders;
+  FProxy := THTTPProxy.Create(Self);
 end;
 
 destructor TOpenAIComponent.Destroy;
 begin
   FOpenAI.Free;
+  FCustomHeaders.Free;
+  FProxy.Free;
   inherited;
+end;
+
+procedure TOpenAIComponent.FOnChangeHeaders(Sender: TObject);
+var
+  i: Integer;
+  FHeaders: TNetHeaders;
+begin
+  for i := 0 to FCustomHeaders.Count - 1 do
+    FHeaders := FHeaders + [TNameValuePair.Create(
+      THTTPHeader(FCustomHeaders.Items[i]).Name,
+      THTTPHeader(FCustomHeaders.Items[i]).Value)];
+  API.CustomHeaders := FHeaders;
 end;
 
 function TOpenAIComponent.GetAPI: TOpenAIAPI;
@@ -573,9 +727,24 @@ begin
   Result := FOpenAI.API;
 end;
 
+function TOpenAIComponent.GetAssistantsRoute: TAssistantsRoute;
+begin
+  Result := FOpenAI.GetAssistantsRoute;
+end;
+
 function TOpenAIComponent.GetAudioRoute: TAudioRoute;
 begin
   Result := FOpenAI.GetAudioRoute;
+end;
+
+function TOpenAIComponent.GetAzureAPIVersion: string;
+begin
+  Result := FOpenAI.API.AzureApiVersion;
+end;
+
+function TOpenAIComponent.GetAzureDeployment: string;
+begin
+  Result := FOpenAI.API.AzureDeployment;
 end;
 
 function TOpenAIComponent.GetBaseUrl: string;
@@ -591,6 +760,11 @@ end;
 function TOpenAIComponent.GetCompletionsRoute: TCompletionsRoute;
 begin
   Result := FOpenAI.GetCompletionsRoute;
+end;
+
+function TOpenAIComponent.GetConnectionTimeout: Integer;
+begin
+  Result := FOpenAI.API.ConnectionTimeout;
 end;
 
 function TOpenAIComponent.GetEditsRoute: TEditsRoute;
@@ -628,6 +802,11 @@ begin
   Result := FOpenAI.GetImagesRoute;
 end;
 
+function TOpenAIComponent.GetIsAzure: Boolean;
+begin
+  Result := FOpenAI.API.IsAzure;
+end;
+
 function TOpenAIComponent.GetModelsRoute: TModelsRoute;
 begin
   Result := FOpenAI.GetModelsRoute;
@@ -643,9 +822,29 @@ begin
   Result := FOpenAI.GetOrganization;
 end;
 
+function TOpenAIComponent.GetResponseTimeout: Integer;
+begin
+  Result := FOpenAI.API.ResponseTimeout;
+end;
+
+function TOpenAIComponent.GetSendTimeout: Integer;
+begin
+  Result := FOpenAI.API.SendTimeout;
+end;
+
 function TOpenAIComponent.GetToken: string;
 begin
   Result := FOpenAI.GetToken;
+end;
+
+procedure TOpenAIComponent.SetAzureAPIVersion(const Value: string);
+begin
+  FOpenAI.API.AzureApiVersion := Value;
+end;
+
+procedure TOpenAIComponent.SetAzureDeployment(const Value: string);
+begin
+  FOpenAI.API.AzureDeployment := Value;
 end;
 
 procedure TOpenAIComponent.SetBaseUrl(const Value: string);
@@ -653,14 +852,132 @@ begin
   FOpenAI.SetBaseUrl(Value);
 end;
 
+procedure TOpenAIComponent.SetConnectionTimeout(const Value: Integer);
+begin
+  FOpenAI.API.ConnectionTimeout := Value;
+end;
+
+procedure TOpenAIComponent.SetIsAzure(const Value: Boolean);
+begin
+  FOpenAI.API.IsAzure := Value;
+end;
+
 procedure TOpenAIComponent.SetOrganization(const Value: string);
 begin
   FOpenAI.SetOrganization(Value);
 end;
 
+procedure TOpenAIComponent.SetResponseTimeout(const Value: Integer);
+begin
+  FOpenAI.API.ResponseTimeout := Value;
+end;
+
+procedure TOpenAIComponent.SetSendTimeout(const Value: Integer);
+begin
+  FOpenAI.API.SendTimeout := Value;
+end;
+
 procedure TOpenAIComponent.SetToken(const Value: string);
 begin
   FOpenAI.SetToken(Value);
+end;
+
+{ TOpenAIComponent.THTTPProxy }
+
+constructor TOpenAIComponent.THTTPProxy.Create(AOwner: TOpenAIComponent);
+begin
+  inherited Create;
+  FOwner := AOwner;
+end;
+
+function TOpenAIComponent.THTTPProxy.GetIP: string;
+begin
+  Result := FOwner.API.ProxySettings.Host;
+end;
+
+function TOpenAIComponent.THTTPProxy.GetPassword: string;
+begin
+  Result := FOwner.API.ProxySettings.Password;
+end;
+
+function TOpenAIComponent.THTTPProxy.GetPort: Integer;
+begin
+  Result := FOwner.API.ProxySettings.Port;
+end;
+
+function TOpenAIComponent.THTTPProxy.GetUserName: string;
+begin
+  Result := FOwner.API.ProxySettings.UserName;
+end;
+
+procedure TOpenAIComponent.THTTPProxy.SetIP(const Value: string);
+var
+  Proxy: TProxySettings;
+begin
+  Proxy := FOwner.API.ProxySettings;
+  Proxy.Host := Value;
+  FOwner.API.ProxySettings := Proxy;
+end;
+
+procedure TOpenAIComponent.THTTPProxy.SetPassword(const Value: string);
+var
+  Proxy: TProxySettings;
+begin
+  Proxy := FOwner.API.ProxySettings;
+  Proxy.Password := Value;
+  FOwner.API.ProxySettings := Proxy;
+end;
+
+procedure TOpenAIComponent.THTTPProxy.SetPort(const Value: Integer);
+var
+  Proxy: TProxySettings;
+begin
+  Proxy := FOwner.API.ProxySettings;
+  Proxy.Port := Value;
+  FOwner.API.ProxySettings := Proxy;
+end;
+
+procedure TOpenAIComponent.THTTPProxy.SetProxy(AIP: string; APort: Integer; AUserName, APassword: string);
+begin
+  IP := AIP;
+  Port := APort;
+  Username := AUserName;
+  Password := APassword;
+end;
+
+procedure TOpenAIComponent.THTTPProxy.SetUserName(const Value: string);
+var
+  Proxy: TProxySettings;
+begin
+  Proxy := FOwner.API.ProxySettings;
+  Proxy.UserName := Value;
+  FOwner.API.ProxySettings := Proxy;
+end;
+
+{ TOpenAIComponent.THTTPHeaders }
+
+procedure TOpenAIComponent.THTTPHeaders.Notify(Item: TCollectionItem; Action: TCollectionNotification);
+begin
+  inherited;
+  if Assigned(FOnChange) then
+    FOnChange(Self);
+end;
+
+procedure TOpenAIComponent.THTTPHeaders.SetOnChange(const Value: TNotifyEvent);
+begin
+  FOnChange := Value;
+end;
+
+{ TOpenAIComponent.THTTPHeader }
+
+procedure TOpenAIComponent.THTTPHeader.SetName(const Value: string);
+begin
+  FName := Value;
+end;
+
+procedure TOpenAIComponent.THTTPHeader.SetValue(const Value: string);
+begin
+  FValue := Value;
 end;
 
 end.

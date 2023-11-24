@@ -92,6 +92,31 @@ type
     constructor Create; reintroduce;
   end;
 
+  TAudioSpeechParams = class(TJSONParam)
+    /// <summary>
+    /// One of the available TTS models: tts-1 or tts-1-hd
+    /// </summary>
+    function Model(const Value: string): TAudioSpeechParams;
+    /// <summary>
+    /// The text to generate audio for. The maximum length is 4096 characters.
+    /// </summary>
+    function Input(const Value: string): TAudioSpeechParams; overload;
+    /// <summary>
+    /// The voice to use when generating the audio.
+    /// Supported voices are alloy, echo, fable, onyx, nova, and shimmer.
+    /// </summary>
+    function Voice(const Value: string): TAudioSpeechParams; overload;
+    /// <summary>
+    /// The format to audio in. Supported formats are mp3, opus, aac, and flac.
+    /// </summary>
+    function ResponseFormat(const Value: string): TAudioSpeechParams;
+    /// <summary>
+    /// The speed of the generated audio. Select a value from 0.25 to 4.0. 1.0 is the default.
+    /// </summary>
+    function Speed(const Value: Single = 1): TAudioSpeechParams;
+    constructor Create; override;
+  end;
+
   TAudioText = class
   private
     FText: string;
@@ -112,11 +137,20 @@ type
     /// Translates audio into into English.
     /// </summary>
     function CreateTranslation(ParamProc: TProc<TAudioTranslation>): TAudioText;
+    /// <summary>
+    /// Generates audio from the input text.
+    /// </summary>
+    procedure CreateSpeech(ParamProc: TProc<TAudioSpeechParams>; Stream: TStream);
   end;
 
 implementation
 
 { TAudioRoute }
+
+procedure TAudioRoute.CreateSpeech(ParamProc: TProc<TAudioSpeechParams>; Stream: TStream);
+begin
+  API.Post<TAudioSpeechParams>('audio/speech', ParamProc, Stream);
+end;
 
 function TAudioRoute.CreateTranscription(ParamProc: TProc<TAudioTranscription>): TAudioText;
 begin
@@ -242,6 +276,40 @@ begin
     TAudioResponseFormat.Vtt:
       Result := 'vtt';
   end;
+end;
+
+{ TAudioSpeechParams }
+
+constructor TAudioSpeechParams.Create;
+begin
+  inherited;
+  Model('tts-1');
+  Voice('alloy');
+end;
+
+function TAudioSpeechParams.Input(const Value: string): TAudioSpeechParams;
+begin
+  Result := TAudioSpeechParams(Add('input', Value));
+end;
+
+function TAudioSpeechParams.Model(const Value: string): TAudioSpeechParams;
+begin
+  Result := TAudioSpeechParams(Add('model', Value));
+end;
+
+function TAudioSpeechParams.ResponseFormat(const Value: string): TAudioSpeechParams;
+begin
+  Result := TAudioSpeechParams(Add('response_format', Value));
+end;
+
+function TAudioSpeechParams.Speed(const Value: Single): TAudioSpeechParams;
+begin
+  Result := TAudioSpeechParams(Add('speed', Value));
+end;
+
+function TAudioSpeechParams.Voice(const Value: string): TAudioSpeechParams;
+begin
+  Result := TAudioSpeechParams(Add('voice', Value));
 end;
 
 end.

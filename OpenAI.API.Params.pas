@@ -3,9 +3,8 @@
 interface
 
 uses
-  System.Classes, System.JSON, System.SysUtils, TypInfo, System.Types,
-  System.RTTI, REST.JsonReflect, REST.Json.Interceptors,
-  System.Generics.Collections;
+  System.Classes, System.JSON, System.SysUtils, System.Types, System.RTTI,
+  REST.JsonReflect, REST.Json.Interceptors, System.Generics.Collections;
 
 type
   TJSONInterceptorStringToString = class(TJSONInterceptor)
@@ -149,9 +148,11 @@ var
 begin
   JArr := TJSONArray.Create;
   for Item in Value do
-  begin
+  try
     JArr.AddElement(Item.JSON);
     Item.JSON := nil;
+  finally
+    Item.Free;
   end;
 
   Add(Key, JArr);
