@@ -20,12 +20,12 @@ type
     /// Name of the JSON Lines file to be uploaded.
     /// If the purpose is set to "fine-tune", the file will be used for fine-tuning.
     /// </summary>
-    function &File(const FileName: string): TFileUploadParams; overload;
+    function &File(const FileName: TFileName): TFileUploadParams; overload;
     /// <summary>
     /// Name of the JSON Lines file to be uploaded.
     /// If the purpose is set to "fine-tune", the file will be used for fine-tuning.
     /// </summary>
-    function &File(const Stream: TStream; const FileName: string): TFileUploadParams; overload;
+    function &File(const Stream: TStream; const FileName: TFileName): TFileUploadParams; overload;
     /// <summary>
     /// The intended purpose of the uploaded documents.
     /// Use "fine-tune" for fine-tuning. This allows us to validate the format of the uploaded file.
@@ -47,7 +47,7 @@ type
   private
     FBytes: Int64;
     FCreated_at: Int64;
-    FFilename: string;
+    FFilename: TFileName;
     FId: string;
     FObject: string;
     FPurpose: string;
@@ -73,7 +73,7 @@ type
     /// <summary>
     /// The name of the file.
     /// </summary>
-    property FileName: string read FFilename write FFilename;
+    property FileName: TFileName read FFilename write FFilename;
     /// <summary>
     /// The intended purpose of the file. Currently, only "fine-tune" is supported.
     /// </summary>
@@ -170,7 +170,7 @@ end;
 
 { TFileUploadParams }
 
-function TFileUploadParams.&File(const FileName: string): TFileUploadParams;
+function TFileUploadParams.&File(const FileName: TFileName): TFileUploadParams;
 begin
   AddFile('file', FileName);
   Result := Self;
@@ -181,7 +181,7 @@ begin
   inherited Create(True);
 end;
 
-function TFileUploadParams.&File(const Stream: TStream; const FileName: string): TFileUploadParams;
+function TFileUploadParams.&File(const Stream: TStream; const FileName: TFileName): TFileUploadParams;
 begin
   AddStream('file', Stream, FileName);
   Result := Self;

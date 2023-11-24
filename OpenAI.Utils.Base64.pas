@@ -6,22 +6,22 @@ uses
   System.SysUtils, System.NetEncoding, System.Classes, System.Net.Mime,
   OpenAI.Types;
 
-function FileToBase64(const FileName: string): TBase64Data;
+function FileToBase64(const FileName: TFileName): TBase64Data;
 
 function StreamToBase64(Stream: TStream; const ContentType: string): TBase64Data;
 
-function GetFileContentType(const FileName: string): string;
+function GetFileContentType(const FileName: TFileName): string;
 
 implementation
 
-function GetFileContentType(const FileName: string): string;
+function GetFileContentType(const FileName: TFileName): string;
 var
   LKind: TMimeTypes.TKind;
 begin
   TMimeTypes.Default.GetFileInfo(FileName, Result, LKind);
 end;
 
-function FileToBase64(const FileName: string): TBase64Data;
+function FileToBase64(const FileName: TFileName): TBase64Data;
 var
   FS: TFileStream;
   Base64: TStringStream;

@@ -20,12 +20,12 @@ type
     /// Required.
     /// The audio file object (not file name) to transcribe, in one of these formats: flac, mp3, mp4, mpeg, mpga, m4a, ogg, wav, or webm.
     /// </summary>
-    function &File(const FileName: string): TAudioTranscription; overload;
+    function &File(const FileName: TFileName): TAudioTranscription; overload;
     /// <summary>
     /// Required.
     /// The audio file object (not file name) to transcribe, in one of these formats: flac, mp3, mp4, mpeg, mpga, m4a, ogg, wav, or webm.
     /// </summary>
-    function &File(const Stream: TStream; const FileName: string): TAudioTranscription; overload;
+    function &File(const Stream: TStream; const FileName: TFileName): TAudioTranscription; overload;
     /// <summary>
     /// Required.
     /// ID of the model to use. Only whisper-1 is currently available.
@@ -63,12 +63,12 @@ type
     /// Required.
     /// The audio file object (not file name) translate, in one of these formats: flac, mp3, mp4, mpeg, mpga, m4a, ogg, wav, or webm.
     /// </summary>
-    function &File(const FileName: string): TAudioTranslation; overload;
+    function &File(const FileName: TFileName): TAudioTranslation; overload;
     /// <summary>
     /// Required.
     /// The audio file object (not file name) translate, in one of these formats: flac, mp3, mp4, mpeg, mpga, m4a, ogg, wav, or webm.
     /// </summary>
-    function &File(const Stream: TStream; const FileName: string): TAudioTranslation; overload;
+    function &File(const Stream: TStream; const FileName: TFileName): TAudioTranslation; overload;
     /// <summary>
     /// Required.
     /// ID of the model to use. Only whisper-1 is currently available.
@@ -164,7 +164,7 @@ end;
 
 { TAudioTranscription }
 
-function TAudioTranscription.&File(const FileName: string): TAudioTranscription;
+function TAudioTranscription.&File(const FileName: TFileName): TAudioTranscription;
 begin
   AddFile('file', FileName);
   Result := Self;
@@ -176,7 +176,7 @@ begin
   Model('whisper-1');
 end;
 
-function TAudioTranscription.&File(const Stream: TStream; const FileName: string): TAudioTranscription;
+function TAudioTranscription.&File(const Stream: TStream; const FileName: TFileName): TAudioTranscription;
 begin
   AddStream('file', Stream, FileName);
   Result := Self;
@@ -219,7 +219,7 @@ end;
 
 { TAudioTranslation }
 
-function TAudioTranslation.&File(const FileName: string): TAudioTranslation;
+function TAudioTranslation.&File(const FileName: TFileName): TAudioTranslation;
 begin
   AddFile('file', FileName);
   Result := Self;
@@ -230,7 +230,7 @@ begin
   inherited Create(True);
 end;
 
-function TAudioTranslation.&File(const Stream: TStream; const FileName: string): TAudioTranslation;
+function TAudioTranslation.&File(const Stream: TStream; const FileName: TFileName): TAudioTranslation;
 begin
   AddStream('file', Stream, FileName);
   Result := Self;
