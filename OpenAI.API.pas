@@ -6,26 +6,16 @@ uses
   System.Classes, System.Net.HttpClient, System.Net.URLClient, System.Net.Mime,
   System.JSON, OpenAI.Errors, OpenAI.API.Params, System.SysUtils;
 
-const
-  {$IF RTLVersion >= 35.0}
-  DefaultSendTimeout = TURLClient.DefaultSendTimeout;
-  {$ELSE}
-  DefaultSendTimeout = 60000;
-  {$ENDIF}
-
-  {$IF RTLVersion >= 35.0}
-  DefaultConnectionTimeout = TURLClient.DefaultConnectionTimeout;
-  {$ELSE}
-  DefaultConnectionTimeout = 60000;
-  {$ENDIF}
-
-  {$IF RTLVersion >= 35.0}
-  DefaultResponseTimeout = TURLClient.DefaultResponseTimeout;
-  {$ELSE}
-  DefaultResponseTimeout = 60000;
-  {$ENDIF}
-
 type
+  {$IF RTLVersion < 35.0}
+  TURLClientHelper = class helper for TURLClient
+  public const
+    DefaultConnectionTimeout = 60000;
+    DefaultSendTimeout = 60000;
+    DefaultResponseTimeout = 60000;
+  end;
+  {$ENDIF}
+
   OpenAIException = class(Exception)
   private
     FCode: Int64;
@@ -164,9 +154,9 @@ constructor TOpenAIAPI.Create;
 begin
   inherited;
   // Defaults
-  FConnectionTimeout := DefaultConnectionTimeout;
-  FSendTimeout := DefaultSendTimeout;
-  FResponseTimeout := DefaultResponseTimeout;
+  FConnectionTimeout := TURLClient.DefaultConnectionTimeout;
+  FSendTimeout := TURLClient.DefaultSendTimeout;
+  FResponseTimeout := TURLClient.DefaultResponseTimeout;
   FToken := '';
   FBaseUrl := URL_BASE;
   FIsAzure := False;
