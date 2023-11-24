@@ -478,15 +478,15 @@ type
     /// <summary> Property to set/get the ConnectionTimeout. Value is in milliseconds.
     /// -1 - Infinite timeout. 0 - platform specific timeout. Supported by Windows, Linux, Android platforms.
     /// </summary>
-    property ConnectionTimeout default TURLClient.DefaultConnectionTimeout;
+    property ConnectionTimeout default DefaultConnectionTimeout;
     /// <summary> Property to set/get the SendTimeout. Value is in milliseconds.
     /// -1 - Infinite timeout. 0 - platform specific timeout. Supported by Windows, macOS platforms.
     /// </summary>
-    property SendTimeout default {$IF RTLVersion >= 35.0}TURLClient.DefaultSendTimeout{$ELSE}60000{$ENDIF};
+    property SendTimeout default DefaultSendTimeout;
     /// <summary> Property to set/get the ResponseTimeout. Value is in milliseconds.
     /// -1 - Infinite timeout. 0 - platform specific timeout. Supported by all platforms.
     /// </summary>
-    property ResponseTimeout default TURLClient.DefaultResponseTimeout;
+    property ResponseTimeout default DefaultResponseTimeout;
     property IsAzure default False;
     property AzureApiVersion;
     property AzureDeployment;
