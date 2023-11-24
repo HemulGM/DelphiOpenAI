@@ -470,10 +470,9 @@ begin
     if Assigned(Error) and Assigned(Error.Error) then
       ParseAndRaiseError(Error.Error, Code)
     else
-      raise OpenAIException.Create('Unknown error', '', '', Code);
+      raise OpenAIException.Create('Unknown error. Code: ' + Code.ToString, '', '', Code);
   finally
-    if Assigned(Error) then
-      Error.Free;
+    Error.Free;
   end;
 end;
 
