@@ -669,7 +669,7 @@ type
 implementation
 
 uses
-  Rest.Json, System.Rtti, OpenAI.Utils.Base64;
+  Rest.Json, System.Rtti, System.Net.HttpClient, OpenAI.Utils.Base64;
 
 { TChatRoute }
 
@@ -687,7 +687,7 @@ begin
   try
     RetPos := 0;
     Result := API.Post<TChatParams>('chat/completions', ParamProc, Response,
-      procedure(const Sender: TObject; AContentLength: Int64; AReadCount: Int64; var AAbort: Boolean)
+      TReceiveDataCallback(procedure(const Sender: TObject; AContentLength: Int64; AReadCount: Int64; var AAbort: Boolean)
       var
         IsDone: Boolean;
         Data: string;
@@ -727,7 +727,7 @@ begin
             Chat.Free;
           end;
         until Ret < 0;
-      end);
+      end));
   finally
     Response.Free;
   end;

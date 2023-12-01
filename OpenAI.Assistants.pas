@@ -244,17 +244,18 @@ type
     /// <summary>
     /// Retrieves an assistant.
     /// </summary>
-    /// <param name="const AssistantId: string">The ID of the assistant to retrieve.</param>
+    /// <param name="AssistantId">The ID of the assistant to retrieve.</param>
     function Retrieve(const AssistantId: string): TAssistant;
     /// <summary>
     /// Modifies an assistant.
     /// </summary>
-    /// <param name="const AssistantId: string">The ID of the assistant to modify.</param>
+    /// <param name="AssistantId">The ID of the assistant to modify.</param>
+    /// <param name="ParamProc">Params</param>
     function Modify(const AssistantId: string; ParamProc: TProc<TAssistantParams>): TAssistant;
     /// <summary>
     /// Delete an assistant.
     /// </summary>
-    /// <param name="const AssistantId: string">The ID of the assistant to delete.</param>
+    /// <param name="AssistantId">The ID of the assistant to delete.</param>
     function Delete(const AssistantId: string): TDeletionStatus;
     /// <summary>
     /// Retrieves an assistant.

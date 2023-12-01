@@ -172,7 +172,7 @@ type
 implementation
 
 uses
-  REST.Json;
+  REST.Json, System.Net.HttpClient;
 
 { TCompletionsRoute }
 
@@ -190,7 +190,7 @@ begin
   try
     RetPos := 0;
     Result := API.Post<TCompletionParams>('completions', ParamProc, Response,
-      procedure(const Sender: TObject; AContentLength: Int64; AReadCount: Int64; var AAbort: Boolean)
+      TReceiveDataCallback(procedure(const Sender: TObject; AContentLength: Int64; AReadCount: Int64; var AAbort: Boolean)
       var
         IsDone: Boolean;
         Data: string;
@@ -227,7 +227,7 @@ begin
             end;
           end;
         until Ret < 0;
-      end);
+      end));
   finally
     Response.Free;
   end;
