@@ -717,6 +717,8 @@ begin
           end;
           try
             Event(Chat, IsDone, AAbort);
+            if AAbort then
+              Exit;
           finally
             Chat.Free;
           end;
