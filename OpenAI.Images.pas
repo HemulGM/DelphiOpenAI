@@ -111,22 +111,22 @@ type
     /// The image to edit. Must be a valid PNG file, less than 4MB, and square.
     /// If mask is not provided, image must have transparency, which will be used as the mask.
     /// </summary>
-    function Image(const FileName: string): TImageEditParams; overload;
+    function Image(const FileName: TFileName): TImageEditParams; overload;
     /// <summary>
     /// The image to edit. Must be a valid PNG file, less than 4MB, and square.
     /// If mask is not provided, image must have transparency, which will be used as the mask.
     /// </summary>
-    function Image(const Stream: TStream; const FileName: string): TImageEditParams; overload;
+    function Image(const Stream: TStream; const FileName: TFileName): TImageEditParams; overload;
     /// <summary>
     /// An additional image whose fully transparent areas (e.g. where alpha is zero) indicate where image should be edited.
     /// Must be a valid PNG file, less than 4MB, and have the same dimensions as image.
     /// </summary>
-    function Mask(const FileName: string): TImageEditParams; overload;
+    function Mask(const FileName: TFileName): TImageEditParams; overload;
     /// <summary>
     /// An additional image whose fully transparent areas (e.g. where alpha is zero) indicate where image should be edited.
     /// Must be a valid PNG file, less than 4MB, and have the same dimensions as image.
     /// </summary>
-    function Mask(const Stream: TStream; const FileName: string): TImageEditParams; overload;
+    function Mask(const Stream: TStream; const FileName: TFileName): TImageEditParams; overload;
     /// <summary>
     /// The model to use for image generation. Only "dall-e-2" is supported at this time.
     /// </summary>
@@ -167,11 +167,11 @@ type
     /// <summary>
     /// The image to use as the basis for the variation(s). Must be a valid PNG file, less than 4MB, and square.
     /// </summary>
-    function Image(const FileName: string): TImageVariationParams; overload;
+    function Image(const FileName: TFileName): TImageVariationParams; overload;
     /// <summary>
     /// The image to use as the basis for the variation(s). Must be a valid PNG file, less than 4MB, and square.
     /// </summary>
-    function Image(const Stream: TStream; const FileName: string): TImageVariationParams; overload;
+    function Image(const Stream: TStream; const FileName: TFileName): TImageVariationParams; overload;
     /// <summary>
     /// The model to use for image generation. Only "dall-e-2" is supported at this time.
     /// </summary>
@@ -387,7 +387,7 @@ end;
 
 { TImageEditParams }
 
-function TImageEditParams.Image(const FileName: string): TImageEditParams;
+function TImageEditParams.Image(const FileName: TFileName): TImageEditParams;
 begin
   AddFile('image', FileName);
   Result := Self;
@@ -398,13 +398,13 @@ begin
   inherited Create(true);
 end;
 
-function TImageEditParams.Image(const Stream: TStream; const FileName: string): TImageEditParams;
+function TImageEditParams.Image(const Stream: TStream; const FileName: TFileName): TImageEditParams;
 begin
   AddStream('image', Stream, FileName);
   Result := Self;
 end;
 
-function TImageEditParams.Mask(const Stream: TStream; const FileName: string): TImageEditParams;
+function TImageEditParams.Mask(const Stream: TStream; const FileName: TFileName): TImageEditParams;
 begin
   AddStream('mask', Stream, FileName);
   Result := Self;
@@ -416,7 +416,7 @@ begin
   Result := Self;
 end;
 
-function TImageEditParams.Mask(const FileName: string): TImageEditParams;
+function TImageEditParams.Mask(const FileName: TFileName): TImageEditParams;
 begin
   AddFile('mask', FileName);
   Result := Self;
@@ -466,7 +466,7 @@ end;
 
 { TImageVariationParams }
 
-function TImageVariationParams.Image(const FileName: string): TImageVariationParams;
+function TImageVariationParams.Image(const FileName: TFileName): TImageVariationParams;
 begin
   AddFile('image', FileName);
   Result := Self;
@@ -477,7 +477,7 @@ begin
   inherited Create(true);
 end;
 
-function TImageVariationParams.Image(const Stream: TStream; const FileName: string): TImageVariationParams;
+function TImageVariationParams.Image(const Stream: TStream; const FileName: TFileName): TImageVariationParams;
 begin
   AddStream('image', Stream, FileName);
   Result := Self;

@@ -6,22 +6,22 @@ uses
   System.SysUtils, System.NetEncoding, System.Classes, System.Net.Mime,
   OpenAI.Types;
 
-function FileToBase64(const FileName: string): TBase64Data;
+function FileToBase64(const FileName: TFileName): TBase64Data;
 
 function StreamToBase64(Stream: TStream; const ContentType: string): TBase64Data;
 
-function GetFileContentType(const FileName: string): string;
+function GetFileContentType(const FileName: TFileName): string;
 
 implementation
 
-function GetFileContentType(const FileName: string): string;
+function GetFileContentType(const FileName: TFileName): string;
 var
   LKind: TMimeTypes.TKind;
 begin
   TMimeTypes.Default.GetFileInfo(FileName, Result, LKind);
 end;
 
-function FileToBase64(const FileName: string): TBase64Data;
+function FileToBase64(const FileName: TFileName): TBase64Data;
 var
   FS: TFileStream;
   Base64: TStringStream;
@@ -30,7 +30,11 @@ begin
   try
     Base64 := TStringStream.Create('', TEncoding.UTF8);
     try
-      TBase64StringEncoding.Base64String.Encode(FS, Base64);
+      {$IF RTLVersion >= 35.0}
+      TNetEncoding.Base64String.Encode(FS, Base64);
+      {$ELSE}
+      TNetEncoding.Base64.Encode(FS, Base64);
+      {$ENDIF}
       Result.Data := Base64.DataString;
       Result.ContentType := GetFileContentType(FileName);
     finally
@@ -47,7 +51,11 @@ var
 begin
   Base64 := TStringStream.Create('', TEncoding.UTF8);
   try
-    TBase64StringEncoding.Base64String.Encode(Stream, Base64);
+    {$IF RTLVersion >= 35.0}
+    TNetEncoding.Base64String.Encode(Stream, Base64);
+    {$ELSE}
+    TNetEncoding.Base64.Encode(Stream, Base64);
+    {$ENDIF}
     Result.Data := Base64.DataString;
     Result.ContentType := ContentType;
   finally

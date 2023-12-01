@@ -7,6 +7,15 @@ uses
   System.JSON, OpenAI.Errors, OpenAI.API.Params, System.SysUtils;
 
 type
+  {$IF RTLVersion < 35.0}
+  TURLClientHelper = class helper for TURLClient
+  public const
+    DefaultConnectionTimeout = 60000;
+    DefaultSendTimeout = 60000;
+    DefaultResponseTimeout = 60000;
+  end;
+  {$ENDIF}
+
   OpenAIException = class(Exception)
   private
     FCode: Int64;
@@ -87,11 +96,11 @@ type
     function GetHeaders: TNetHeaders; virtual;
     function GetClient: THTTPClient; virtual;
     function GetRequestURL(const Path: string): string;
-    function Get(const Path: string; Response: TStringStream): Integer; overload;
-    function Delete(const Path: string; Response: TStringStream): Integer; overload;
-    function Post(const Path: string; Response: TStringStream): Integer; overload;
-    function Post(const Path: string; Body: TJSONObject; Response: TStringStream; OnReceiveData: TReceiveDataCallback = nil): Integer; overload;
-    function Post(const Path: string; Body: TMultipartFormData; Response: TStringStream): Integer; overload;
+    function Get(const Path: string; Response: TStream): Integer; overload;
+    function Delete(const Path: string; Response: TStream): Integer; overload;
+    function Post(const Path: string; Response: TStream): Integer; overload;
+    function Post(const Path: string; Body: TJSONObject; Response: TStream; OnReceiveData: TReceiveDataCallback = nil): Integer; overload;
+    function Post(const Path: string; Body: TMultipartFormData; Response: TStream): Integer; overload;
     function ParseResponse<T: class, constructor>(const Code: Int64; const ResponseText: string): T;
     procedure CheckAPI;
   public
@@ -99,9 +108,8 @@ type
     function Get<TResult: class, constructor; TParams: TJSONParam>(const Path: string; ParamProc: TProc<TParams>): TResult; overload;
     procedure GetFile(const Path: string; Response: TStream); overload;
     function Delete<TResult: class, constructor>(const Path: string): TResult; overload;
-    function Post<TParams: TJSONParam>(const Path: string; ParamProc: TProc<TParams>; Response: TStringStream; Event: TReceiveDataCallback = nil): Boolean; overload;
+    function Post<TParams: TJSONParam>(const Path: string; ParamProc: TProc<TParams>; Response: TStream; Event: TReceiveDataCallback = nil): Boolean; overload;
     function Post<TResult: class, constructor; TParams: TJSONParam>(const Path: string; ParamProc: TProc<TParams>): TResult; overload;
-    procedure Post<TParams: TJSONParam>(const Path: string; ParamProc: TProc<TParams>; Response: TStream; Event: TReceiveDataCallback = nil); overload;
     function Post<TResult: class, constructor>(const Path: string): TResult; overload;
     function PostForm<TResult: class, constructor; TParams: TMultipartFormData, constructor>(const Path: string; ParamProc: TProc<TParams>): TResult; overload;
   public
@@ -167,7 +175,7 @@ begin
   inherited;
 end;
 
-function TOpenAIAPI.Post(const Path: string; Body: TJSONObject; Response: TStringStream; OnReceiveData: TReceiveDataCallback): Integer;
+function TOpenAIAPI.Post(const Path: string; Body: TJSONObject; Response: TStream; OnReceiveData: TReceiveDataCallback): Integer;
 var
   Headers: TNetHeaders;
   Stream: TStringStream;
@@ -192,7 +200,7 @@ begin
   end;
 end;
 
-function TOpenAIAPI.Get(const Path: string; Response: TStringStream): Integer;
+function TOpenAIAPI.Get(const Path: string; Response: TStream): Integer;
 var
   Client: THTTPClient;
 begin
@@ -205,7 +213,7 @@ begin
   end;
 end;
 
-function TOpenAIAPI.Post(const Path: string; Body: TMultipartFormData; Response: TStringStream): Integer;
+function TOpenAIAPI.Post(const Path: string; Body: TMultipartFormData; Response: TStream): Integer;
 var
   Client: THTTPClient;
 begin
@@ -218,7 +226,7 @@ begin
   end;
 end;
 
-function TOpenAIAPI.Post(const Path: string; Response: TStringStream): Integer;
+function TOpenAIAPI.Post(const Path: string; Response: TStream): Integer;
 var
   Client: THTTPClient;
 begin
@@ -228,54 +236,6 @@ begin
     Result := Client.Post(GetRequestURL(Path), TStream(nil), Response, GetHeaders).StatusCode;
   finally
     Client.Free;
-  end;
-end;
-
-procedure TOpenAIAPI.Post<TParams>(const Path: string; ParamProc: TProc<TParams>; Response: TStream; Event: TReceiveDataCallback);
-var
-  Params: TParams;
-  Code: Integer;
-  Headers: TNetHeaders;
-  Stream, Strings: TStringStream;
-  Client: THTTPClient;
-begin
-  Params := TParams.Create;
-  try
-    if Assigned(ParamProc) then
-      ParamProc(Params);
-
-    CheckAPI;
-    Client := GetClient;
-    try
-      Client.ReceiveDataCallBack := Event;
-      Headers := GetHeaders + [TNetHeader.Create('Content-Type', 'application/json')];
-      Stream := TStringStream.Create;
-      try
-        Stream.WriteString(Params.JSON.ToJSON);
-        Stream.Position := 0;
-        Code := Client.Post(GetRequestURL(Path), Stream, Response, Headers).StatusCode;
-        case Code of
-          200..299:
-            ; {success}
-        else
-          Strings := TStringStream.Create;
-          try
-            Response.Position := 0;
-            Strings.LoadFromStream(Response);
-            ParseError(Code, Strings.DataString);
-          finally
-            Strings.Free;
-          end;
-        end;
-      finally
-        Client.OnReceiveData := nil;
-        Stream.Free;
-      end;
-    finally
-      Client.Free;
-    end;
-  finally
-    Params.Free;
   end;
 end;
 
@@ -298,7 +258,7 @@ begin
   end;
 end;
 
-function TOpenAIAPI.Post<TParams>(const Path: string; ParamProc: TProc<TParams>; Response: TStringStream; Event: TReceiveDataCallback): Boolean;
+function TOpenAIAPI.Post<TParams>(const Path: string; ParamProc: TProc<TParams>; Response: TStream; Event: TReceiveDataCallback): Boolean;
 var
   Params: TParams;
   Code: Integer;
@@ -342,7 +302,7 @@ begin
   end;
 end;
 
-function TOpenAIAPI.Delete(const Path: string; Response: TStringStream): Integer;
+function TOpenAIAPI.Delete(const Path: string; Response: TStream): Integer;
 var
   Client: THTTPClient;
 begin
@@ -433,7 +393,9 @@ begin
   Result.ProxySettings := FProxySettings;
   Result.ConnectionTimeout := FConnectionTimeout;
   Result.ResponseTimeout := FResponseTimeout;
+  {$IF RTLVersion >= 35.0}
   Result.SendTimeout := FSendTimeout;
+  {$ENDIF}
   Result.AcceptCharSet := 'utf-8';
 end;
 
@@ -528,10 +490,9 @@ begin
     if Assigned(Error) and Assigned(Error.Error) then
       ParseAndRaiseError(Error.Error, Code)
     else
-      raise OpenAIException.Create('Unknown error', '', '', Code);
+      raise OpenAIException.Create('Unknown error. Code: ' + Code.ToString, '', '', Code);
   finally
-    if Assigned(Error) then
-      Error.Free;
+    Error.Free;
   end;
 end;
 
