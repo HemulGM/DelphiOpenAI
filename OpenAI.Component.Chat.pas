@@ -90,7 +90,7 @@ type
     property IsBusy: Boolean read GetIsBusy;
   public
     procedure Send(const Messages: TArray<TChatMessageBuild>);
-    procedure StopSream;
+    procedure StopStream;
   public
     property OnChat: TOnChat read FOnChat write SetOnChat;
     property OnChatDelta: TOnChatDelta read FOnChatDelta write SetOnChatDelta;
@@ -545,7 +545,7 @@ begin
   FUser := Value;
 end;
 
-procedure TOpenAIChatCustom.StopSream;
+procedure TOpenAIChatCustom.StopStream;
 begin
   FDoStreamStop := True;
 end;

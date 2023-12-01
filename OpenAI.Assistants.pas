@@ -3,15 +3,40 @@
 interface
 
 uses
-  System.SysUtils, Rest.Json, Rest.Json.Types, OpenAI.API, OpenAI.API.Params,
-  OpenAI.Types;
+  System.SysUtils, Rest.Json, Rest.Json.Types, REST.JsonReflect, System.JSON, OpenAI.API,
+  OpenAI.API.Params, OpenAI.Types;
 
 type
-  TAssistantTool = class(TJSONParam)
+  TAssistantTool = class abstract(TJSONParam)
     //Code interpreter tool
     //Retrieval tool
     //Function tool
 
+  end;
+
+  TAssistantCodeInterpreterTool = class(TAssistantTool)
+  end;
+
+  TAssistantRetrievalTool = class(TAssistantTool)
+  end;
+
+  TAssistantFunctionTool = class(TAssistantTool)
+    /// <summary>
+    /// A description of what the function does, used by the model to choose when and how to call the function.
+    /// </summary>
+    function Description(const Value: string): TAssistantFunctionTool;
+    /// <summary>
+    /// The name of the function to be called. Must be a-z, A-Z, 0-9,
+    /// or contain underscores and dashes, with a maximum length of 64.
+    /// </summary>
+    function Name(const Value: string): TAssistantFunctionTool;
+    /// <summary>
+    /// The parameters the functions accepts, described as a JSON Schema object.
+    /// See the guide for examples, and the JSON Schema reference for documentation about the format.
+    /// <br>
+    /// To describe a function that accepts no parameters, provide the value {"type": "object", "properties": {}}.
+    /// </summary>
+    function Parameters(const Value: TJSONObject): TAssistantFunctionTool;
   end;
 
   TAssistantListParams = class(TJSONParam)
@@ -104,9 +129,10 @@ type
     /// To describe a function that accepts no parameters, provide the value {"type": "object", "properties": {}}.
     /// </summary>
     property Parameters: TFunctionParameters read FParameters write FParameters;
+    destructor Destroy; override;
   end;
 
-  TTools = class
+  TTool = class
   private
     [JsonNameAttribute('type')]
     FType: string;
@@ -115,6 +141,7 @@ type
   public
     property &Type: string read FType write FType;
     property &Function: TToolFunction read FFunction write FFunction;
+    destructor Destroy; override;
   end;
 
   /// <summary>
@@ -137,7 +164,7 @@ type
     [JsonNameAttribute('instructions')]
     FInstructions: string;
     [JsonNameAttribute('tools')]
-    FTools: TArray<TTools>;
+    FTools: TArray<TTool>;
     [JsonNameAttribute('file_ids')]
     FFileIds: TArray<string>;
     [JsonNameAttribute('metadata')]
@@ -176,7 +203,7 @@ type
     /// A list of tool enabled on the assistant. There can be a maximum of 128 tools per assistant.
     /// Tools can be of types code_interpreter, retrieval, or function.
     /// </summary>
-    property Tools: TArray<TTools> read FTools write FTools;
+    property Tools: TArray<TTool> read FTools write FTools;
     /// <summary>
     /// A list of file IDs attached to this assistant.
     /// There can be a maximum of 20 files attached to the assistant.
@@ -240,8 +267,10 @@ implementation
 { TAssistant }
 
 destructor TAssistant.Destroy;
+var
+  Item: TTool;
 begin
-  for var Item in FTools do
+  for Item in FTools do
     Item.Free;
   FMetadata.Free;
   inherited;
@@ -347,6 +376,39 @@ end;
 function TAssistantListParams.Order(const Value: string): TAssistantListParams;
 begin
   Result := TAssistantListParams(Add('order', Value));
+end;
+
+{ TTool }
+
+destructor TTool.Destroy;
+begin
+  FFunction.Free;
+  inherited;
+end;
+
+{ TToolFunction }
+
+destructor TToolFunction.Destroy;
+begin
+  FParameters.Free;
+  inherited;
+end;
+
+{ TAssistantFunctionTool }
+
+function TAssistantFunctionTool.Description(const Value: string): TAssistantFunctionTool;
+begin
+  Result := TAssistantFunctionTool(Add('description', Value));
+end;
+
+function TAssistantFunctionTool.Name(const Value: string): TAssistantFunctionTool;
+begin
+  Result := TAssistantFunctionTool(Add('name', Value));
+end;
+
+function TAssistantFunctionTool.Parameters(const Value: TJSONObject): TAssistantFunctionTool;
+begin
+  Result := TAssistantFunctionTool(Add('parameters', Value));
 end;
 
 end.
