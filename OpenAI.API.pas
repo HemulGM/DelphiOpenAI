@@ -16,6 +16,12 @@ type
   end;
   {$ENDIF}
 
+  {$IF RTLVersion >= 35.0}
+  TOpenAIReceiveDataCallback = TReceiveDataCallback;
+  {$ELSE}
+  TOpenAIReceiveDataCallback = reference to procedure(const Sender: TObject; AContentLength: Int64; AReadCount: Int64; var AAbort: Boolean);
+  {$ENDIF}
+
   OpenAIException = class(Exception)
   private
     FCode: Int64;
@@ -63,7 +69,6 @@ type
 
   OpenAIExceptionInvalidResponse = class(OpenAIException);
 
-  {$WARNINGS OFF}
   TOpenAIAPI = class
   public
     const
@@ -99,16 +104,19 @@ type
     function Get(const Path: string; Response: TStream): Integer; overload;
     function Delete(const Path: string; Response: TStream): Integer; overload;
     function Post(const Path: string; Response: TStream): Integer; overload;
-    function Post(const Path: string; Body: TJSONObject; Response: TStream; OnReceiveData: TReceiveDataCallback = nil): Integer; overload;
+    function Post(const Path: string; Body: TJSONObject; Response: TStream; OnReceiveData: TOpenAIReceiveDataCallback = nil): Integer; overload;
     function Post(const Path: string; Body: TMultipartFormData; Response: TStream): Integer; overload;
     function ParseResponse<T: class, constructor>(const Code: Int64; const ResponseText: string): T;
     procedure CheckAPI;
+    {$IF RTLVersion < 35.0}
+    procedure DoReciveData(const Sender: TObject; AContentLength: Int64; AReadCount: Int64; var Abort: Boolean);
+    {$ENDIF}
   public
     function Get<TResult: class, constructor>(const Path: string): TResult; overload;
     function Get<TResult: class, constructor; TParams: TJSONParam>(const Path: string; ParamProc: TProc<TParams>): TResult; overload;
     procedure GetFile(const Path: string; Response: TStream); overload;
     function Delete<TResult: class, constructor>(const Path: string): TResult; overload;
-    function Post<TParams: TJSONParam>(const Path: string; ParamProc: TProc<TParams>; Response: TStream; Event: TReceiveDataCallback = nil): Boolean; overload;
+    function Post<TParams: TJSONParam>(const Path: string; ParamProc: TProc<TParams>; Response: TStream; Event: TOpenAIReceiveDataCallback = nil): Boolean; overload;
     function Post<TResult: class, constructor; TParams: TJSONParam>(const Path: string; ParamProc: TProc<TParams>): TResult; overload;
     function Post<TResult: class, constructor>(const Path: string): TResult; overload;
     function PostForm<TResult: class, constructor; TParams: TMultipartFormData, constructor>(const Path: string; ParamProc: TProc<TParams>): TResult; overload;
@@ -134,7 +142,6 @@ type
     property AzureDeployment: string read FAzureDeployment write FAzureDeployment;
     property CustomHeaders: TNetHeaders read FCustomHeaders write SetCustomHeaders;
   end;
-  {$WARNINGS ON}
 
   TOpenAIAPIRoute = class
   private
@@ -175,24 +182,55 @@ begin
   inherited;
 end;
 
-function TOpenAIAPI.Post(const Path: string; Body: TJSONObject; Response: TStream; OnReceiveData: TReceiveDataCallback): Integer;
+{$IF RTLVersion < 35.0}
+type
+  THTTPRequestAccess = class(THTTPRequest);
+  TStringStreamWithEvent = class(TStringStream)
+  public
+    OnReceiveData: TOpenAIReceiveDataCallback;
+  end;
+
+procedure TOpenAIAPI.DoReciveData(const Sender: TObject; AContentLength: Int64; AReadCount: Int64; var Abort: Boolean);
+begin
+  if Sender is THTTPRequest then
+    if THTTPRequestAccess(Sender).FSourceStream is TStringStreamWithEvent then
+      if Assigned(TStringStreamWithEvent(THTTPRequestAccess(Sender).FSourceStream).OnReceiveData) then
+        TStringStreamWithEvent(THTTPRequestAccess(Sender).FSourceStream).OnReceiveData(Sender, AContentLength, AReadCount, Abort);
+end;
+{$ENDIF}
+
+function TOpenAIAPI.Post(const Path: string; Body: TJSONObject; Response: TStream; OnReceiveData: TOpenAIReceiveDataCallback): Integer;
 var
   Headers: TNetHeaders;
+  {$IF RTLVersion >= 35.0}
   Stream: TStringStream;
+  {$ELSE}
+  Stream: TStringStreamWithEvent;
+  {$ENDIF}
   Client: THTTPClient;
 begin
   CheckAPI;
   Client := GetClient;
   try
     Headers := GetHeaders + [TNetHeader.Create('Content-Type', 'application/json')];
-    Stream := TStringStream.Create;
+    {$IF RTLVersion >= 35.0}
     Client.ReceiveDataCallBack := OnReceiveData;
+    Stream := TStringStream.Create;
+    {$ELSE}
+    Client.OnReceiveData := DoReciveData;
+    Stream := TStringStreamWithEvent.Create;
+    Stream.OnReceiveData := OnReceiveData;
+    {$ENDIF}
     try
       Stream.WriteString(Body.ToJSON);
       Stream.Position := 0;
       Result := Client.Post(GetRequestURL(Path), Stream, Response, Headers).StatusCode;
     finally
+      {$IF RTLVersion >= 35.0}
+      Client.ReceiveDataCallBack := nil;
+      {$ELSE}
       Client.OnReceiveData := nil;
+      {$ENDIF}
       Stream.Free;
     end;
   finally
@@ -258,7 +296,7 @@ begin
   end;
 end;
 
-function TOpenAIAPI.Post<TParams>(const Path: string; ParamProc: TProc<TParams>; Response: TStream; Event: TReceiveDataCallback): Boolean;
+function TOpenAIAPI.Post<TParams>(const Path: string; ParamProc: TProc<TParams>; Response: TStream; Event: TOpenAIReceiveDataCallback): Boolean;
 var
   Params: TParams;
   Code: Integer;
@@ -274,13 +312,18 @@ begin
         Result := True;
     else
       Result := False;
-      Strings := TStringStream.Create;
-      try
-        Response.Position := 0;
-        Strings.LoadFromStream(Response);
-        ParseError(Code, Strings.DataString);
-      finally
-        Strings.Free;
+      if Response is TStringStream then
+        ParseError(Code, TStringStream(Response).DataString)
+      else
+      begin
+        Strings := TStringStream.Create;
+        try
+          Response.Position := 0;
+          Strings.LoadFromStream(Response);
+          ParseError(Code, Strings.DataString);
+        finally
+          Strings.Free;
+        end;
       end;
     end;
   finally
@@ -492,7 +535,8 @@ begin
     else
       raise OpenAIException.Create('Unknown error. Code: ' + Code.ToString, '', '', Code);
   finally
-    Error.Free;
+    if Assigned(Error) then
+      Error.Free;
   end;
 end;
 
