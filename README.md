@@ -350,7 +350,7 @@ SOFTWARE.
 
 <hr>
 <p align="center">
-<img src="https://dtffvb2501i0o.cloudfront.net/images/logos/delphi-logo-128.webp" alt="Delphi">
+<img src="https://d2ohlsp9gwqc7h.cloudfront.net/images/rad-studio/rad-12/Delphi_12_256x2561x.webp" width=128px alt="Delphi">
 </p>
 <h5 align="center">
 Made with :heart: on Delphi
