@@ -378,14 +378,14 @@ type
     /// <summary>
     /// A list of functions the model may generate JSON inputs for.
     /// </summary>
-    function Functions(const Value: TArray<IChatFunction>): TChatParams; deprecated;
+    function Functions(const Value: TArray<IChatFunction>): TChatParams; deprecated 'Use Tools';
     /// <summary>
     /// Controls how the model responds to function calls. none means the model does not call a function,
     /// and responds to the end-user. auto means the model can pick between an end-user or calling a function.
     /// Specifying a particular function via {"name": "my_function"} forces the model to call that function.
     /// none is the default when no functions are present. auto is the default if functions are present.
     /// </summary>
-    function FunctionCall(const Value: TFunctionCall): TChatParams; deprecated;
+    function FunctionCall(const Value: TFunctionCall): TChatParams; deprecated 'Use ToolChoice';
     /// <summary>
     /// What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random,
     /// while lower values like 0.2 will make it more focused and deterministic.
