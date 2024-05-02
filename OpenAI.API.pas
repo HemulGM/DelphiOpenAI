@@ -498,6 +498,7 @@ end;
 
 function TOpenAIAPI.ParseResponse<T>(const Code: Int64; const ResponseText: string): T;
 begin
+  Result := nil;
   case Code of
     200..299:
       try

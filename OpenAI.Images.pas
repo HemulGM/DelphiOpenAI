@@ -400,13 +400,13 @@ end;
 
 function TImageEditParams.Image(const Stream: TStream; const FileName: TFileName): TImageEditParams;
 begin
-  AddStream('image', Stream, FileName);
+  AddStream('image', Stream, False, FileName);
   Result := Self;
 end;
 
 function TImageEditParams.Mask(const Stream: TStream; const FileName: TFileName): TImageEditParams;
 begin
-  AddStream('mask', Stream, FileName);
+  AddStream('mask', Stream, False, FileName);
   Result := Self;
 end;
 
@@ -479,7 +479,7 @@ end;
 
 function TImageVariationParams.Image(const Stream: TStream; const FileName: TFileName): TImageVariationParams;
 begin
-  AddStream('image', Stream, FileName);
+  AddStream('image', Stream, False, FileName);
   Result := Self;
 end;
 

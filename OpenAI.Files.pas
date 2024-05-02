@@ -183,7 +183,7 @@ end;
 
 function TFileUploadParams.&File(const Stream: TStream; const FileName: TFileName): TFileUploadParams;
 begin
-  AddStream('file', Stream, FileName);
+  AddStream('file', Stream, False, FileName);
   Result := Self;
 end;
 

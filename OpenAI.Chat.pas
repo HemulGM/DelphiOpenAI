@@ -391,10 +391,11 @@ type
     /// while lower values like 0.2 will make it more focused and deterministic.
     /// We generally recommend altering this or top_p but not both.
     /// </summary>
-    function Temperature(const Value: Single = 1): TChatParams;
+    function Temperature(const Value: Single): TChatParams;
     /// <summary>
     /// A list of tools the model may call. Currently, only functions are supported as a tool.
     /// Use this to provide a list of functions the model may generate JSON inputs for.
+    /// A max of 128 functions are supported.
     /// </summary>
     function Tools(const Value: TArray<TChatToolParam>): TChatParams;
     /// <summary>
@@ -412,26 +413,28 @@ type
     /// probability mass are considered.
     /// We generally recommend altering this or temperature but not both.
     /// </summary>
-    function TopP(const Value: Single = 1): TChatParams;
+    function TopP(const Value: Single): TChatParams;
     /// <summary>
     /// How many chat completion choices to generate for each input message.
+    /// Note that you will be charged based on the number of generated tokens across all of the choices.
+    /// Keep n as 1 to minimize costs.
     /// </summary>
-    function N(const Value: Integer = 1): TChatParams;
+    function N(const Value: Integer): TChatParams;
     /// <summary>
     /// If set, partial message deltas will be sent, like in ChatGPT. Tokens will be sent as
     /// data-only server-sent events as they become available, with the stream terminated by a data: [DONE] message.
     /// </summary>
     function Stream(const Value: Boolean = True): TChatParams;
     /// <summary>
-    /// An object specifying the format that the model must output. Used to enable JSON mode.
-    /// Setting to "json_object" enables JSON mode. This guarantees that the message the
-    /// model generates is valid JSON.
-    /// Note that your system prompt must still instruct the model to produce JSON,
-    /// and to help ensure you don't forget, the API will throw an error if the string JSON
-    /// does not appear in your system message. Also note that the message content may be
-    /// partial (i.e. cut off) if finish_reason="length", which indicates the generation
-    /// exceeded max_tokens or the conversation exceeded the max context length.
-    /// Must be one of "text" or "json_object".
+    /// An object specifying the format that the model must output.
+    /// Compatible with GPT-4 Turbo and all GPT-3.5 Turbo models newer than gpt-3.5-turbo-1106.
+    /// Setting to { "type": "json_object" } enables JSON mode, which guarantees the message the model
+    /// generates is valid JSON.
+    /// Important: when using JSON mode, you must also instruct the model to produce JSON yourself via a
+    /// system or user message. Without this, the model may generate an unending stream of whitespace until
+    /// the generation reaches the token limit, resulting in a long-running and seemingly "stuck" request.
+    /// Also note that the message content may be partially cut off if finish_reason="length",
+    /// which indicates the generation exceeded max_tokens or the conversation exceeded the max context length.
     /// </summary>
     function ResponseFormat(const Value: TChatResponseFormat): TChatParams;
     /// <summary>
@@ -450,14 +453,13 @@ type
     /// </summary>
     function Stop(const Value: TArray<string>): TChatParams; overload;
     /// <summary>
-    /// The maximum number of tokens allowed for the generated answer. By default, the number of
-    /// tokens the model can return will be (4096 - prompt tokens).
+    /// The maximum number of tokens that can be generated in the chat completion.
+    /// The total length of input tokens and generated tokens is limited by the model's context length.
     /// </summary>
-    function MaxTokens(const Value: Integer = 16): TChatParams;
+    function MaxTokens(const Value: Integer): TChatParams;
     /// <summary>
-    /// Number between -2.0 and 2.0. Positive values penalize new tokens based on whether they
-    /// appear in the text so far,
-    /// increasing the model's likelihood to talk about new topics.
+    /// Number between -2.0 and 2.0. Positive values penalize new tokens based on whether they appear
+    /// in the text so far, increasing the model's likelihood to talk about new topics.
     /// </summary>
     function PresencePenalty(const Value: Single = 0): TChatParams;
     /// <summary>
@@ -481,6 +483,17 @@ type
     /// A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse.
     /// </summary>
     function User(const Value: string): TChatParams;
+    /// <summary>
+    /// Whether to return log probabilities of the output tokens or not.
+    /// If true, returns the log probabilities of each output token returned in the content of message.
+    /// This option is currently not available on the gpt-4-vision-preview model.
+    /// </summary>
+    function Logprobs(const Value: Boolean = True): TChatParams;
+    /// <summary>
+    /// An integer between 0 and 20 specifying the number of most likely tokens to return at each token position,
+    /// each with an associated log probability. logprobs must be set to true if this parameter is used.
+    /// </summary>
+    function TopLogprobs(const Value: Integer): TChatParams;
     constructor Create; override;
   end;
 
@@ -570,6 +583,48 @@ type
     destructor Destroy; override;
   end;
 
+  TLogprobContent = class
+  private
+    FToken: string;
+    FLogprob: Extended;
+    FBytes: TArray<Integer>;
+    FTop_logprobs: TArray<TLogprobContent>;
+  public
+    /// <summary>
+    /// The token.
+    /// </summary>
+    property Token: string read FToken write FToken;
+    /// <summary>
+    /// The log probability of this token, if it is within the top 20 most likely tokens.
+    /// Otherwise, the value -9999.0 is used to signify that the token is very unlikely.
+    /// </summary>
+    property Logprob: Extended read FLogprob write FLogprob;
+    /// <summary>
+    /// A list of integers representing the UTF-8 bytes representation of the token.
+    /// Useful in instances where characters are represented by multiple tokens and their byte
+    /// representations must be combined to generate the correct text representation.
+    /// Can be null if there is no bytes representation for the token.
+    /// </summary>
+    property Bytes: TArray<Integer> read FBytes write FBytes;
+    /// <summary>
+    /// List of the most likely tokens and their log probability, at this token position.
+    /// In rare cases, there may be fewer than the number of requested top_logprobs returned.
+    /// </summary>
+    property TopLogprobs: TArray<TLogprobContent> read FTop_logprobs write FTop_logprobs;
+    destructor Destroy; override;
+  end;
+
+  TLogprobs = class
+  private
+    FContent: TArray<TLogprobContent>;
+  public
+    /// <summary>
+    /// A list of message content tokens with log probability information.
+    /// </summary>
+    property Content: TArray<TLogprobContent> read FContent write FContent;
+    destructor Destroy; override;
+  end;
+
   TChatChoices = class
   private
     FIndex: Int64;
@@ -577,6 +632,7 @@ type
     [JsonReflectAttribute(ctString, rtString, TFinishReasonInterceptor)]
     FFinish_reason: TFinishReason;
     FDelta: TChatMessage;
+    FLogprobs: TLogprobs;
   public
     /// <summary>
     /// The index of the choice in the list of choices.
@@ -598,6 +654,10 @@ type
     /// tool_calls if the model called a tool, or function_call (deprecated) if the model called a function.
     /// </summary>
     property FinishReason: TFinishReason read FFinish_reason write FFinish_reason;
+    /// <summary>
+    /// Log probability information for the choice.
+    /// </summary>
+    property Logprobs: TLogprobs read FLogprobs write FLogprobs;
     destructor Destroy; override;
   end;
 
@@ -687,7 +747,8 @@ begin
   try
     RetPos := 0;
     Result := API.Post<TChatParams>('chat/completions', ParamProc, Response,
-      TReceiveDataCallback(procedure(const Sender: TObject; AContentLength: Int64; AReadCount: Int64; var AAbort: Boolean)
+      TReceiveDataCallback(
+      procedure(const Sender: TObject; AContentLength: Int64; AReadCount: Int64; var AAbort: Boolean)
       var
         IsDone: Boolean;
         Data: string;
@@ -770,6 +831,11 @@ end;
 function TChatParams.LogitBias(const Value: TJSONObject): TChatParams;
 begin
   Result := TChatParams(Add('logit_bias', Value));
+end;
+
+function TChatParams.Logprobs(const Value: Boolean): TChatParams;
+begin
+  Result := TChatParams(Add('logprobs', Value));
 end;
 
 function TChatParams.FunctionCall(const Value: TFunctionCall): TChatParams;
@@ -955,6 +1021,11 @@ begin
   Result := TChatParams(Add('tools', TArray<TJSONParam>(Value)));
 end;
 
+function TChatParams.TopLogprobs(const Value: Integer): TChatParams;
+begin
+  Result := TChatParams(Add('top_logprobs', Value));
+end;
+
 function TChatParams.TopP(const Value: Single): TChatParams;
 begin
   Result := TChatParams(Add('top_p', Value));
@@ -1073,10 +1144,9 @@ end;
 
 destructor TChatChoices.Destroy;
 begin
-  if Assigned(FMessage) then
-    FMessage.Free;
-  if Assigned(FDelta) then
-    FDelta.Free;
+  FMessage.Free;
+  FDelta.Free;
+  FLogprobs.Free;
   inherited;
 end;
 
@@ -1310,6 +1380,28 @@ begin
     TImageDetail.High:
       Exit('high');
   end;
+end;
+
+{ TLogprobs }
+
+destructor TLogprobs.Destroy;
+var
+  Item: TLogprobContent;
+begin
+  for Item in FContent do
+    Item.Free;
+  inherited;
+end;
+
+{ TLogprobContent }
+
+destructor TLogprobContent.Destroy;
+var
+  Item: TLogprobContent;
+begin
+  for Item in FTop_logprobs do
+    Item.Free;
+  inherited;
 end;
 
 end.

@@ -6,6 +6,13 @@ uses
   System.SysUtils, OpenAI.API.Params, OpenAI.API;
 
 type
+  TEncodingFormat = (Float, Base64);
+
+  TEncodingFormatHelper = record helper for TEncodingFormat
+    function ToString: string;
+    class function FromString(const Value: string): TEncodingFormat; static;
+  end;
+
   TEmbeddingParams = class(TJSONParam)
     /// <summary>
     /// ID of the model to use. You can use the List models API to see all of your available models,
@@ -28,6 +35,15 @@ type
     /// A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse.
     /// </summary>
     function User(const Value: string): TEmbeddingParams; overload;
+    /// <summary>
+    /// The format to return the embeddings in. Can be either float or base64.
+    /// </summary>
+    function EncodingFormat(const Value: TEncodingFormat): TEmbeddingParams; overload;
+    /// <summary>
+    /// The number of dimensions the resulting output embeddings should have.
+    /// Only supported in text-embedding-3 and later models.
+    /// </summary>
+    function Dimensions(const Value: Int64): TEmbeddingParams; overload;
   end;
 
   TEmbeddingUsage = class
@@ -39,6 +55,9 @@ type
     property TotalTokens: Int64 read FTotal_tokens write FTotal_tokens;
   end;
 
+  /// <summary>
+  /// Represents an embedding vector returned by embedding endpoint.
+  /// </summary>
   TEmbeddingData = class
   private
     FIndex: Int64;
@@ -105,6 +124,16 @@ end;
 
 { TEmbeddingParams }
 
+function TEmbeddingParams.Dimensions(const Value: Int64): TEmbeddingParams;
+begin
+  Result := TEmbeddingParams(Add('dimensions', Value));
+end;
+
+function TEmbeddingParams.EncodingFormat(const Value: TEncodingFormat): TEmbeddingParams;
+begin
+  Result := TEmbeddingParams(Add('encoding_format', Value.ToString));
+end;
+
 function TEmbeddingParams.Input(const Value: TArray<string>): TEmbeddingParams;
 begin
   Result := TEmbeddingParams(Add('input', Value));
@@ -123,6 +152,30 @@ end;
 function TEmbeddingParams.User(const Value: string): TEmbeddingParams;
 begin
   Result := TEmbeddingParams(Add('user', Value));
+end;
+
+{ TEncodingFormatHelper }
+
+class function TEncodingFormatHelper.FromString(const Value: string): TEncodingFormat;
+begin
+  if Value = 'float' then
+    Exit(TEncodingFormat.Float)
+  else if Value = 'base64' then
+    Exit(TEncodingFormat.Base64)
+  else
+    Exit(TEncodingFormat.Float);
+end;
+
+function TEncodingFormatHelper.ToString: string;
+begin
+  case Self of
+    Float:
+      Exit('float');
+    Base64:
+      Exit('base64');
+  else
+    Result := 'float';
+  end;
 end;
 
 end.
