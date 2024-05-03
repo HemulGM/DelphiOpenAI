@@ -395,7 +395,7 @@ end;
 
 constructor TImageEditParams.Create;
 begin
-  inherited Create(true);
+  inherited Create(True);
 end;
 
 function TImageEditParams.Image(const Stream: TStream; const FileName: TFileName): TImageEditParams;
