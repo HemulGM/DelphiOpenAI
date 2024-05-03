@@ -183,7 +183,11 @@ end;
 
 function TFileUploadParams.&File(const Stream: TStream; const FileName: TFileName): TFileUploadParams;
 begin
+  {$IF CompilerVersion <= 35}
+  AddStream('file', Stream, FileName);
+  {$ELSE}
   AddStream('file', Stream, False, FileName);
+  {$ENDIF}
   Result := Self;
 end;
 

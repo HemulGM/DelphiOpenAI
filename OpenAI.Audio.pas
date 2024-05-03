@@ -316,7 +316,11 @@ end;
 
 function TAudioTranscription.&File(const Stream: TStream; const FileName: TFileName): TAudioTranscription;
 begin
+  {$IF CompilerVersion <= 35}
+  AddStream('file', Stream, FileName);
+  {$ELSE}
   AddStream('file', Stream, False, FileName);
+  {$ENDIF}
   Result := Self;
 end;
 
@@ -376,7 +380,11 @@ end;
 
 function TAudioTranslation.&File(const Stream: TStream; const FileName: TFileName): TAudioTranslation;
 begin
+  {$IF CompilerVersion <= 35}
+  AddStream('file', Stream, FileName);
+  {$ELSE}
   AddStream('file', Stream, False, FileName);
+  {$ENDIF}
   Result := Self;
 end;
 
