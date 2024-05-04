@@ -493,7 +493,49 @@ type
     property CustomHeaders;
   end;
 
+function chat(const Token, Prompt: string; const Model: string = 'gpt-4'): string;
+
+function input(const Print: string = ''): string;
+
+procedure print(const Text: string; const NewLine: Boolean = True);
+
 implementation
+
+procedure print(const Text: string; const NewLine: Boolean);
+begin
+  if NewLine then
+    Writeln(Text)
+  else
+    write(Text);
+end;
+
+function input(const Print: string): string;
+begin
+  write(Print);
+  readln(Result);
+end;
+
+function chat(const Token, Prompt: string; const Model: string): string;
+begin
+  try
+    var API: IOpenAI := TOpenAI.Create(Token);
+    var Chat := API.Chat.Create(
+      procedure(Params: TChatParams)
+      begin
+        Params.Model(Model);
+        Params.Messages([TChatMessageBuild.User(Prompt)]);
+      end);
+    try
+      if Length(Chat.Choices) > 0 then
+        Result := Chat.Choices[0].Message.Content;
+    finally
+      Chat.Free;
+    end;
+  except
+    on E: Exception do
+      Result := 'Error "' + E.Message + '"';
+  end;
+end;
 
 { TOpenAI }
 

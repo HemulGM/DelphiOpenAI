@@ -44,6 +44,7 @@ object FormChat: TFormChat
     Size.PlatformDefault = False
     TabOrder = 5
     Text = 'Send'
+    TextSettings.Trimming = None
     OnClick = ButtonSendClick
   end
   object ButtonStreamSend: TButton
@@ -54,6 +55,7 @@ object FormChat: TFormChat
     Size.PlatformDefault = False
     TabOrder = 4
     Text = 'StreamSend'
+    TextSettings.Trimming = None
     OnClick = ButtonStreamSendClick
   end
   object AniIndicatorBusy: TAniIndicator
@@ -86,6 +88,7 @@ object FormChat: TFormChat
     Size.PlatformDefault = False
     TabOrder = 12
     Text = '+'
+    TextSettings.Trimming = None
     OnClick = Button1Click
   end
   object Button2: TButton
@@ -96,6 +99,7 @@ object FormChat: TFormChat
     Size.PlatformDefault = False
     TabOrder = 11
     Text = '-'
+    TextSettings.Trimming = None
   end
   object StyleBook1: TStyleBook
     Styles = <
@@ -9118,6 +9122,7 @@ object FormChat: TFormChat
   end
   object OpenAIChat1: TOpenAIChat
     Client = OpenAIClient1
+    Functions = OpenAIChatFunctions1
     Model = 'gpt-4-vision-preview'
     Temperature = 1.000000000000000000
     TopP = 1.000000000000000000

@@ -9,6 +9,9 @@
         <Projects Include="..\OpenAIPackage.dproj">
             <Dependencies/>
         </Projects>
+        <Projects Include="QuickChat\QuickChat.dproj">
+            <Dependencies/>
+        </Projects>
     </ItemGroup>
     <ProjectExtensions>
         <Borland.Personality>Default.Personality.12</Borland.Personality>
@@ -35,14 +38,23 @@
     <Target Name="OpenAIPackage:Make">
         <MSBuild Projects="..\OpenAIPackage.dproj" Targets="Make"/>
     </Target>
+    <Target Name="QuickChat">
+        <MSBuild Projects="QuickChat\QuickChat.dproj"/>
+    </Target>
+    <Target Name="QuickChat:Clean">
+        <MSBuild Projects="QuickChat\QuickChat.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="QuickChat:Make">
+        <MSBuild Projects="QuickChat\QuickChat.dproj" Targets="Make"/>
+    </Target>
     <Target Name="Build">
-        <CallTarget Targets="SimpleChat;OpenAIPackage"/>
+        <CallTarget Targets="SimpleChat;OpenAIPackage;QuickChat"/>
     </Target>
     <Target Name="Clean">
-        <CallTarget Targets="SimpleChat:Clean;OpenAIPackage:Clean"/>
+        <CallTarget Targets="SimpleChat:Clean;OpenAIPackage:Clean;QuickChat:Clean"/>
     </Target>
     <Target Name="Make">
-        <CallTarget Targets="SimpleChat:Make;OpenAIPackage:Make"/>
+        <CallTarget Targets="SimpleChat:Make;OpenAIPackage:Make;QuickChat:Make"/>
     </Target>
     <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
 </Project>
