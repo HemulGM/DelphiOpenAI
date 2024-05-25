@@ -1235,9 +1235,9 @@ begin
     Exit(TFinishReason.FunctionCall)
   else if Value = 'content_filter' then
     Exit(TFinishReason.ContentFilter)
-  else if Value = 'null' then
+  else if Value = 'tool_calls' then
     Exit(TFinishReason.ToolCalls)
-  else if Value = 'tool_calls ' then
+  else if Value = 'null' then
     Exit(TFinishReason.Null);
   Result := TFinishReason.Stop;
 end;
@@ -1253,10 +1253,10 @@ begin
       Exit('function_call');
     TFinishReason.ContentFilter:
       Exit('content_filter');
+    TFinishReason.ToolCalls:
+      Exit('tool_calls');
     TFinishReason.Null:
       Exit('null');
-    TFinishReason.ToolCalls:
-      Exit('tool_calls ');
   end;
 end;
 
