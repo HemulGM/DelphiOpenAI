@@ -80,7 +80,8 @@ object FormChat: TFormChat
     Viewport.Width = 501.000000000000000000
     Viewport.Height = 92.000000000000000000
   end
-  object Button1: TButton
+  object ButtonAttach: TButton
+    Hint = 'Attach file'
     Position.X = 521.000000000000000000
     Position.Y = 233.000000000000000000
     Size.Width = 24.000000000000000000
@@ -89,9 +90,10 @@ object FormChat: TFormChat
     TabOrder = 12
     Text = '+'
     TextSettings.Trimming = None
-    OnClick = Button1Click
+    OnClick = ButtonAttachClick
   end
-  object Button2: TButton
+  object ButtonRemoveAttach: TButton
+    Hint = 'Remove attach'
     Position.X = 521.000000000000000000
     Position.Y = 265.000000000000000000
     Size.Width = 24.000000000000000000
@@ -9145,7 +9147,7 @@ object FormChat: TFormChat
           'ype": "string", "description": "The city and state, e.g. San Fra' +
           'ncisco, CA"},'#13#10'      "unit": {"type": "string", "enum": ["celsiu' +
           's", "fahrenheit"]}'#13#10'  },'#13#10'  "required": ["location"]'#13#10'}'
-        OnFunctionExecute = OpenAIChatFunctions1Items0FunctionExecute
+        OnFunctionExecute = FuncGetCurrentWeather
       end>
     Left = 384
     Top = 104

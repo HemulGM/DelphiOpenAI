@@ -2,7 +2,7 @@
     <PropertyGroup>
         <ProjectGuid>{AEF0734F-C1E6-4A7A-BC68-D170EF3FE99F}</ProjectGuid>
         <MainSource>OpenAIPackage.dpk</MainSource>
-        <ProjectVersion>20.1</ProjectVersion>
+        <ProjectVersion>20.2</ProjectVersion>
         <FrameworkType>None</FrameworkType>
         <Base>True</Base>
         <Config Condition="'$(Config)'==''">Debug</Config>
@@ -164,17 +164,19 @@
         <DelphiCompile Include="$(MainSource)">
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
+        <DCCReference Include="hIcons.dcr"/>
         <DCCReference Include="rtl.dcp"/>
         <DCCReference Include="RESTComponents.dcp"/>
-        <DCCReference Include="OpenAI.API.Params.pas"/>
+        <DCCReference Include="OpenAI.pas"/>
+        <DCCReference Include="OpenAI.Types.pas"/>
         <DCCReference Include="OpenAI.API.pas"/>
+        <DCCReference Include="OpenAI.API.Params.pas"/>
+        <DCCReference Include="OpenAI.Assistants.pas"/>
         <DCCReference Include="OpenAI.Audio.pas"/>
+        <DCCReference Include="OpenAI.Chat.pas"/>
         <DCCReference Include="OpenAI.Chat.Functions.pas"/>
         <DCCReference Include="OpenAI.Chat.Functions.Samples.pas"/>
-        <DCCReference Include="OpenAI.Chat.pas"/>
         <DCCReference Include="OpenAI.Completions.pas"/>
-        <DCCReference Include="OpenAI.Component.Chat.pas"/>
-        <DCCReference Include="OpenAI.Component.Reg.pas"/>
         <DCCReference Include="OpenAI.Edits.pas"/>
         <DCCReference Include="OpenAI.Embeddings.pas"/>
         <DCCReference Include="OpenAI.Engines.pas"/>
@@ -185,13 +187,12 @@
         <DCCReference Include="OpenAI.Images.pas"/>
         <DCCReference Include="OpenAI.Models.pas"/>
         <DCCReference Include="OpenAI.Moderations.pas"/>
-        <DCCReference Include="OpenAI.pas"/>
-        <DCCReference Include="OpenAI.Utils.ChatHistory.pas"/>
-        <DCCReference Include="OpenAI.Component.Functions.pas"/>
-        <DCCReference Include="OpenAI.Assistants.pas"/>
-        <DCCReference Include="OpenAI.Types.pas"/>
         <DCCReference Include="OpenAI.Utils.Base64.pas"/>
+        <DCCReference Include="OpenAI.Utils.ChatHistory.pas"/>
         <DCCReference Include="OpenAI.Utils.ObjectHolder.pas"/>
+        <DCCReference Include="OpenAI.Component.Chat.pas"/>
+        <DCCReference Include="OpenAI.Component.Functions.pas"/>
+        <DCCReference Include="OpenAI.Component.Reg.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>
@@ -213,7 +214,7 @@
                     <Source Name="MainSource">OpenAIPackage.dpk</Source>
                 </Source>
             </Delphi.Personality>
-            <Deployment Version="4">
+            <Deployment Version="5">
                 <DeployFile LocalName="$(BDS)\Redist\iossimulator\libcgunwind.1.0.dylib" Class="DependencyModule">
                     <Platform Name="iOSSimulator">
                         <Overwrite>true</Overwrite>
@@ -229,28 +230,13 @@
                         <Overwrite>true</Overwrite>
                     </Platform>
                 </DeployFile>
-                <DeployFile LocalName="C:\Users\Public\Documents\Embarcadero\Studio\23.0\Bpl\OpenAIPackage.bpl" Configuration="Debug" Class="ProjectOutput">
-                    <Platform Name="Win32">
-                        <RemoteName>OpenAIPackage.bpl</RemoteName>
-                        <Overwrite>true</Overwrite>
-                    </Platform>
-                </DeployFile>
+                <DeployFile LocalName="C:\Users\Public\Documents\Embarcadero\Studio\23.0\Bpl\OpenAIPackage.bpl" Configuration="Debug" Class="ProjectOutput"/>
                 <DeployClass Name="AdditionalDebugSymbols">
                     <Platform Name="OSX32">
                         <Operation>1</Operation>
                     </Platform>
                     <Platform Name="Win32">
                         <Operation>0</Operation>
-                    </Platform>
-                </DeployClass>
-                <DeployClass Name="AndroidClasses">
-                    <Platform Name="Android">
-                        <RemoteDir>classes</RemoteDir>
-                        <Operation>64</Operation>
-                    </Platform>
-                    <Platform Name="Android64">
-                        <RemoteDir>classes</RemoteDir>
-                        <Operation>64</Operation>
                     </Platform>
                 </DeployClass>
                 <DeployClass Name="AndroidFileProvider">
@@ -260,12 +246,6 @@
                     </Platform>
                     <Platform Name="Android64">
                         <RemoteDir>res\xml</RemoteDir>
-                        <Operation>1</Operation>
-                    </Platform>
-                </DeployClass>
-                <DeployClass Name="AndroidGDBServer">
-                    <Platform Name="Android">
-                        <RemoteDir>library\lib\armeabi-v7a</RemoteDir>
                         <Operation>1</Operation>
                     </Platform>
                 </DeployClass>
