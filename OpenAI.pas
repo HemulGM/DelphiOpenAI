@@ -10,6 +10,8 @@ uses
   OpenAI.Assistants;
 
 type
+  THeaderItem = System.Net.URLClient.TNameValuePair;
+
   IOpenAI = interface
     ['{F4CF7FB9-9B73-48FB-A3FE-1E98CCEFCAF0}']
     procedure SetToken(const Value: string);

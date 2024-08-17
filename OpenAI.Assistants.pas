@@ -66,6 +66,10 @@ type
     function Order(const Value: string): TAssistantListParams;
   end;
 
+  TAssistantToolResourcesParams = class(TJSONParam)
+    function CodeInterpreter(const FileIds: TArray<string>): TAssistantToolResourcesParams;
+  end;
+
   TAssistantParams = class(TJSONParam)
     /// <summary>
     /// ID of the model to use. You can use the List models API to see all of your available models,
@@ -89,6 +93,12 @@ type
     /// Tools can be of types code_interpreter, file_search, or function.
     /// </summary>
     function Tools(const Value: TArray<TAssistantTool>): TAssistantParams; overload;
+    /// <summary>
+    /// A set of resources that are used by the assistant's tools. The resources are specific to the type of tool.
+    /// For example, the code_interpreter tool requires a list of file IDs,
+    /// while the file_search tool requires a list of vector store IDs.
+    /// </summary>
+    function ToolResources(const Value: TAssistantToolResourcesParams): TAssistantParams; overload;
     /// <summary>
     /// A list of file IDs attached to this assistant. There can be a maximum of 20 files
     /// attached to the assistant. Files are ordered by their creation date in ascending order.
@@ -345,6 +355,11 @@ begin
   Result := TAssistantParams(Add('name', Value));
 end;
 
+function TAssistantParams.ToolResources(const Value: TAssistantToolResourcesParams): TAssistantParams;
+begin
+  Result := TAssistantParams(Add('tool_resources', Value));
+end;
+
 function TAssistantParams.Tools(const Value: TArray<TAssistantTool>): TAssistantParams;
 begin
   Result := TAssistantParams(Add('tools', TArray<TJSONParam>(Value)));
@@ -438,6 +453,13 @@ end;
 function TAssistantFileSearch.MaxNumResults(const Value: Int64): TAssistantFileSearch;
 begin
   Result := TAssistantFileSearch(Add('max_num_results', Value));
+end;
+
+{ TAssistantToolResourcesParams }
+
+function TAssistantToolResourcesParams.CodeInterpreter(const FileIds: TArray<string>): TAssistantToolResourcesParams;
+begin
+  Result := TAssistantToolResourcesParams(Add('code_interpreter', TJSONParam.Create.Add('file_ids', FileIds)));
 end;
 
 end.
