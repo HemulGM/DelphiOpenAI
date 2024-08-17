@@ -3,40 +3,44 @@
 interface
 
 uses
-  System.SysUtils, Rest.Json, Rest.Json.Types, REST.JsonReflect, System.JSON, OpenAI.API,
-  OpenAI.API.Params, OpenAI.Types;
+  System.SysUtils, Rest.Json, Rest.Json.Types, REST.JsonReflect, System.JSON,
+  OpenAI.API, OpenAI.API.Params, OpenAI.Types, OpenAI.Chat.Functions;
 
 type
   TAssistantTool = class abstract(TJSONParam)
     //Code interpreter tool
-    //Retrieval tool
+    //File search tool
     //Function tool
-
   end;
 
   TAssistantCodeInterpreterTool = class(TAssistantTool)
+  public
+    constructor Create; override;
   end;
 
-  TAssistantRetrievalTool = class(TAssistantTool)
+  TAssistantFileSearch = class(TJSONParam)
+    /// <summary>
+    /// The maximum number of results the file search tool should output.
+    /// The default is 20 for gpt-4* models and 5 for gpt-3.5-turbo. This number should be between 1 and 50 inclusive.
+    /// Note that the file search tool may output fewer than max_num_results results.
+    /// See the file search tool documentation for more information.
+    /// </summary>
+    function MaxNumResults(const Value: Int64): TAssistantFileSearch;
+  end;
+
+  TAssistantFileSearchTool = class(TAssistantTool)
+  public
+    constructor Create; override;
+    /// <summary>
+    /// Overrides for the file search tool.
+    /// </summary>
+    function FileSearch(const Value: TAssistantFileSearch): TAssistantFileSearchTool;
   end;
 
   TAssistantFunctionTool = class(TAssistantTool)
-    /// <summary>
-    /// A description of what the function does, used by the model to choose when and how to call the function.
-    /// </summary>
-    function Description(const Value: string): TAssistantFunctionTool;
-    /// <summary>
-    /// The name of the function to be called. Must be a-z, A-Z, 0-9,
-    /// or contain underscores and dashes, with a maximum length of 64.
-    /// </summary>
-    function Name(const Value: string): TAssistantFunctionTool;
-    /// <summary>
-    /// The parameters the functions accepts, described as a JSON Schema object.
-    /// See the guide for examples, and the JSON Schema reference for documentation about the format.
-    /// <br>
-    /// To describe a function that accepts no parameters, provide the value {"type": "object", "properties": {}}.
-    /// </summary>
-    function Parameters(const Value: TJSONObject): TAssistantFunctionTool;
+  public
+    constructor Create; override;
+    function &Function(const Value: IChatFunction): TAssistantFunctionTool;
   end;
 
   TAssistantListParams = class(TJSONParam)
@@ -82,7 +86,7 @@ type
     function Instructions(const Value: string): TAssistantParams; overload;
     /// <summary>
     /// A list of tool enabled on the assistant. There can be a maximum of 128 tools per assistant.
-    /// Tools can be of types code_interpreter, retrieval, or function.
+    /// Tools can be of types code_interpreter, file_search, or function.
     /// </summary>
     function Tools(const Value: TArray<TAssistantTool>): TAssistantParams; overload;
     /// <summary>
@@ -397,19 +401,43 @@ end;
 
 { TAssistantFunctionTool }
 
-function TAssistantFunctionTool.Description(const Value: string): TAssistantFunctionTool;
+function TAssistantFunctionTool.&Function(const Value: IChatFunction): TAssistantFunctionTool;
 begin
-  Result := TAssistantFunctionTool(Add('description', Value));
+  Result := TAssistantFunctionTool(Add('function', TChatFunction.ToJson(Value)));
 end;
 
-function TAssistantFunctionTool.Name(const Value: string): TAssistantFunctionTool;
+constructor TAssistantFunctionTool.Create;
 begin
-  Result := TAssistantFunctionTool(Add('name', Value));
+  inherited;
+  Add('type', 'function');
 end;
 
-function TAssistantFunctionTool.Parameters(const Value: TJSONObject): TAssistantFunctionTool;
+{ TAssistantCodeInterpreterTool }
+
+constructor TAssistantCodeInterpreterTool.Create;
 begin
-  Result := TAssistantFunctionTool(Add('parameters', Value));
+  inherited;
+  Add('type', 'code_interpreter');
+end;
+
+{ TAssistantFileSearchTool }
+
+constructor TAssistantFileSearchTool.Create;
+begin
+  inherited;
+  Add('type', 'file_search');
+end;
+
+function TAssistantFileSearchTool.FileSearch(const Value: TAssistantFileSearch): TAssistantFileSearchTool;
+begin
+  Result := TAssistantFileSearchTool(Add('file_search', Value));
+end;
+
+{ TAssistantFileSearch }
+
+function TAssistantFileSearch.MaxNumResults(const Value: Int64): TAssistantFileSearch;
+begin
+  Result := TAssistantFileSearch(Add('max_num_results', Value));
 end;
 
 end.
