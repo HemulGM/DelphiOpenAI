@@ -850,7 +850,7 @@ end;
 
 function TChatParams.MaxTokens(const Value: Integer): TChatParams;
 begin
-  Result := TChatParams(Add('max_tokens', Value));
+  Result := TChatParams(Add('max_completion_tokens', Value));
 end;
 
 function TChatParams.Model(const Value: string): TChatParams;
