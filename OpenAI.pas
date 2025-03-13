@@ -10,6 +10,8 @@ uses
   OpenAI.Assistants;
 
 type
+  THeaderItem = System.Net.URLClient.TNameValuePair;
+
   IOpenAI = interface
     ['{F4CF7FB9-9B73-48FB-A3FE-1E98CCEFCAF0}']
     procedure SetToken(const Value: string);
@@ -501,6 +503,9 @@ procedure print(const Text: string; const NewLine: Boolean = True);
 
 implementation
 
+uses
+  OpenAI.Utils.ChatHistory;
+
 procedure print(const Text: string; const NewLine: Boolean);
 begin
   if NewLine then
@@ -515,19 +520,31 @@ begin
   readln(Result);
 end;
 
+var
+  ConsoleHistory: TChatHistory = nil;
+
 function chat(const Token, Prompt: string; const Model: string): string;
 begin
+  if ConsoleHistory = nil then
+  begin
+    ConsoleHistory := TChatHistory.Create;
+    ConsoleHistory.AutoTrim := True;
+  end;
   try
+    ConsoleHistory.New(TMessageRole.User, Prompt, TGUID.NewGuid.ToString);
     var API: IOpenAI := TOpenAI.Create(Token);
     var Chat := API.Chat.Create(
       procedure(Params: TChatParams)
       begin
         Params.Model(Model);
-        Params.Messages([TChatMessageBuild.User(Prompt)]);
+        Params.Messages(ConsoleHistory.ToArray);
       end);
     try
       if Length(Chat.Choices) > 0 then
+      begin
         Result := Chat.Choices[0].Message.Content;
+        ConsoleHistory.New(TMessageRole.Assistant, Result, TGUID.NewGuid.ToString);
+      end;
     finally
       Chat.Free;
     end;
@@ -1021,6 +1038,11 @@ procedure TOpenAIComponent.THTTPHeader.SetValue(const Value: string);
 begin
   FValue := Value;
 end;
+
+initialization
+
+finalization
+  ConsoleHistory.Free;
 
 end.
 

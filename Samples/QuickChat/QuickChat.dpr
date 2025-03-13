@@ -1,5 +1,5 @@
 ﻿uses OpenAI;
 
 begin
-  repeat print('GPT: ' + chat('insert token', input('You: '))) until False;
+  repeat print('GPT: ' + chat('token', input('You: '))) until False;
 end.

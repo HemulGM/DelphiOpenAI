@@ -9,10 +9,11 @@ uses
 type
   {$IF RTLVersion < 35.0}
   TURLClientHelper = class helper for TURLClient
-  public const
-    DefaultConnectionTimeout = 60000;
-    DefaultSendTimeout = 60000;
-    DefaultResponseTimeout = 60000;
+  public
+    const
+      DefaultConnectionTimeout = 60000;
+      DefaultSendTimeout = 60000;
+      DefaultResponseTimeout = 60000;
   end;
   {$ENDIF}
 
@@ -81,6 +82,7 @@ type
     FConnectionTimeout: Integer;
     FSendTimeout: Integer;
     FResponseTimeout: Integer;
+    FAssistantsVersion: string;
 
     procedure SetToken(const Value: string);
     procedure SetBaseUrl(const Value: string);
@@ -133,6 +135,10 @@ type
     property AzureApiVersion: string read FAzureApiVersion write FAzureApiVersion;
     property AzureDeployment: string read FAzureDeployment write FAzureDeployment;
     property CustomHeaders: TNetHeaders read FCustomHeaders write SetCustomHeaders;
+    /// <summary>
+    /// Example: v1, v2, ...
+    /// </summary>
+    property AssistantsVersion: string read FAssistantsVersion write FAssistantsVersion;
   end;
   {$WARNINGS ON}
 
@@ -436,6 +442,8 @@ begin
   Result := [TNetHeader.Create('Authorization', 'Bearer ' + FToken)] + FCustomHeaders;
   if not FOrganization.IsEmpty then
     Result := Result + [TNetHeader.Create('OpenAI-Organization', FOrganization)];
+  if not FAssistantsVersion.IsEmpty then
+    Result := Result + [TNetHeader.Create('OpenAI-Beta', 'assistants=' + FAssistantsVersion)];
 end;
 
 function TOpenAIAPI.GetRequestURL(const Path: string): string;
@@ -504,7 +512,16 @@ begin
       try
         Result := TJson.JsonToObject<T>(ResponseText);
       except
-        Result := nil;
+        try
+          var JO := TJSONObject.Create(TJSONPair.Create('text', ResponseText)); // try parse as part of object with text field (example, vtt)
+          try
+            Result := TJson.JsonToObject<T>(JO);
+          finally
+            JO.Free;
+          end;
+        except
+          Result := nil;
+        end;
       end;
   else
     ParseError(Code, ResponseText);

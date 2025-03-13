@@ -3,13 +3,15 @@
 interface
 
 uses
-  System.Generics.Collections, Rest.Json, OpenAI.API, System.SysUtils,
-  OpenAI.API.Params;
+  System.Generics.Collections, Rest.Json, System.JSON.Types, OpenAI.API,
+  System.SysUtils, OpenAI.API.Params;
 
 type
   THyperparameters = class
   private
     FN_epochs: string;
+    FLearning_rate_multiplier: Extended;
+    FBatch_size: Int64;
   public
     /// <summary>
     /// The number of epochs to train the model for. An epoch refers to one full cycle through the training dataset.
@@ -17,11 +19,162 @@ type
     /// If setting the number manually, we support any number between 1 and 50 epochs.
     /// </summary>
     property NEpochs: string read FN_epochs write FN_epochs;
+    property BatchSize: Int64 read FBatch_size write FBatch_size;
+    property LearningRateMultiplier: Extended read FLearning_rate_multiplier write FLearning_rate_multiplier;
   end;
 
   TFTError = class
-    // не известно пока
+  private
+    FCode: string;
+    FMessage: string;
+    FParam: string;
+  public
+    /// <summary>
+    /// A machine-readable error code.
+    /// </summary>
+    property Code: string read FCode write FCode;
+    /// <summary>
+    /// A human-readable error message.
+    /// </summary>
+    property Message: string read FMessage write FMessage;
+    /// <summary>
+    /// The parameter that was invalid, usually training_file or validation_file.
+    /// This field will be null if the failure was not parameter-specific.
+    /// </summary>
+    property Param: string read FParam write FParam;
   end;
+
+  TFTMetrics = class
+  private
+    [JsonNameAttribute('step')]
+    FStep: Extended;
+    [JsonNameAttribute('train_loss')]
+    FTrainLoss: Extended;
+    [JsonNameAttribute('train_mean_token_accuracy')]
+    FTrainMeanTokenAccuracy: Extended;
+    [JsonNameAttribute('valid_loss')]
+    FValidLoss: Extended;
+    [JsonNameAttribute('valid_mean_token_accuracy')]
+    FValidMeanTokenAccuracy: Extended;
+    [JsonNameAttribute('full_valid_loss')]
+    FFullValidLoss: Extended;
+    [JsonNameAttribute('full_valid_mean_token_accuracy')]
+    FFullValidMeanTokenAccuracy: Extended;
+  public
+    property Step: Extended read FStep write FStep;
+    property TrainLoss: Extended read FTrainLoss write FTrainLoss;
+    property TrainMeanTokenAccuracy: Extended read FTrainMeanTokenAccuracy write FTrainMeanTokenAccuracy;
+    property ValidLoss: Extended read FValidLoss write FValidLoss;
+    property ValidMeanTokenAccuracy: Extended read FValidMeanTokenAccuracy write FValidMeanTokenAccuracy;
+    property FullValidLoss: Extended read FFullValidLoss write FFullValidLoss;
+    property FullValidMeanTokenAccuracy: Extended read FFullValidMeanTokenAccuracy write FFullValidMeanTokenAccuracy;
+  end;
+
+  TFTCheckPoint = class
+  private
+    [JsonNameAttribute('object')]
+    FObject: string;
+    [JsonNameAttribute('id')]
+    FId: string;
+    [JsonNameAttribute('created_at')]
+    FCreatedAt: Int64;
+    [JsonNameAttribute('fine_tuned_model_checkpoint')]
+    FFineTunedModelCheckpoint: string;
+    [JsonNameAttribute('fine_tuning_job_id')]
+    FFineTuningJobId: string;
+    [JsonNameAttribute('metrics')]
+    FMetrics: TFTMetrics;
+    [JsonNameAttribute('step_number')]
+    FStepNumber: Int64;
+  public
+    /// <summary>
+    /// The object type, which is always "fine_tuning.job.checkpoint".
+    /// </summary>
+    property &Object: string read FObject write FObject;
+    /// <summary>
+    /// The checkpoint identifier, which can be referenced in the API endpoints.
+    /// </summary>
+    property Id: string read FId write FId;
+    /// <summary>
+    /// The Unix timestamp (in seconds) for when the checkpoint was created.
+    /// </summary>
+    property CreatedAt: Int64 read FCreatedAt write FCreatedAt;
+    /// <summary>
+    /// The name of the fine-tuned checkpoint model that is created.
+    /// </summary>
+    property FineTunedModelCheckpoint: string read FFineTunedModelCheckpoint write FFineTunedModelCheckpoint;
+    /// <summary>
+    /// The name of the fine-tuning job that this checkpoint was created from.
+    /// </summary>
+    property FineTuningJobId: string read FFineTuningJobId write FFineTuningJobId;
+    /// <summary>
+    /// Metrics at the step number during the fine-tuning job.
+    /// </summary>
+    property Metrics: TFTMetrics read FMetrics write FMetrics;
+    /// <summary>
+    /// The step number that the checkpoint was created at.
+    /// </summary>
+    property StepNumber: Int64 read FStepNumber write FStepNumber;
+    destructor Destroy; override;
+  end;
+
+  TFTCheckPoints = class
+  private
+    FObject: string;
+    FData: TArray<TFTCheckPoint>;
+  public
+    property &Object: string read FObject write FObject;
+    property Data: TArray<TFTCheckPoint> read FData write FData;
+    destructor Destroy; override;
+  end;
+
+  TFTWandb = class
+  private
+    FName: string;
+    FProject: string;
+    FTags: TArray<string>;
+    FEntity: string;
+  public
+    /// <summary>
+    /// The name of the project that the new run will be created under.
+    /// </summary>
+    property Project: string read FProject write FProject;
+    /// <summary>
+    /// A display name to set for the run. If not set, we will use the Job ID as the name.
+    /// </summary>
+    property Name: string read FName write FName;
+    /// <summary>
+    /// The entity to use for the run. This allows you to set the team or username of the WandB user
+    /// that you would like associated with the run. If not set, the default entity for the registered WandB API key is used.
+    /// </summary>
+    property Entity: string read FEntity write FEntity;
+    /// <summary>
+    /// A list of tags to be attached to the newly created run. These tags are passed through directly to WandB.
+    /// Some default tags are generated by OpenAI: "openai/finetune", "openai/{base-model}", "openai/{ftjob-abcdef}".
+    /// </summary>
+    property Tags: TArray<string> read FTags write FTags;
+  end;
+
+  TFTIntegration = class
+  private
+    FType: string;
+    FWandb: TFTWandb;
+  public
+    /// <summary>
+    /// The type of the integration being enabled for the fine-tuning job
+    /// </summary>
+    property &Type: string read FType write FType;
+    /// <summary>
+    /// The settings for your integration with Weights and Biases.
+    /// This payload specifies the project that metrics will be sent to.
+    /// Optionally, you can set an explicit display name for your run, add tags to your run,
+    /// and set a default entity (team, username, etc) to be associated with your run.
+    /// </summary>
+    property Wandb: TFTWandb read FWandb write FWandb;
+    destructor Destroy; override;
+  end;
+
+  TFTIntegrations = TArray<TFTIntegration>;
 
   /// <summary>
   /// The fine-tuning job object
@@ -42,6 +195,9 @@ type
     FTraining_file: string;
     FValidation_file: string;
     FError: TFTError;
+    FSeed: Int64;
+    FEstimated_finish: Int64;
+    FIntegrations: TFTIntegrations;
   public
     /// <summary>
     /// The Unix timestamp (in seconds) for when the fine-tuning job was created.
@@ -102,6 +258,19 @@ type
     /// For fine-tuning jobs that have failed, this will contain more information on the cause of the failure.
     /// </summary>
     property Error: TFTError read FError write FError;
+    /// <summary>
+    /// The seed used for the fine-tuning job.
+    /// </summary>
+    property Seed: Int64 read FSeed write FSeed;
+    /// <summary>
+    /// A list of integrations to enable for this fine-tuning job.
+    /// </summary>
+    property Integrations: TFTIntegrations read FIntegrations write FIntegrations;
+    /// <summary>
+    /// The Unix timestamp (in seconds) for when the fine-tuning job is estimated to finish.
+    /// The value will be null if the fine-tuning job is not running.
+    /// </summary>
+    property EstimatedFinish: Int64 read FEstimated_finish write FEstimated_finish;
     destructor Destroy; override;
   end;
 
@@ -166,6 +335,62 @@ type
     destructor Destroy; override;
   end;
 
+  TFineTuningHyperParams = class(TJSONParam)
+    /// <summary>
+    /// Number of examples in each batch. A larger batch size means that model parameters are updated less frequently,
+    /// but with lower variance.
+    /// </summary>
+    function BatchSize(const Value: Int64): TFineTuningHyperParams;
+    /// <summary>
+    /// Scaling factor for the learning rate. A smaller learning rate may be useful to avoid overfitting.
+    /// </summary>
+    function LearningRateMultiplier(const Value: Extended): TFineTuningHyperParams;
+    /// <summary>
+    /// The number of epochs to train the model for. An epoch refers to one full cycle through the training dataset.
+    /// </summary>
+    function NEpochs(const Value: Int64): TFineTuningHyperParams;
+  end;
+
+  TFineTuningWandbParams = class(TJSONParam)
+    /// <summary>
+    /// Required
+    /// The name of the project that the new run will be created under.
+    /// </summary>
+    function Project(const Value: string): TFineTuningWandbParams;
+    /// <summary>
+    /// Optional
+    /// A display name to set for the run. If not set, we will use the Job ID as the name.
+    /// </summary>
+    function Name(const Value: string): TFineTuningWandbParams;
+    /// <summary>
+    /// Optional
+    /// The entity to use for the run. This allows you to set the team or username of the WandB user
+    /// that you would like associated with the run. If not set, the default entity for the registered WandB API key is used.
+    /// </summary>
+    function Entity(const Value: string): TFineTuningWandbParams;
+    /// <summary>
+    /// Optional
+    /// A list of tags to be attached to the newly created run.
+    /// These tags are passed through directly to WandB. Some default tags are generated by OpenAI:
+    /// "openai/finetune", "openai/{base-model}", "openai/{ftjob-abcdef}".
+    /// </summary>
+    function Tags(const Value: TArray<string>): TFineTuningWandbParams;
+  end;
+
+  TFineTuningIntegrationParams = class(TJSONParam)
+    /// <summary>
+    /// The type of integration to enable. Currently, only "wandb" (Weights and Biases) is supported.
+    /// </summary>
+    function &Type(const Value: string): TFineTuningIntegrationParams;
+    /// <summary>
+    /// The settings for your integration with Weights and Biases.
+    /// This payload specifies the project that metrics will be sent to.
+    /// Optionally, you can set an explicit display name for your run, add tags to your run,
+    /// and set a default entity (team, username, etc) to be associated with your run.
+    /// </summary>
+    function Wandb(const Value: TFineTuningWandbParams): TFineTuningIntegrationParams;
+  end;
+
   TFineTuningCreateParams = class(TJSONParam)
     /// <summary>
     /// Required.
@@ -192,12 +417,22 @@ type
     /// <param name="NEpochs">
     /// The number of epochs to train the model for. An epoch refers to one full cycle through the training dataset.
     /// </param>
-    function Hyperparameters(const NEpochs: Integer): TFineTuningCreateParams;
+    function Hyperparameters(const Value: TFineTuningHyperParams): TFineTuningCreateParams;
     /// <summary>
-    /// A string of up to 18 characters that will be added to your fine-tuned model name.
-    /// For example, a suffix of "custom-model-name" would produce a model name like ft:gpt-3.5-turbo:openai:custom-model-name:7p4lURel.
+    /// A string of up to 64 characters that will be added to your fine-tuned model name.
+    /// For example, a suffix of "custom-model-name" would produce a model name
+    /// like ft:gpt-4o-mini:openai:custom-model-name:7p4lURel.
     /// </summary>
     function Suffix(const Value: string): TFineTuningCreateParams;
+    /// <summary>
+    /// A list of integrations to enable for your fine-tuning job.
+    /// </summary>
+    function Integrations(const Value: TFineTuningIntegrationParams): TFineTuningCreateParams;
+    /// <summary>
+    /// The seed controls the reproducibility of the job. Passing in the same seed and job parameters should produce
+    /// the same results, but may differ in rare cases. If a seed is not specified, one will be generated for you.
+    /// </summary>
+    function Seed(const Value: Int64): TFineTuningCreateParams;
   end;
 
   TFineTuningListParams = class(TJSONParam)
@@ -234,6 +469,10 @@ type
     /// Get status updates for a fine-tuning job.
     /// </summary>
     function ListEvents(const FineTuningJobId: string; ParamProc: TProc<TFineTuningListParams> = nil): TFineTuningJobEvents;
+    /// <summary>
+    /// List checkpoints for a fine-tuning job.
+    /// </summary>
+    function ListCheckpoints(const FineTuningJobId: string; ParamProc: TProc<TFineTuningListParams> = nil): TFTCheckPoints;
   end;
 
 implementation
@@ -244,22 +483,36 @@ uses
 { TFineTuningJob }
 
 destructor TFineTuningJob.Destroy;
+var
+  Item: TFTIntegration;
 begin
   FHyperparameters.Free;
   FError.Free;
+  for Item in FIntegrations do
+    Item.Free;
   inherited;
 end;
 
 { TFineTuningCreateParams }
 
-function TFineTuningCreateParams.Hyperparameters(const NEpochs: Integer): TFineTuningCreateParams;
+function TFineTuningCreateParams.Hyperparameters(const Value: TFineTuningHyperParams): TFineTuningCreateParams;
 begin
-  Result := TFineTuningCreateParams(Add('hyperparameters', TJSONObject.Create(TJSONPair.Create('n_epochs', TJSONNumber.Create(NEpochs)))));
+  Result := TFineTuningCreateParams(Add('hyperparameters', Value));
+end;
+
+function TFineTuningCreateParams.Integrations(const Value: TFineTuningIntegrationParams): TFineTuningCreateParams;
+begin
+  Result := TFineTuningCreateParams(Add('integrations', Value));
 end;
 
 function TFineTuningCreateParams.Model(const Value: string): TFineTuningCreateParams;
 begin
   Result := TFineTuningCreateParams(Add('model', Value));
+end;
+
+function TFineTuningCreateParams.Seed(const Value: Int64): TFineTuningCreateParams;
+begin
+  Result := TFineTuningCreateParams(Add('seed', Value));
 end;
 
 function TFineTuningCreateParams.Suffix(const Value: string): TFineTuningCreateParams;
@@ -292,6 +545,11 @@ end;
 function TFineTuningRoute.List(ParamProc: TProc<TFineTuningListParams>): TFineTuningJobs;
 begin
   Result := API.Get<TFineTuningJobs, TFineTuningListParams>('fine_tuning/jobs', ParamProc);
+end;
+
+function TFineTuningRoute.ListCheckpoints(const FineTuningJobId: string; ParamProc: TProc<TFineTuningListParams>): TFTCheckPoints;
+begin
+  Result := API.Get<TFTCheckPoints, TFineTuningListParams>('fine_tuning/jobs/' + FineTuningJobId + '/checkpoints', ParamProc);
 end;
 
 function TFineTuningRoute.ListEvents(const FineTuningJobId: string; ParamProc: TProc<TFineTuningListParams>): TFineTuningJobEvents;
@@ -340,6 +598,84 @@ end;
 destructor TFineTuningJobEvents.Destroy;
 var
   Item: TFineTuningEvent;
+begin
+  for Item in FData do
+    Item.Free;
+  inherited;
+end;
+
+{ TFineTuningHyperParams }
+
+function TFineTuningHyperParams.BatchSize(const Value: Int64): TFineTuningHyperParams;
+begin
+  Result := TFineTuningHyperParams(Add('batch_size', Value));
+end;
+
+function TFineTuningHyperParams.LearningRateMultiplier(const Value: Extended): TFineTuningHyperParams;
+begin
+  Result := TFineTuningHyperParams(Add('learning_rate_multiplier', Value));
+end;
+
+function TFineTuningHyperParams.NEpochs(const Value: Int64): TFineTuningHyperParams;
+begin
+  Result := TFineTuningHyperParams(Add('n_epochs', Value));
+end;
+
+{ TFineTuningIntegrationParams }
+
+function TFineTuningIntegrationParams.&Type(const Value: string): TFineTuningIntegrationParams;
+begin
+  Result := TFineTuningIntegrationParams(Add('type', Value));
+end;
+
+function TFineTuningIntegrationParams.Wandb(const Value: TFineTuningWandbParams): TFineTuningIntegrationParams;
+begin
+  Result := TFineTuningIntegrationParams(Add('wandb', Value));
+end;
+
+{ TFineTuningWandbParams }
+
+function TFineTuningWandbParams.Entity(const Value: string): TFineTuningWandbParams;
+begin
+  Result := TFineTuningWandbParams(Add('entity', Value));
+end;
+
+function TFineTuningWandbParams.Name(const Value: string): TFineTuningWandbParams;
+begin
+  Result := TFineTuningWandbParams(Add('name', Value));
+end;
+
+function TFineTuningWandbParams.Project(const Value: string): TFineTuningWandbParams;
+begin
+  Result := TFineTuningWandbParams(Add('project', Value));
+end;
+
+function TFineTuningWandbParams.Tags(const Value: TArray<string>): TFineTuningWandbParams;
+begin
+  Result := TFineTuningWandbParams(Add('tags', Value));
+end;
+
+{ TFTIntegration }
+
+destructor TFTIntegration.Destroy;
+begin
+  FWandb.Free;
+  inherited;
+end;
+
+{ TFTCheckPoint }
+
+destructor TFTCheckPoint.Destroy;
+begin
+  FMetrics.Free;
+  inherited;
+end;
+
+{ TFTCheckPoints }
+
+destructor TFTCheckPoints.Destroy;
+var
+  Item: TFTCheckPoint;
 begin
   for Item in FData do
     Item.Free;

@@ -53,6 +53,7 @@ implementation
 constructor TChatHistory.Create;
 begin
   inherited;
+  FAutoTrim := False;
   FMaxTokensForQuery := DEFULT_MAX_TOKENS;
   FMaxTokensOfModel := DEFULT_MODEL_TOKENS_LIMIT;
 end;

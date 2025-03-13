@@ -20,17 +20,33 @@ type
     /// </summary>
     function Model(const Value: string): TEmbeddingParams;
     /// <summary>
-    /// Input text to get embeddings for, encoded as a string or array of tokens.
-    /// To get embeddings for multiple inputs in a single request, pass an array of strings or array of token arrays.
-    /// Each input must not exceed 8192 tokens in length.
+    /// Input text to embed, encoded as a string or array of tokens.
+    /// To embed multiple inputs in a single request, pass an array of strings or array of token arrays.
+    /// The input must not exceed the max input tokens for the model (8192 tokens for text-embedding-ada-002),
+    /// cannot be an empty string, and any array must be 2048 dimensions or less.
     /// </summary>
     function Input(const Value: string): TEmbeddingParams; overload;
     /// <summary>
-    /// Input text to get embeddings for, encoded as a string or array of tokens.
-    /// To get embeddings for multiple inputs in a single request, pass an array of strings or array of token arrays.
-    /// Each input must not exceed 8192 tokens in length.
+    /// Input text to embed, encoded as a string or array of tokens.
+    /// To embed multiple inputs in a single request, pass an array of strings or array of token arrays.
+    /// The input must not exceed the max input tokens for the model (8192 tokens for text-embedding-ada-002),
+    /// cannot be an empty string, and any array must be 2048 dimensions or less.
     /// </summary>
     function Input(const Value: TArray<string>): TEmbeddingParams; overload;
+    /// <summary>
+    /// Input text to embed, encoded as a string or array of tokens.
+    /// To embed multiple inputs in a single request, pass an array of strings or array of token arrays.
+    /// The input must not exceed the max input tokens for the model (8192 tokens for text-embedding-ada-002),
+    /// cannot be an empty string, and any array must be 2048 dimensions or less.
+    /// </summary>
+    function Input(const Value: TArray<Integer>): TEmbeddingParams; overload;
+    /// <summary>
+    /// Input text to embed, encoded as a string or array of tokens.
+    /// To embed multiple inputs in a single request, pass an array of strings or array of token arrays.
+    /// The input must not exceed the max input tokens for the model (8192 tokens for text-embedding-ada-002),
+    /// cannot be an empty string, and any array must be 2048 dimensions or less.
+    /// </summary>
+    function Input(const Value: TArray<TArray<Integer>>): TEmbeddingParams; overload;
     /// <summary>
     /// A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse.
     /// </summary>
@@ -73,7 +89,8 @@ type
     /// </summary>
     property &Object: string read FObject write FObject;
     /// <summary>
-    /// The embedding vector, which is a list of floats. The length of vector depends on the model as listed in the embedding guide.
+    /// The embedding vector, which is a list of floats.
+    /// The length of vector depends on the model as listed in the embedding guide.
     /// </summary>
     /// <seealso>https://platform.openai.com/docs/guides/embeddings</seealso>
     property Embedding: TArray<Extended> read FEmbedding write FEmbedding;
@@ -134,6 +151,11 @@ begin
   Result := TEmbeddingParams(Add('encoding_format', Value.ToString));
 end;
 
+function TEmbeddingParams.Input(const Value: TArray<Integer>): TEmbeddingParams;
+begin
+  Result := TEmbeddingParams(Add('input', Value));
+end;
+
 function TEmbeddingParams.Input(const Value: TArray<string>): TEmbeddingParams;
 begin
   Result := TEmbeddingParams(Add('input', Value));
@@ -152,6 +174,11 @@ end;
 function TEmbeddingParams.User(const Value: string): TEmbeddingParams;
 begin
   Result := TEmbeddingParams(Add('user', Value));
+end;
+
+function TEmbeddingParams.Input(const Value: TArray<TArray<Integer>>): TEmbeddingParams;
+begin
+  Result := TEmbeddingParams(Add('input', Value));
 end;
 
 { TEncodingFormatHelper }

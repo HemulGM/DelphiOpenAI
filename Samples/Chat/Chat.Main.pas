@@ -21,8 +21,8 @@ type
     AniIndicatorBusy: TAniIndicator;
     OpenAIChatFunctions1: TOpenAIChatFunctions;
     ListBox1: TListBox;
-    Button1: TButton;
-    Button2: TButton;
+    ButtonAttach: TButton;
+    ButtonRemoveAttach: TButton;
     StyleBook1: TStyleBook;
     OpenDialogImg: TOpenDialog;
     procedure FormCreate(Sender: TObject);
@@ -33,8 +33,8 @@ type
     procedure OpenAIChat1BeginWork(Sender: TObject);
     procedure OpenAIChat1ChatDelta(Sender: TObject; Event: TChat; IsDone: Boolean);
     procedure OpenAIChat1EndWork(Sender: TObject);
-    procedure OpenAIChatFunctions1Items0FunctionExecute(Sender: TObject; const Args: string; out Result: string);
-    procedure Button1Click(Sender: TObject);
+    procedure FuncGetCurrentWeather(Sender: TObject; const Args: string; out Result: string);
+    procedure ButtonAttachClick(Sender: TObject);
   private
     { Private declarations }
   public
@@ -51,7 +51,7 @@ uses
 
 {$R *.fmx}
 
-procedure TFormChat.Button1Click(Sender: TObject);
+procedure TFormChat.ButtonAttachClick(Sender: TObject);
 begin
   if OpenDialogImg.Execute then
   begin
@@ -90,8 +90,6 @@ end;
 
 procedure TFormChat.FormCreate(Sender: TObject);
 begin
-  //
-  //OpenAIClient1.Assistants.Retrieve('')
   OpenAIClient1.Token := {$INCLUDE token.txt};
 end;
 
@@ -132,7 +130,7 @@ begin
   MemoMessages.Lines.Add('');
 end;
 
-procedure TFormChat.OpenAIChatFunctions1Items0FunctionExecute(Sender: TObject; const Args: string; out Result: string);
+procedure TFormChat.FuncGetCurrentWeather(Sender: TObject; const Args: string; out Result: string);
 var
   JSON: TJSONObject;
   Location: string;
