@@ -154,7 +154,7 @@ type
 implementation
 
 uses
-  REST.Json, System.NetConsts;
+  REST.Json, System.NetConsts, OpenAI.Utils.JSON.Cleaner;
 
 constructor TOpenAIAPI.Create;
 begin
@@ -505,15 +505,19 @@ begin
 end;
 
 function TOpenAIAPI.ParseResponse<T>(const Code: Int64; const ResponseText: string): T;
+var
+  lClearJSON: string;
 begin
   Result := nil;
+
+  lClearJSON := TJSONCleaner<T>.New.CleanJSON(ResponseText);
   case Code of
     200..299:
       try
-        Result := TJson.JsonToObject<T>(ResponseText);
+        Result := TJson.JsonToObject<T>(lClearJSON);
       except
         try
-          var JO := TJSONObject.Create(TJSONPair.Create('text', ResponseText)); // try parse as part of object with text field (example, vtt)
+          var JO := TJSONObject.Create(TJSONPair.Create('text', lClearJSON)); // try parse as part of object with text field (example, vtt)
           try
             Result := TJson.JsonToObject<T>(JO);
           finally
@@ -524,7 +528,7 @@ begin
         end;
       end;
   else
-    ParseError(Code, ResponseText);
+    ParseError(Code, lClearJSON);
   end;
   if not Assigned(Result) then
     raise OpenAIExceptionInvalidResponse.Create('Empty or invalid response', '', '', Code);
