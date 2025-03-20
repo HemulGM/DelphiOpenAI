@@ -1543,8 +1543,10 @@ begin
 end;
 
 function TChatParams.StreamOptions(const IncludeUsage: Boolean): TChatParams;
+var
+  Value: TJSONParam;
 begin
-  var Value := TJSONParam.Create;
+  Value := TJSONParam.Create;
   Value.Add('include_usage', IncludeUsage);
   Result := TChatParams(Add('stream_options', Value));
 end;

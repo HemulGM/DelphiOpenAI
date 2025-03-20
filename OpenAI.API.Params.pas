@@ -289,8 +289,10 @@ begin
 end;
 
 function TJSONParam.ToStringPairs: TArray<TPair<string, string>>;
+var
+  Pair: TJSONPair;
 begin
-  for var Pair in FJSON do
+  for Pair in FJSON do
     Result := Result + [TPair<string, string>.Create(Pair.JsonString.Value, Pair.JsonValue.AsType<string>)];
 end;
 

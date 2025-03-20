@@ -283,7 +283,6 @@ type
         property Password: string read GetPassword write SetPassword;
       end;
 
-
       THTTPHeader = class(TCollectionItem)
       private
         FName: string;
@@ -294,7 +293,6 @@ type
         property Name: string read FName write SetName;
         property Value: string read FValue write SetValue;
       end;
-
 
       THTTPHeaders = class(TOwnedCollection)
       private
@@ -524,6 +522,9 @@ var
   ConsoleHistory: TChatHistory = nil;
 
 function chat(const Token, Prompt: string; const Model: string): string;
+var
+  API: IOpenAI;
+  Chat: TChat;
 begin
   if ConsoleHistory = nil then
   begin
@@ -532,8 +533,8 @@ begin
   end;
   try
     ConsoleHistory.New(TMessageRole.User, Prompt, TGUID.NewGuid.ToString);
-    var API: IOpenAI := TOpenAI.Create(Token);
-    var Chat := API.Chat.Create(
+    API := TOpenAI.Create(Token);
+    Chat := API.Chat.Create(
       procedure(Params: TChatParams)
       begin
         Params.Model(Model);
@@ -776,8 +777,8 @@ var
 begin
   for i := 0 to FCustomHeaders.Count - 1 do
     FHeaders := FHeaders + [TNameValuePair.Create(
-      THTTPHeader(FCustomHeaders.Items[i]).Name,
-      THTTPHeader(FCustomHeaders.Items[i]).Value)];
+    THTTPHeader(FCustomHeaders.Items[i]).Name,
+    THTTPHeader(FCustomHeaders.Items[i]).Value)];
   API.CustomHeaders := FHeaders;
 end;
 

@@ -3,8 +3,9 @@
 interface
 
 uses
-  System.Classes, System.Net.HttpClient, System.Net.URLClient, System.Net.Mime,
-  System.JSON, OpenAI.Errors, OpenAI.API.Params, System.SysUtils;
+  System.Classes, System.SysUtils, System.Net.HttpClient, System.Net.URLClient,
+  System.Net.Mime, System.JSON, System.Generics.Collections, OpenAI.Errors,
+  OpenAI.API.Params;
 
 type
   {$IF RTLVersion < 35.0}
@@ -358,17 +359,20 @@ function TOpenAIAPI.Get<TResult, TParams>(const Path: string; ParamProc: TProc<T
 var
   Response: TStringStream;
   Params: TParams;
+  Pair: TPair<string, string>;
   Code: Integer;
+  Pairs: TArray<string>;
+  QPath: string;
 begin
   Response := TStringStream.Create('', TEncoding.UTF8);
   Params := TParams.Create;
   try
     if Assigned(ParamProc) then
       ParamProc(Params);
-    var Pairs: TArray<string> := [];
-    for var Pair in Params.ToStringPairs do
+    Pairs := [];
+    for Pair in Params.ToStringPairs do
       Pairs := Pairs + [Pair.Key + '=' + Pair.Value];
-    var QPath := Path;
+    QPath := Path;
     if Length(Pairs) > 0 then
       QPath := QPath + '?' + string.Join('&', Pairs);
     Code := Get(QPath, Response);
@@ -506,18 +510,31 @@ end;
 
 function TOpenAIAPI.ParseResponse<T>(const Code: Int64; const ResponseText: string): T;
 var
-  lClearJSON: string;
+  JO: TJSONObject;
+  {$IF CompilerVersion <= 35}
+  ClearedJSON: string; // fix for Delphi < 11 versions
+  {$ENDIF}
 begin
   Result := nil;
-
-  lClearJSON := TJSONCleaner<T>.New.CleanJSON(ResponseText);
+  {$IF CompilerVersion <= 35}
+  ClearedJSON := TJSONCleaner<T>.New.CleanJSON(ResponseText);
+  {$ENDIF}
   case Code of
     200..299:
       try
-        Result := TJson.JsonToObject<T>(lClearJSON);
+        {$IF CompilerVersion <= 35}
+        Result := TJson.JsonToObject<T>(ClearedJSON);
+        {$ELSE}
+        Result := TJson.JsonToObject<T>(ResponseText);
+        {$ENDIF}
       except
         try
-          var JO := TJSONObject.Create(TJSONPair.Create('text', lClearJSON)); // try parse as part of object with text field (example, vtt)
+          // try parse as part of object with text field (example, vtt)
+          {$IF CompilerVersion <= 35}
+          JO := TJSONObject.Create(TJSONPair.Create('text', ClearedJSON));
+          {$ELSE}
+          JO := TJSONObject.Create(TJSONPair.Create('text', ResponseText));
+          {$ENDIF}
           try
             Result := TJson.JsonToObject<T>(JO);
           finally
@@ -528,7 +545,11 @@ begin
         end;
       end;
   else
-    ParseError(Code, lClearJSON);
+    {$IF CompilerVersion <= 35}
+    ParseError(Code, ClearedJSON);
+    {$ELSE}
+    ParseError(Code, ResponseText);
+    {$ENDIF}
   end;
   if not Assigned(Result) then
     raise OpenAIExceptionInvalidResponse.Create('Empty or invalid response', '', '', Code);
