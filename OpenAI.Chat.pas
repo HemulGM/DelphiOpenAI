@@ -47,6 +47,18 @@ type
     class function FromString(const Value: string): TMessageRole; static;
   end;
 
+  TModality = (Text, Audio);
+
+  TModalityHelper = record helper for TModality
+    function ToString: string;
+  end;
+
+  TModalities = set of TModality;
+
+  TModalitiesHelper = record helper for TModalities
+    function ToStringArray: TArray<string>;
+  end;
+
   /// <summary>
   /// Finish reason
   /// </summary>
@@ -85,6 +97,12 @@ type
   public
     function StringConverter(Data: TObject; Field: string): string; override;
     procedure StringReverter(Data: TObject; Field: string; Arg: string); override;
+  end;
+
+  TReasoningEffort = (Low, Medium, High);
+
+  TReasoningEffortHelper = record helper for TReasoningEffort
+    function ToString: string;
   end;
 
   TFunctionCallType = (None, Auto, Func);
@@ -758,6 +776,13 @@ type
     /// <seealso>https://platform.openai.com/docs/guides/function-calling/parallel-function-calling</seealso>
     function ParallelToolCalls(const Value: Boolean): TChatParams;
     /// <summary>
+    /// Static predicted output content, such as the content of a text file that is being regenerated.
+    /// Configuration for a Predicted Output, which can greatly improve response times
+    /// when large parts of the model response are known ahead of time.
+    /// This is most common when you are regenerating a file with only minor changes to most of the content.
+    /// </summary>
+    function Prediction(const Value: TArray<TMessageContentBase>): TChatParams;
+    /// <summary>
     /// An alternative to sampling with temperature, called nucleus sampling, where the model considers the
     /// results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10%
     /// probability mass are considered.
@@ -804,23 +829,35 @@ type
     /// </summary>
     function Seed(const Value: Integer): TChatParams;
     /// <summary>
-    /// Specifies the latency tier to use for processing the request.
-    /// This parameter is relevant for customers subscribed to the scale tier service:
-    /// </br>- If set to 'auto', the system will utilize scale tier credits until they are exhausted.
-    /// </br>- If set to 'default', the request will be processed using the default service tier with
-    /// a lower uptime SLA and no latency guarentee.
-    /// </br>- When not set, the default behavior is 'auto'.
-    /// </br> When this parameter is set, the response body will include the service_tier utilized.
+    /// Specifies the latency tier to use for processing the request. This parameter is
+    /// relevant for customers subscribed to the scale tier service:
+    /// <para> - If set to 'auto', and the Project is Scale tier enabled, the system will
+    /// utilize scale tier credits until they are exhausted. </para>
+    /// <para> - If set to 'auto', and the Project is not Scale tier enabled, the request
+    /// will be processed using the default service tier with a lower uptime SLA and no latency guarentee. </para>
+    /// <para> - If set to 'default', the request will be processed using the default service tier
+    /// with a lower uptime SLA and no latency guarentee. </para>
+    /// <para> - When not set, the default behavior is 'auto'. </para>
+    /// <para> When this parameter is set, the response body will include the <b>service_tier</b> utilized. </para>
     /// </summary>
     function ServiceTier(const Value: string): TChatParams; overload;
     /// <summary>
-    /// Up to 4 sequences where the API will stop generating further tokens.
+    /// Up to 4 sequences where the API will stop generating further tokens. The returned text will not contain the stop sequence.
     /// </summary>
     function Stop(const Value: string): TChatParams; overload;
     /// <summary>
-    /// Up to 4 sequences where the API will stop generating further tokens.
+    /// Up to 4 sequences where the API will stop generating further tokens. The returned text will not contain the stop sequence.
     /// </summary>
     function Stop(const Value: TArray<string>): TChatParams; overload;
+    /// <summary>
+    /// Whether or not to store the output of this chat completion request for use in our model distillation or evals products.
+    /// </summary>
+    function Store(const Value: Boolean = True): TChatParams; overload;
+    /// <summary>
+    /// An upper bound for the number of tokens that can be generated for a completion,
+    /// including visible output tokens and reasoning tokens.
+    /// </summary>
+    function MaxCompletionTokens(const Value: Integer): TChatParams;
     /// <summary>
     /// The maximum number of tokens that can be generated in the chat completion.
     /// The total length of input tokens and generated tokens is limited by the model's context length.
@@ -832,10 +869,42 @@ type
     /// </summary>
     function MaxTokensOld(const Value: Integer): TChatParams; deprecated;
     /// <summary>
+    /// Set of 16 key-value pairs that can be attached to an object.
+    /// This can be useful for storing additional information about the object in a structured format,
+    /// and querying for objects via API or the dashboard.
+    /// Keys are strings with a maximum length of 64 characters.
+    /// Values are strings with a maximum length of 512 characters.
+    /// </summary>
+    function Metadata(const Value: TJSONParam): TChatParams;
+    /// <summary>
+    /// Output types that you would like the model to generate. Most models are capable of generating text,
+    /// which is the default:
+    /// ["text"]
+    /// The gpt-4o-audio-preview model can also be used to generate audio. To request that this model
+    /// generate both text and audio responses, you can use:
+    /// ["text", "audio"]
+    /// </summary>
+    function Modalities(const Value: TArray<string>): TChatParams; overload;
+    /// <summary>
+    /// Output types that you would like the model to generate. Most models are capable of generating text,
+    /// which is the default:
+    /// ["text"]
+    /// The gpt-4o-audio-preview model can also be used to generate audio. To request that this model
+    /// generate both text and audio responses, you can use:
+    /// ["text", "audio"]
+    /// </summary>
+    function Modalities(const Value: TModalities): TChatParams; overload;
+    /// <summary>
     /// Number between -2.0 and 2.0. Positive values penalize new tokens based on whether they appear
     /// in the text so far, increasing the model's likelihood to talk about new topics.
     /// </summary>
     function PresencePenalty(const Value: Single = 0): TChatParams;
+    /// <summary>
+    /// o-series models only
+    /// Constrains effort on reasoning for reasoning models. Currently supported values are
+    /// low, medium, and high. Reducing reasoning effort can result in faster responses and fewer tokens used on reasoning in a response.
+    /// </summary>
+    function ReasoningEffort(const Value: TReasoningEffort): TChatParams;
     /// <summary>
     /// Number between -2.0 and 2.0. Positive values penalize new tokens based on their existing frequency
     /// in the text so far,
@@ -1369,6 +1438,11 @@ begin
   Result := TChatParams(Add('frequency_penalty', Value));
 end;
 
+function TChatParams.MaxCompletionTokens(const Value: Integer): TChatParams;
+begin
+  Result := TChatParams(Add('max_completion_tokens', Value));
+end;
+
 function TChatParams.MaxTokens(const Value: Integer): TChatParams;
 begin
   Result := TChatParams(Add('max_completion_tokens', Value));
@@ -1382,6 +1456,21 @@ end;
 function TChatParams.Messages(const Value: TArray<TChatMessageBase>): TChatParams;
 begin
   Result := TChatParams(Add('messages', TArray<TJSONParam>(Value)));
+end;
+
+function TChatParams.Metadata(const Value: TJSONParam): TChatParams;
+begin
+  Result := TChatParams(Add('metadata', Value));
+end;
+
+function TChatParams.Modalities(const Value: TArray<string>): TChatParams;
+begin
+  Result := TChatParams(Add('modalities', Value));
+end;
+
+function TChatParams.Modalities(const Value: TModalities): TChatParams;
+begin
+  Result := TChatParams(Add('modalities', Value.ToStringArray));
 end;
 
 function TChatParams.Model(const Value: string): TChatParams;
@@ -1399,9 +1488,24 @@ begin
   Result := TChatParams(Add('parallel_tool_calls', Value));
 end;
 
+function TChatParams.Prediction(const Value: TArray<TMessageContentBase>): TChatParams;
+var
+  VJO: TJSONParam;
+begin
+  VJO := TJSONParam.Create;
+  VJO.Add('type', 'content');
+  VJO.Add('content', TArray<TJSONParam>(Value));
+  Result := TChatParams(Add('prediction', VJO));
+end;
+
 function TChatParams.PresencePenalty(const Value: Single): TChatParams;
 begin
   Result := TChatParams(Add('presence_penalty', Value));
+end;
+
+function TChatParams.ReasoningEffort(const Value: TReasoningEffort): TChatParams;
+begin
+  Result := TChatParams(Add('reasoning_effort', Value.ToString));
 end;
 
 function TChatParams.ResponseFormat(const Value: TChatResponseFormat; SchemaFormat: TJSONSchemaFormat): TChatParams;
@@ -1487,7 +1591,14 @@ begin
         FuncData.AddPair('arguments', Item.FunctionCall.Arguments);
       end;
 
+      //Refusal
+      if not Item.Refusal.IsEmpty then
+        JSON.AddPair('refusal', Item.Refusal);
+
       //tool calls
+      if not Item.ToolCallId.IsEmpty then
+        JSON.AddPair('tool_call_id', Item.ToolCallId);
+
       if Length(Item.ToolCalls) > 0 then
       begin
         Tools := TJSONArray.Create;
@@ -1530,6 +1641,11 @@ end;
 function TChatParams.Stop(const Value: TArray<string>): TChatParams;
 begin
   Result := TChatParams(Add('stop', Value));
+end;
+
+function TChatParams.Store(const Value: Boolean): TChatParams;
+begin
+  Result := TChatParams(Add('store', Value));
 end;
 
 function TChatParams.Stop(const Value: string): TChatParams;
@@ -2331,6 +2447,46 @@ end;
 function TMessageContentRefusal.Refusal(const Value: string): TMessageContentFile;
 begin
   Result := TMessageContentFile(Add('refusal', Value));
+end;
+
+{ TModalitiesHelper }
+
+function TModalitiesHelper.ToStringArray: TArray<string>;
+var
+  Item: TModality;
+begin
+  for Item in Self do
+    Result := Result + [Item.ToString];
+end;
+
+{ TModalityHelper }
+
+function TModalityHelper.ToString: string;
+begin
+  case Self of
+    TModality.Text:
+      Exit('text');
+    TModality.Audio:
+      Exit('audio');
+  else
+    raise Exception.Create('Unknown TModality value');
+  end;
+end;
+
+{ TReasoningEffortHelper }
+
+function TReasoningEffortHelper.ToString: string;
+begin
+  case Self of
+    TReasoningEffort.Low:
+      Exit('low');
+    TReasoningEffort.Medium:
+      Exit('medium');
+    TReasoningEffort.High:
+      Exit('high');
+  else
+    raise Exception.Create('Unknown TReasoningEffort value');
+  end;
 end;
 
 end.
