@@ -26,7 +26,7 @@ var
   FS: TFileStream;
   Base64: TStringStream;
 begin
-  FS := TFileStream.Create(FileName, fmOpenRead);
+  FS := TFileStream.Create(FileName, fmOpenRead or fmShareDenyWrite);
   try
     Base64 := TStringStream.Create('', TEncoding.UTF8);
     try
