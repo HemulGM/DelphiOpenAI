@@ -615,7 +615,11 @@ end;
 
 function TAssistantResponseJsonSchema.strict(const Value: Boolean): TAssistantResponseJsonSchema;
 begin
+  {$IF RTLVersion < 35.0}
+  FJsonSchema.AddPair('strict', TJSONBool.Create(Value));
+  {$ELSE}
   FJsonSchema.AddPair('strict', Value);
+  {$ENDIF}
   Result := TAssistantResponseJsonSchema(Self);
 end;
 
