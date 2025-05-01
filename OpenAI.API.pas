@@ -504,7 +504,8 @@ begin
     else
       raise OpenAIException.Create('Unknown error. Code: ' + Code.ToString, '', '', Code);
   finally
-    Error.Free;
+    if Assigned(Error) then
+      Error.Free;
   end;
 end;
 
