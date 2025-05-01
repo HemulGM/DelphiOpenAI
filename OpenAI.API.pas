@@ -281,13 +281,18 @@ begin
         Result := True;
     else
       Result := False;
-      Strings := TStringStream.Create;
-      try
-        Response.Position := 0;
-        Strings.LoadFromStream(Response);
-        ParseError(Code, Strings.DataString);
-      finally
-        Strings.Free;
+      if Response is TStringStream then
+        ParseError(Code, TStringStream(Response).DataString)
+      else
+      begin
+        Strings := TStringStream.Create;
+        try
+          Response.Position := 0;
+          Strings.LoadFromStream(Response);
+          ParseError(Code, Strings.DataString);
+        finally
+          Strings.Free;
+        end;
       end;
     end;
   finally
