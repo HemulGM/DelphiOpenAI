@@ -1843,9 +1843,12 @@ end;
 
 destructor TChatChoice.Destroy;
 begin
-  FMessage.Free;
-  FDelta.Free;
-  FLogprobs.Free;
+  if Assigned(FMessage) then
+    FMessage.Free;
+  if Assigned(FDelta) then
+    FDelta.Free;
+  if Assigned(FLogprobs) then
+    FLogprobs.Free;
   inherited;
 end;
 
