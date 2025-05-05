@@ -84,6 +84,7 @@ type
     FSendTimeout: Integer;
     FResponseTimeout: Integer;
     FAssistantsVersion: string;
+    FDisableBearerPrefix: Boolean;
 
     procedure SetToken(const Value: string);
     procedure SetBaseUrl(const Value: string);
@@ -133,6 +134,7 @@ type
     ///  -1 - Infinite timeout. 0 - platform specific timeout. Supported by all platforms. </summary>
     property ResponseTimeout: Integer read FResponseTimeout write SetResponseTimeout;
     property IsAzure: Boolean read FIsAzure write FIsAzure;
+    property DisableBearerPrefix: Boolean read FDisableBearerPrefix write FDisableBearerPrefix;
     property AzureApiVersion: string read FAzureApiVersion write FAzureApiVersion;
     property AzureDeployment: string read FAzureDeployment write FAzureDeployment;
     property CustomHeaders: TNetHeaders read FCustomHeaders write SetCustomHeaders;
@@ -167,6 +169,7 @@ begin
   FToken := '';
   FBaseUrl := URL_BASE;
   FIsAzure := False;
+  FDisableBearerPrefix := False;
   FAzureApiVersion := '';
   FAzureDeployment := '';
 end;
@@ -443,7 +446,10 @@ begin
   if IsAzure then
     Exit;
 
-  Result := [TNetHeader.Create('Authorization', 'Bearer ' + FToken)] + FCustomHeaders;
+  if DisableBearerPrefix then
+    Result := [TNetHeader.Create('Authorization', FToken)] + FCustomHeaders
+  else
+    Result := [TNetHeader.Create('Authorization', 'Bearer ' + FToken)] + FCustomHeaders;
   if not FOrganization.IsEmpty then
     Result := Result + [TNetHeader.Create('OpenAI-Organization', FOrganization)];
   if not FAssistantsVersion.IsEmpty then

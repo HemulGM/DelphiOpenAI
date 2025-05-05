@@ -161,6 +161,8 @@ type
     procedure SetIsAzure(const Value: Boolean);
     function GetImagesAzureRoute: TImagesAzureRoute;
     function GetFineTuningRoute: TFineTuningRoute;
+    function GetDisableBearerPrefix: Boolean;
+    procedure SetDisableBearerPrefix(const Value: Boolean);
   public
     constructor Create; overload;
     constructor Create(const AToken: string); overload;
@@ -190,6 +192,7 @@ type
     property Organization: string read GetOrganization write SetOrganization;
 
     property IsAzure: Boolean read GetIsAzure write SetIsAzure;
+    property DisableBearerPrefix: Boolean read GetDisableBearerPrefix write SetDisableBearerPrefix;
     property AzureApiVersion: string read GetAzureAPIVersion write SetAzureAPIVersion;
     property AzureDeployment: string read GetAzureDeployment write SetAzureDeployment;
   public
@@ -339,6 +342,8 @@ type
     procedure SetAzureAPIVersion(const Value: string);
     procedure SetAzureDeployment(const Value: string);
     procedure SetIsAzure(const Value: Boolean);
+    function GetDisableBearerPrefix: Boolean;
+    procedure SetDisableBearerPrefix(const Value: Boolean);
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -445,6 +450,7 @@ type
     property ResponseTimeout: Integer read GetResponseTimeout write SetResponseTimeout;
 
     property IsAzure: Boolean read GetIsAzure write SetIsAzure;
+    property DisableBearerPrefix: Boolean read GetDisableBearerPrefix write SetDisableBearerPrefix;
     property AzureApiVersion: string read GetAzureAPIVersion write SetAzureAPIVersion;
     property AzureDeployment: string read GetAzureDeployment write SetAzureDeployment;
     property CustomHeaders: THTTPHeaders read FCustomHeaders;
@@ -488,6 +494,7 @@ type
     /// </summary>
     property ResponseTimeout default TURLClient.DefaultResponseTimeout;
     property IsAzure default False;
+    property DisableBearerPrefix default False;
     property AzureApiVersion;
     property AzureDeployment;
     property CustomHeaders;
@@ -697,6 +704,11 @@ begin
   Result := FAPI.IsAzure;
 end;
 
+function TOpenAI.GetDisableBearerPrefix: Boolean;
+begin
+  Result := FAPI.DisableBearerPrefix;
+end;
+
 function TOpenAI.GetModelsRoute: TModelsRoute;
 begin
   if not Assigned(FModelsRoute) then
@@ -739,6 +751,11 @@ end;
 procedure TOpenAI.SetIsAzure(const Value: Boolean);
 begin
   FAPI.IsAzure := Value;
+end;
+
+procedure TOpenAI.SetDisableBearerPrefix(const Value: Boolean);
+begin
+  FAPI.DisableBearerPrefix := Value;
 end;
 
 procedure TOpenAI.SetOrganization(const Value: string);
@@ -867,6 +884,11 @@ begin
   Result := FOpenAI.API.IsAzure;
 end;
 
+function TOpenAIComponent.GetDisableBearerPrefix: Boolean;
+begin
+  Result := FOpenAI.API.DisableBearerPrefix;
+end;
+
 function TOpenAIComponent.GetModelsRoute: TModelsRoute;
 begin
   Result := FOpenAI.GetModelsRoute;
@@ -920,6 +942,11 @@ end;
 procedure TOpenAIComponent.SetIsAzure(const Value: Boolean);
 begin
   FOpenAI.API.IsAzure := Value;
+end;
+
+procedure TOpenAIComponent.SetDisableBearerPrefix(const Value: Boolean);
+begin
+  FOpenAI.API.DisableBearerPrefix := Value;
 end;
 
 procedure TOpenAIComponent.SetOrganization(const Value: string);
