@@ -12,6 +12,22 @@ uses
 type
   THeaderItem = System.Net.URLClient.TNameValuePair;
 
+  TChatParams = OpenAI.Chat.TChatParams;
+
+  TChatMessageBase = OpenAI.Chat.TChatMessageBase;
+
+  TChatMessageDeveloper = OpenAI.Chat.TChatMessageDeveloper;
+
+  TChatMessageSystem = OpenAI.Chat.TChatMessageSystem;
+
+  TChatMessageUser = OpenAI.Chat.TChatMessageUser;
+
+  TChatMessageAssistant = OpenAI.Chat.TChatMessageAssistant;
+
+  TChatMessageTool = OpenAI.Chat.TChatMessageTool;
+
+  TChatMessageFunction = OpenAI.Chat.TChatMessageFunction;
+
   IOpenAI = interface
     ['{F4CF7FB9-9B73-48FB-A3FE-1E98CCEFCAF0}']
     procedure SetToken(const Value: string);
@@ -134,6 +150,7 @@ type
     FChatRoute: TChatRoute;
     FAudioRoute: TAudioRoute;
     FAssistantsRoute: TAssistantsRoute;
+    FPrepare: IAPIPrepare;
     procedure SetToken(const Value: string);
     function GetToken: string;
     function GetBaseUrl: string;
@@ -163,9 +180,11 @@ type
     function GetFineTuningRoute: TFineTuningRoute;
     function GetDisableBearerPrefix: Boolean;
     procedure SetDisableBearerPrefix(const Value: Boolean);
+    procedure SetPrepare(const Value: IAPIPrepare);
   public
     constructor Create; overload;
     constructor Create(const AToken: string); overload;
+    constructor Create(const AApiUrl, AToken: string); overload;
     destructor Destroy; override;
   public
     /// <summary>
@@ -195,6 +214,7 @@ type
     property DisableBearerPrefix: Boolean read GetDisableBearerPrefix write SetDisableBearerPrefix;
     property AzureApiVersion: string read GetAzureAPIVersion write SetAzureAPIVersion;
     property AzureDeployment: string read GetAzureDeployment write SetAzureDeployment;
+    property Prepare: IAPIPrepare read FPrepare write SetPrepare;
   public
     /// <summary>
     /// Given a prompt, the model will return one or more predicted completions,
@@ -576,6 +596,13 @@ begin
   Token := AToken;
 end;
 
+constructor TOpenAI.Create(const AApiUrl, AToken: string);
+begin
+  Create;
+  Token := AToken;
+  BaseURL := AApiUrl;
+end;
+
 destructor TOpenAI.Destroy;
 begin
   FCompletionsRoute.Free;
@@ -761,6 +788,12 @@ end;
 procedure TOpenAI.SetOrganization(const Value: string);
 begin
   FAPI.Organization := Value;
+end;
+
+procedure TOpenAI.SetPrepare(const Value: IAPIPrepare);
+begin
+  FPrepare := Value;
+  API.Prepare := Value;
 end;
 
 procedure TOpenAI.SetToken(const Value: string);

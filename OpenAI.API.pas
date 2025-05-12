@@ -8,6 +8,8 @@ uses
   OpenAI.API.Params;
 
 type
+  TOpenAIAPI = class;
+
   {$IF RTLVersion < 35.0}
   TURLClientHelper = class helper for TURLClient
   public
@@ -65,6 +67,13 @@ type
 
   OpenAIExceptionInvalidResponse = class(OpenAIException);
 
+  OpenAIPrepareException = class(OpenAIException);
+
+  IAPIPrepare = interface
+    ['{10B51102-8D50-40F5-AD6D-E44D9B22A56F}']
+    procedure PrepareQuery(API: TOpenAIAPI);
+  end;
+
   {$WARNINGS OFF}
   TOpenAIAPI = class
   public
@@ -85,6 +94,7 @@ type
     FResponseTimeout: Integer;
     FAssistantsVersion: string;
     FDisableBearerPrefix: Boolean;
+    FPrepare: IAPIPrepare;
 
     procedure SetToken(const Value: string);
     procedure SetBaseUrl(const Value: string);
@@ -98,7 +108,6 @@ type
     procedure SetSendTimeout(const Value: Integer);
   protected
     function GetHeaders: TNetHeaders; virtual;
-    function GetClient: THTTPClient; virtual;
     function GetRequestURL(const Path: string): string;
     function Get(const Path: string; Response: TStream): Integer; overload;
     function Delete(const Path: string; Response: TStream): Integer; overload;
@@ -108,6 +117,7 @@ type
     function ParseResponse<T: class, constructor>(const Code: Int64; const ResponseText: string): T;
     procedure CheckAPI;
   public
+    function GetClient: THTTPClient; virtual;
     function Get<TResult: class, constructor>(const Path: string): TResult; overload;
     function Get<TResult: class, constructor; TParams: TJSONParam>(const Path: string; ParamProc: TProc<TParams>): TResult; overload;
     procedure GetFile(const Path: string; Response: TStream); overload;
@@ -142,6 +152,7 @@ type
     /// Example: v1, v2, ...
     /// </summary>
     property AssistantsVersion: string read FAssistantsVersion write FAssistantsVersion;
+    property Prepare: IAPIPrepare read FPrepare write FPrepare;
   end;
   {$WARNINGS ON}
 
@@ -193,6 +204,7 @@ var
 begin
   CheckAPI;
   Client := GetClient;
+
   try
     Headers := GetHeaders + [TNetHeader.Create('Content-Type', 'application/json')];
     Stream := TStringStream.Create;
@@ -475,6 +487,8 @@ end;
 
 procedure TOpenAIAPI.CheckAPI;
 begin
+  if Assigned(FPrepare) then
+    FPrepare.PrepareQuery(Self);
   if FToken.IsEmpty then
     raise OpenAIExceptionAPI.Create('Token is empty!');
   if FBaseUrl.IsEmpty then
