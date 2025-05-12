@@ -13,6 +13,18 @@ This repositorty contains Delphi implementation over [OpenAI](https://beta.opena
 
 ❗*This is an unofficial library. OpenAI does not provide any official library for Delphi.*
 
+### Compatibility
+Also, the library is compatible with the following AI APIs (tested): 
+- OpenAI Azure
+- DeepSeek
+- YandexGPT
+- Qwen
+- GigaChat
+
+and other compatible with the OpenAI API.
+
+### Table of contents
+
 - [What is OpenAI](#what-is-openai)
 - [Installation](#installation)
 - [Usage](#usage)
