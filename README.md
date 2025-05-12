@@ -314,7 +314,11 @@ end;
 ### Proxy
 
 ```Pascal
-OpenAI.API.Client.ProxySettings := TProxySettings.Create(ProxyHost, ProxyPort, ProxyUserName, ProxyPassword);
+OpenAI.API.Client.ProxySettings := TProxySettings.Create(
+    ProxyHost,
+    ProxyPort,
+    ProxyUserName,
+    ProxyPassword);
 ```
 
 ### Preparing mechanism
