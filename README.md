@@ -314,7 +314,7 @@ end;
 ### Proxy
 
 ```Pascal
-OpenAI.API.Client.ProxySettings := TProxySettings.Create(
+OpenAI.API.ProxySettings := TProxySettings.Create(
     ProxyHost,
     ProxyPort,
     ProxyUserName,
