@@ -91,6 +91,8 @@ end;
 procedure TFormChat.FormCreate(Sender: TObject);
 begin
   OpenAIClient1.Token := {$INCLUDE token.txt};   //'sk-...'
+
+  OpenAIClient1.API.CustomHeaders := OpenAIClient1.API.CustomHeaders + [THeaderItem.Create('OpenAI-Beta', 'assistants=v2')];
 end;
 
 procedure TFormChat.OpenAIChat1BeginWork(Sender: TObject);
