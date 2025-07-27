@@ -6,7 +6,7 @@ ___
 ![GitHub](https://img.shields.io/github/license/hemulgm/DelphiOpenAI)
 ![GitHub](https://img.shields.io/github/last-commit/hemulgm/DelphiOpenAI)
 ![GitHub](https://img.shields.io/badge/coverage-100%25-green)
-![GitHub](https://img.shields.io/badge/IDE%20Version-Delphi%2010.3+-yellow)
+![GitHub](https://img.shields.io/badge/IDE%20Version-Delphi%2011+-yellow)
 ![GitHub](https://img.shields.io/badge/platform-all%20platforms-green)
 
 This repositorty contains Delphi implementation over [OpenAI](https://beta.openai.com/docs/api-reference/) public API.
