@@ -3,10 +3,13 @@
 interface
 
 uses
-  System.Classes, System.Net.HttpClient, System.Net.URLClient, System.Net.Mime,
-  System.JSON, OpenAI.Errors, OpenAI.API.Params, System.SysUtils;
+  System.Classes, System.SysUtils, System.Net.HttpClient, System.Net.URLClient,
+  System.Net.Mime, System.JSON, System.Generics.Collections, OpenAI.Errors,
+  OpenAI.API.Params;
 
 type
+  TOpenAIAPI = class;
+
   {$IF RTLVersion < 35.0}
   TURLClientHelper = class helper for TURLClient
   public
@@ -64,6 +67,13 @@ type
 
   OpenAIExceptionInvalidResponse = class(OpenAIException);
 
+  OpenAIPrepareException = class(OpenAIException);
+
+  IAPIPrepare = interface
+    ['{10B51102-8D50-40F5-AD6D-E44D9B22A56F}']
+    procedure PrepareQuery(API: TOpenAIAPI);
+  end;
+
   {$WARNINGS OFF}
   TOpenAIAPI = class
   public
@@ -83,6 +93,8 @@ type
     FSendTimeout: Integer;
     FResponseTimeout: Integer;
     FAssistantsVersion: string;
+    FDisableBearerPrefix: Boolean;
+    FPrepare: IAPIPrepare;
 
     procedure SetToken(const Value: string);
     procedure SetBaseUrl(const Value: string);
@@ -96,7 +108,6 @@ type
     procedure SetSendTimeout(const Value: Integer);
   protected
     function GetHeaders: TNetHeaders; virtual;
-    function GetClient: THTTPClient; virtual;
     function GetRequestURL(const Path: string): string;
     function Get(const Path: string; Response: TStream): Integer; overload;
     function Delete(const Path: string; Response: TStream): Integer; overload;
@@ -106,6 +117,7 @@ type
     function ParseResponse<T: class, constructor>(const Code: Int64; const ResponseText: string): T;
     procedure CheckAPI;
   public
+    function GetClient: THTTPClient; virtual;
     function Get<TResult: class, constructor>(const Path: string): TResult; overload;
     function Get<TResult: class, constructor; TParams: TJSONParam>(const Path: string; ParamProc: TProc<TParams>): TResult; overload;
     procedure GetFile(const Path: string; Response: TStream); overload;
@@ -132,6 +144,7 @@ type
     ///  -1 - Infinite timeout. 0 - platform specific timeout. Supported by all platforms. </summary>
     property ResponseTimeout: Integer read FResponseTimeout write SetResponseTimeout;
     property IsAzure: Boolean read FIsAzure write FIsAzure;
+    property DisableBearerPrefix: Boolean read FDisableBearerPrefix write FDisableBearerPrefix;
     property AzureApiVersion: string read FAzureApiVersion write FAzureApiVersion;
     property AzureDeployment: string read FAzureDeployment write FAzureDeployment;
     property CustomHeaders: TNetHeaders read FCustomHeaders write SetCustomHeaders;
@@ -139,6 +152,7 @@ type
     /// Example: v1, v2, ...
     /// </summary>
     property AssistantsVersion: string read FAssistantsVersion write FAssistantsVersion;
+    property Prepare: IAPIPrepare read FPrepare write FPrepare;
   end;
   {$WARNINGS ON}
 
@@ -154,7 +168,7 @@ type
 implementation
 
 uses
-  REST.Json, System.NetConsts;
+  REST.Json, System.NetConsts, OpenAI.Utils.JSON.Cleaner;
 
 constructor TOpenAIAPI.Create;
 begin
@@ -166,6 +180,7 @@ begin
   FToken := '';
   FBaseUrl := URL_BASE;
   FIsAzure := False;
+  FDisableBearerPrefix := False;
   FAzureApiVersion := '';
   FAzureDeployment := '';
 end;
@@ -189,6 +204,7 @@ var
 begin
   CheckAPI;
   Client := GetClient;
+
   try
     Headers := GetHeaders + [TNetHeader.Create('Content-Type', 'application/json')];
     Stream := TStringStream.Create;
@@ -280,13 +296,18 @@ begin
         Result := True;
     else
       Result := False;
-      Strings := TStringStream.Create;
-      try
-        Response.Position := 0;
-        Strings.LoadFromStream(Response);
-        ParseError(Code, Strings.DataString);
-      finally
-        Strings.Free;
+      if Response is TStringStream then
+        ParseError(Code, TStringStream(Response).DataString)
+      else
+      begin
+        Strings := TStringStream.Create;
+        try
+          Response.Position := 0;
+          Strings.LoadFromStream(Response);
+          ParseError(Code, Strings.DataString);
+        finally
+          Strings.Free;
+        end;
       end;
     end;
   finally
@@ -358,17 +379,20 @@ function TOpenAIAPI.Get<TResult, TParams>(const Path: string; ParamProc: TProc<T
 var
   Response: TStringStream;
   Params: TParams;
+  Pair: TPair<string, string>;
   Code: Integer;
+  Pairs: TArray<string>;
+  QPath: string;
 begin
   Response := TStringStream.Create('', TEncoding.UTF8);
   Params := TParams.Create;
   try
     if Assigned(ParamProc) then
       ParamProc(Params);
-    var Pairs: TArray<string> := [];
-    for var Pair in Params.ToStringPairs do
+    Pairs := [];
+    for Pair in Params.ToStringPairs do
       Pairs := Pairs + [Pair.Key + '=' + Pair.Value];
-    var QPath := Path;
+    QPath := Path;
     if Length(Pairs) > 0 then
       QPath := QPath + '?' + string.Join('&', Pairs);
     Code := Get(QPath, Response);
@@ -439,7 +463,10 @@ begin
   if IsAzure then
     Exit;
 
-  Result := [TNetHeader.Create('Authorization', 'Bearer ' + FToken)] + FCustomHeaders;
+  if DisableBearerPrefix then
+    Result := [TNetHeader.Create('Authorization', FToken)] + FCustomHeaders
+  else
+    Result := [TNetHeader.Create('Authorization', 'Bearer ' + FToken)] + FCustomHeaders;
   if not FOrganization.IsEmpty then
     Result := Result + [TNetHeader.Create('OpenAI-Organization', FOrganization)];
   if not FAssistantsVersion.IsEmpty then
@@ -460,6 +487,8 @@ end;
 
 procedure TOpenAIAPI.CheckAPI;
 begin
+  if Assigned(FPrepare) then
+    FPrepare.PrepareQuery(Self);
   if FToken.IsEmpty then
     raise OpenAIExceptionAPI.Create('Token is empty!');
   if FBaseUrl.IsEmpty then
@@ -505,15 +534,32 @@ begin
 end;
 
 function TOpenAIAPI.ParseResponse<T>(const Code: Int64; const ResponseText: string): T;
+var
+  JO: TJSONObject;
+  {$IF CompilerVersion <= 35}
+  ClearedJSON: string; // fix for Delphi < 11 versions
+  {$ENDIF}
 begin
   Result := nil;
+  {$IF CompilerVersion <= 35}
+  ClearedJSON := TJSONCleaner<T>.New.CleanJSON(ResponseText);
+  {$ENDIF}
   case Code of
     200..299:
       try
+        {$IF CompilerVersion <= 35}
+        Result := TJson.JsonToObject<T>(ClearedJSON);
+        {$ELSE}
         Result := TJson.JsonToObject<T>(ResponseText);
+        {$ENDIF}
       except
         try
-          var JO := TJSONObject.Create(TJSONPair.Create('text', ResponseText)); // try parse as part of object with text field (example, vtt)
+          // try parse as part of object with text field (example, vtt)
+          {$IF CompilerVersion <= 35}
+          JO := TJSONObject.Create(TJSONPair.Create('text', ClearedJSON));
+          {$ELSE}
+          JO := TJSONObject.Create(TJSONPair.Create('text', ResponseText));
+          {$ENDIF}
           try
             Result := TJson.JsonToObject<T>(JO);
           finally
@@ -524,7 +570,11 @@ begin
         end;
       end;
   else
+    {$IF CompilerVersion <= 35}
+    ParseError(Code, ClearedJSON);
+    {$ELSE}
     ParseError(Code, ResponseText);
+    {$ENDIF}
   end;
   if not Assigned(Result) then
     raise OpenAIExceptionInvalidResponse.Create('Empty or invalid response', '', '', Code);

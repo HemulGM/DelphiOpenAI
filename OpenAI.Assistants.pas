@@ -40,7 +40,7 @@ type
   TAssistantFunctionTool = class(TAssistantTool)
   public
     constructor Create; override;
-    function &Function(const Value: IChatFunction): TAssistantFunctionTool;
+    function  &Function(const Value: IChatFunction): TAssistantFunctionTool;
   end;
 
   TAssistantListParams = class(TJSONParam)
@@ -68,6 +68,62 @@ type
 
   TAssistantToolResourcesParams = class(TJSONParam)
     function CodeInterpreter(const FileIds: TArray<string>): TAssistantToolResourcesParams;
+    //function FileSearch(const VectorStoreIds: TArray<string>): TAssistantToolResourcesParams;
+  end;
+
+  TAssistantResponseFormat = class abstract(TJSONParam)
+  private
+    /// <summary>
+    /// The type of response format being defined
+    /// </summary>
+    function FormatType(const Value: string): TAssistantResponseFormat;
+  end;
+
+  /// <summary>
+  /// Default response format. Used to generate text responses.
+  /// </summary>
+  TAssistantResponseText = class(TAssistantResponseFormat)
+  public
+    constructor Create; override;
+  end;
+
+  /// <summary>
+  /// JSON object response format. An older method of generating JSON responses.
+  /// Using json_schema is recommended for models that support it.
+  /// Note that the model will not generate JSON without a system or user message instructing it to do so.
+  /// </summary>
+  TAssistantResponseJsonObject = class(TAssistantResponseFormat)
+  public
+    constructor Create; override;
+  end;
+
+  /// <summary>
+  /// JSON Schema response format. Used to generate structured JSON responses.
+  /// Structured Outputs configuration options, including a JSON Schema.
+  /// </summary>
+  TAssistantResponseJsonSchema = class(TAssistantResponseFormat)
+  private
+    FJsonSchema: TJSONObject;
+  public
+    constructor Create; override;
+    /// <summary>
+    /// Required. The name of the response format. Must be a-z, A-Z, 0-9, or contain underscores and dashes, with a maximum length of 64.
+    /// </summary>
+    function Name(const Value: string): TAssistantResponseJsonSchema;
+    /// <summary>
+    /// A description of what the response format is for, used by the model to determine how to respond in the format.
+    /// </summary>
+    function Description(const Value: string): TAssistantResponseJsonSchema;
+    /// <summary>
+    /// The schema for the response format, described as a JSON Schema object.
+    /// </summary>
+    function Schema(const Value: TJSONObject): TAssistantResponseJsonSchema;
+    /// <summary>
+    /// Whether to enable strict schema adherence when generating the output.
+    /// If set to true, the model will always follow the exact schema defined in the schema field.
+    /// Only a subset of JSON Schema is supported when strict is true. To learn more, read the Structured Outputs guide.
+    /// </summary>
+    function strict(const Value: Boolean = True): TAssistantResponseJsonSchema;
   end;
 
   TAssistantParams = class(TJSONParam)
@@ -77,10 +133,6 @@ type
     /// </summary>
     function Model(const Value: string): TAssistantParams;
     /// <summary>
-    /// The name of the assistant. The maximum length is 256 characters.
-    /// </summary>
-    function Name(const Value: string): TAssistantParams; overload;
-    /// <summary>
     /// The description of the assistant. The maximum length is 512 characters.
     /// </summary>
     function Description(const Value: string): TAssistantParams; overload;
@@ -88,6 +140,45 @@ type
     /// The system instructions that the assistant uses. The maximum length is 32768 characters.
     /// </summary>
     function Instructions(const Value: string): TAssistantParams; overload;
+    /// <summary>
+    /// Set of 16 key-value pairs that can be attached to an object. This can be useful
+    /// for storing additional information about the object in a structured format.
+    /// Keys can be a maximum of 64 characters long and values can be a maxium of 512 characters long.
+    /// </summary>
+    function Metadata(const Value: TJSONParam): TAssistantParams;
+    /// <summary>
+    /// The name of the assistant. The maximum length is 256 characters.
+    /// </summary>
+    function Name(const Value: string): TAssistantParams; overload;
+    /// <summary>
+    /// o-series models only.
+    /// Constrains effort on reasoning for reasoning models.
+    /// Currently supported values are low, medium, and high. Reducing reasoning
+    /// effort can result in faster responses and fewer tokens used on reasoning in a response.
+    /// </summary>
+    function ReasoningEffort(const Value: string): TAssistantParams; overload;
+    /// <summary>
+    /// Specifies the format that the model must output. Compatible with GPT-4o, GPT-4 Turbo,
+    /// and all GPT-3.5 Turbo models since gpt-3.5-turbo-1106.
+    ///
+    /// Setting to { "type": "json_schema", "json_schema": {...} } enables Structured Outputs which
+    /// ensures the model will match your supplied JSON schema. Learn more in the Structured Outputs guide.
+    ///
+    /// Setting to { "type": "json_object" } enables JSON mode, which ensures the message the model generates is valid JSON.
+    ///
+    /// Important: when using JSON mode, you must also instruct the model to produce JSON yourself via a
+    /// system or user message. Without this, the model may generate an unending stream of whitespace
+    /// until the generation reaches the token limit, resulting in a long-running and seemingly "stuck"
+    /// request. Also note that the message content may be partially cut off if finish_reason="length",
+    /// which indicates the generation exceeded max_tokens or the conversation exceeded the max
+    /// context length.
+    /// </summary>
+    function ResponseFormat(const Value: TAssistantResponseFormat): TAssistantParams; overload;
+    /// <summary>
+    /// What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output
+    /// more random, while lower values like 0.2 will make it more focused and deterministic.
+    /// </summary>
+    function Temperature(const Value: Extended): TAssistantParams; overload;
     /// <summary>
     /// A list of tool enabled on the assistant. There can be a maximum of 128 tools per assistant.
     /// Tools can be of types code_interpreter, file_search, or function.
@@ -104,12 +195,6 @@ type
     /// attached to the assistant. Files are ordered by their creation date in ascending order.
     /// </summary>
     function FileIds(const Value: TArray<string>): TAssistantParams;
-    /// <summary>
-    /// Set of 16 key-value pairs that can be attached to an object. This can be useful
-    /// for storing additional information about the object in a structured format.
-    /// Keys can be a maximum of 64 characters long and values can be a maxium of 512 characters long.
-    /// </summary>
-    function Metadata(const Value: TJSONParam): TAssistantParams;
     constructor Create; override;
   end;
 
@@ -355,6 +440,21 @@ begin
   Result := TAssistantParams(Add('name', Value));
 end;
 
+function TAssistantParams.ReasoningEffort(const Value: string): TAssistantParams;
+begin
+  Result := TAssistantParams(Add('reasoning_effort', Value));
+end;
+
+function TAssistantParams.ResponseFormat(const Value: TAssistantResponseFormat): TAssistantParams;
+begin
+  Result := TAssistantParams(Add('response_format', Value));
+end;
+
+function TAssistantParams.Temperature(const Value: Extended): TAssistantParams;
+begin
+  Result := TAssistantParams(Add('temperature', Value));
+end;
+
 function TAssistantParams.ToolResources(const Value: TAssistantToolResourcesParams): TAssistantParams;
 begin
   Result := TAssistantParams(Add('tool_resources', Value));
@@ -460,6 +560,67 @@ end;
 function TAssistantToolResourcesParams.CodeInterpreter(const FileIds: TArray<string>): TAssistantToolResourcesParams;
 begin
   Result := TAssistantToolResourcesParams(Add('code_interpreter', TJSONParam.Create.Add('file_ids', FileIds)));
+end;
+
+{ TAssistantResponseFormat }
+
+function TAssistantResponseFormat.FormatType(const Value: string): TAssistantResponseFormat;
+begin
+  Result := TAssistantResponseFormat(Add('type', Value));
+end;
+
+{ TAssistantResponseText }
+
+constructor TAssistantResponseText.Create;
+begin
+  inherited;
+  FormatType('text');
+end;
+
+{ TAssistantResponseJsonObject }
+
+constructor TAssistantResponseJsonObject.Create;
+begin
+  inherited;
+  FormatType('json_object');
+end;
+
+{ TAssistantResponseJsonSchema }
+
+constructor TAssistantResponseJsonSchema.Create;
+begin
+  inherited;
+  FormatType('json_schema');
+  FJsonSchema := TJSONObject.Create;
+  Add('json_schema', FJsonSchema);
+end;
+
+function TAssistantResponseJsonSchema.Description(const Value: string): TAssistantResponseJsonSchema;
+begin
+  FJsonSchema.AddPair('description', Value);
+  Result := TAssistantResponseJsonSchema(Self);
+end;
+
+function TAssistantResponseJsonSchema.Name(const Value: string): TAssistantResponseJsonSchema;
+begin
+  FJsonSchema.AddPair('name', Value);
+  Result := TAssistantResponseJsonSchema(Self);
+end;
+
+function TAssistantResponseJsonSchema.Schema(const Value: TJSONObject): TAssistantResponseJsonSchema;
+begin
+  FJsonSchema.AddPair('schema', Value);
+  Result := TAssistantResponseJsonSchema(Self);
+end;
+
+function TAssistantResponseJsonSchema.strict(const Value: Boolean): TAssistantResponseJsonSchema;
+begin
+  {$IF RTLVersion < 35.0}
+  FJsonSchema.AddPair('strict', TJSONBool.Create(Value));
+  {$ELSE}
+  FJsonSchema.AddPair('strict', Value);
+  {$ENDIF}
+  Result := TAssistantResponseJsonSchema(Self);
 end;
 
 end.

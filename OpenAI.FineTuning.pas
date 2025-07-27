@@ -3,8 +3,8 @@
 interface
 
 uses
-  System.Generics.Collections, Rest.Json, System.JSON.Types, OpenAI.API,
-  System.SysUtils, OpenAI.API.Params;
+  System.Generics.Collections, Rest.Json, System.Json, System.JSON.Types,
+  OpenAI.API, System.SysUtils, OpenAI.API.Params;
 
 type
   THyperparameters = class
@@ -381,7 +381,7 @@ type
     /// <summary>
     /// The type of integration to enable. Currently, only "wandb" (Weights and Biases) is supported.
     /// </summary>
-    function &Type(const Value: string): TFineTuningIntegrationParams;
+    function  &Type(const Value: string): TFineTuningIntegrationParams;
     /// <summary>
     /// The settings for your integration with Weights and Biases.
     /// This payload specifies the project that metrics will be sent to.
@@ -412,12 +412,16 @@ type
     /// </summary>
     function Model(const Value: string): TFineTuningCreateParams;
     /// <summary>
-    /// The hyperparameters used for the fine-tuning job.
+    /// Set of 16 key-value pairs that can be attached to an object.
+    /// This can be useful for storing additional information about the object in a structured format,
+    /// and querying for objects via API or the dashboard.
+    /// Keys are strings with a maximum length of 64 characters. Values are strings with a maximum length of 512 characters.
     /// </summary>
-    /// <param name="NEpochs">
-    /// The number of epochs to train the model for. An epoch refers to one full cycle through the training dataset.
-    /// </param>
-    function Hyperparameters(const Value: TFineTuningHyperParams): TFineTuningCreateParams;
+    function Metadata(const Value: TJSONValue): TFineTuningCreateParams;
+    /// <summary>
+    /// The hyperparameters used for the fine-tuning job. This value is now deprecated in favor of method, and should be passed in under the method parameter.
+    /// </summary>
+    function Hyperparameters(const Value: TFineTuningHyperParams): TFineTuningCreateParams; deprecated;
     /// <summary>
     /// A string of up to 64 characters that will be added to your fine-tuned model name.
     /// For example, a suffix of "custom-model-name" would produce a model name
@@ -477,9 +481,6 @@ type
 
 implementation
 
-uses
-  System.JSON;
-
 { TFineTuningJob }
 
 destructor TFineTuningJob.Destroy;
@@ -503,6 +504,11 @@ end;
 function TFineTuningCreateParams.Integrations(const Value: TFineTuningIntegrationParams): TFineTuningCreateParams;
 begin
   Result := TFineTuningCreateParams(Add('integrations', Value));
+end;
+
+function TFineTuningCreateParams.Metadata(const Value: TJSONValue): TFineTuningCreateParams;
+begin
+  Result := TFineTuningCreateParams(Add('metadata', Value));
 end;
 
 function TFineTuningCreateParams.Model(const Value: string): TFineTuningCreateParams;

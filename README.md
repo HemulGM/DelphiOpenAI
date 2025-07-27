@@ -6,12 +6,24 @@ ___
 ![GitHub](https://img.shields.io/github/license/hemulgm/DelphiOpenAI)
 ![GitHub](https://img.shields.io/github/last-commit/hemulgm/DelphiOpenAI)
 ![GitHub](https://img.shields.io/badge/coverage-100%25-green)
-![GitHub](https://img.shields.io/badge/IDE%20Version-Delphi%2010.3+-yellow)
+![GitHub](https://img.shields.io/badge/IDE%20Version-Delphi%2011+-yellow)
 ![GitHub](https://img.shields.io/badge/platform-all%20platforms-green)
 
 This repositorty contains Delphi implementation over [OpenAI](https://beta.openai.com/docs/api-reference/) public API.
 
 ❗*This is an unofficial library. OpenAI does not provide any official library for Delphi.*
+
+### Compatibility
+Also, the library is compatible with the following AI APIs (tested): 
+- OpenAI Azure
+- DeepSeek
+- YandexGPT
+- Qwen
+- GigaChat
+
+and other compatible with the OpenAI API.
+
+### Table of contents
 
 - [What is OpenAI](#what-is-openai)
 - [Installation](#installation)
@@ -25,6 +37,7 @@ This repositorty contains Delphi implementation over [OpenAI](https://beta.opena
     - [Errors](#errors)
     - [Exceptions](#exceptions)
     - [Usage proxy](#proxy)
+    - [Preparing mechanism](#preparing-mechanism)
 - [Examples](#examples)
 - [Requirements](#requirements)
 - [Links](#links)
@@ -301,7 +314,23 @@ end;
 ### Proxy
 
 ```Pascal
-OpenAI.API.Client.ProxySettings := TProxySettings.Create(ProxyHost, ProxyPort, ProxyUserName, ProxyPassword);
+OpenAI.API.ProxySettings := TProxySettings.Create(
+    ProxyHost,
+    ProxyPort,
+    ProxyUserName,
+    ProxyPassword);
+```
+
+### Preparing mechanism
+
+If a third-party API requires some actions before making a request, then use the IAPIPrepare interface and the Prepare property.
+
+```Pascal
+var client := TOpenAI.Create('https://gigachat.devices.sberbank.ru/api/v1', '');
+сlient.Prepare := TApiPrepareGigaChat.Create(
+  '<client_id>',
+  '<auth_key>');
+var response := client.Chat.Create(...);
 ```
 
 ## Examples

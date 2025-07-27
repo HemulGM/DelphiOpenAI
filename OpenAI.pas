@@ -12,6 +12,22 @@ uses
 type
   THeaderItem = System.Net.URLClient.TNameValuePair;
 
+  TChatParams = OpenAI.Chat.TChatParams;
+
+  TChatMessageBase = OpenAI.Chat.TChatMessageBase;
+
+  TChatMessageDeveloper = OpenAI.Chat.TChatMessageDeveloper;
+
+  TChatMessageSystem = OpenAI.Chat.TChatMessageSystem;
+
+  TChatMessageUser = OpenAI.Chat.TChatMessageUser;
+
+  TChatMessageAssistant = OpenAI.Chat.TChatMessageAssistant;
+
+  TChatMessageTool = OpenAI.Chat.TChatMessageTool;
+
+  TChatMessageFunction = OpenAI.Chat.TChatMessageFunction;
+
   IOpenAI = interface
     ['{F4CF7FB9-9B73-48FB-A3FE-1E98CCEFCAF0}']
     procedure SetToken(const Value: string);
@@ -134,6 +150,7 @@ type
     FChatRoute: TChatRoute;
     FAudioRoute: TAudioRoute;
     FAssistantsRoute: TAssistantsRoute;
+    FPrepare: IAPIPrepare;
     procedure SetToken(const Value: string);
     function GetToken: string;
     function GetBaseUrl: string;
@@ -161,9 +178,13 @@ type
     procedure SetIsAzure(const Value: Boolean);
     function GetImagesAzureRoute: TImagesAzureRoute;
     function GetFineTuningRoute: TFineTuningRoute;
+    function GetDisableBearerPrefix: Boolean;
+    procedure SetDisableBearerPrefix(const Value: Boolean);
+    procedure SetPrepare(const Value: IAPIPrepare);
   public
     constructor Create; overload;
     constructor Create(const AToken: string); overload;
+    constructor Create(const AApiUrl, AToken: string); overload;
     destructor Destroy; override;
   public
     /// <summary>
@@ -190,8 +211,10 @@ type
     property Organization: string read GetOrganization write SetOrganization;
 
     property IsAzure: Boolean read GetIsAzure write SetIsAzure;
+    property DisableBearerPrefix: Boolean read GetDisableBearerPrefix write SetDisableBearerPrefix;
     property AzureApiVersion: string read GetAzureAPIVersion write SetAzureAPIVersion;
     property AzureDeployment: string read GetAzureDeployment write SetAzureDeployment;
+    property Prepare: IAPIPrepare read FPrepare write SetPrepare;
   public
     /// <summary>
     /// Given a prompt, the model will return one or more predicted completions,
@@ -283,7 +306,6 @@ type
         property Password: string read GetPassword write SetPassword;
       end;
 
-
       THTTPHeader = class(TCollectionItem)
       private
         FName: string;
@@ -294,7 +316,6 @@ type
         property Name: string read FName write SetName;
         property Value: string read FValue write SetValue;
       end;
-
 
       THTTPHeaders = class(TOwnedCollection)
       private
@@ -341,6 +362,8 @@ type
     procedure SetAzureAPIVersion(const Value: string);
     procedure SetAzureDeployment(const Value: string);
     procedure SetIsAzure(const Value: Boolean);
+    function GetDisableBearerPrefix: Boolean;
+    procedure SetDisableBearerPrefix(const Value: Boolean);
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -447,6 +470,7 @@ type
     property ResponseTimeout: Integer read GetResponseTimeout write SetResponseTimeout;
 
     property IsAzure: Boolean read GetIsAzure write SetIsAzure;
+    property DisableBearerPrefix: Boolean read GetDisableBearerPrefix write SetDisableBearerPrefix;
     property AzureApiVersion: string read GetAzureAPIVersion write SetAzureAPIVersion;
     property AzureDeployment: string read GetAzureDeployment write SetAzureDeployment;
     property CustomHeaders: THTTPHeaders read FCustomHeaders;
@@ -490,6 +514,7 @@ type
     /// </summary>
     property ResponseTimeout default TURLClient.DefaultResponseTimeout;
     property IsAzure default False;
+    property DisableBearerPrefix default False;
     property AzureApiVersion;
     property AzureDeployment;
     property CustomHeaders;
@@ -524,6 +549,9 @@ var
   ConsoleHistory: TChatHistory = nil;
 
 function chat(const Token, Prompt: string; const Model: string): string;
+var
+  API: IOpenAI;
+  Chat: TChat;
 begin
   if ConsoleHistory = nil then
   begin
@@ -532,8 +560,8 @@ begin
   end;
   try
     ConsoleHistory.New(TMessageRole.User, Prompt, TGUID.NewGuid.ToString);
-    var API: IOpenAI := TOpenAI.Create(Token);
-    var Chat := API.Chat.Create(
+    API := TOpenAI.Create(Token);
+    Chat := API.Chat.Create(
       procedure(Params: TChatParams)
       begin
         Params.Model(Model);
@@ -566,6 +594,13 @@ constructor TOpenAI.Create(const AToken: string);
 begin
   Create;
   Token := AToken;
+end;
+
+constructor TOpenAI.Create(const AApiUrl, AToken: string);
+begin
+  Create;
+  Token := AToken;
+  BaseURL := AApiUrl;
 end;
 
 destructor TOpenAI.Destroy;
@@ -696,6 +731,11 @@ begin
   Result := FAPI.IsAzure;
 end;
 
+function TOpenAI.GetDisableBearerPrefix: Boolean;
+begin
+  Result := FAPI.DisableBearerPrefix;
+end;
+
 function TOpenAI.GetModelsRoute: TModelsRoute;
 begin
   if not Assigned(FModelsRoute) then
@@ -740,9 +780,20 @@ begin
   FAPI.IsAzure := Value;
 end;
 
+procedure TOpenAI.SetDisableBearerPrefix(const Value: Boolean);
+begin
+  FAPI.DisableBearerPrefix := Value;
+end;
+
 procedure TOpenAI.SetOrganization(const Value: string);
 begin
   FAPI.Organization := Value;
+end;
+
+procedure TOpenAI.SetPrepare(const Value: IAPIPrepare);
+begin
+  FPrepare := Value;
+  API.Prepare := Value;
 end;
 
 procedure TOpenAI.SetToken(const Value: string);
@@ -776,8 +827,8 @@ var
 begin
   for i := 0 to FCustomHeaders.Count - 1 do
     FHeaders := FHeaders + [TNameValuePair.Create(
-      THTTPHeader(FCustomHeaders.Items[i]).Name,
-      THTTPHeader(FCustomHeaders.Items[i]).Value)];
+    THTTPHeader(FCustomHeaders.Items[i]).Name,
+    THTTPHeader(FCustomHeaders.Items[i]).Value)];
   API.CustomHeaders := FHeaders;
 end;
 
@@ -866,6 +917,11 @@ begin
   Result := FOpenAI.API.IsAzure;
 end;
 
+function TOpenAIComponent.GetDisableBearerPrefix: Boolean;
+begin
+  Result := FOpenAI.API.DisableBearerPrefix;
+end;
+
 function TOpenAIComponent.GetModelsRoute: TModelsRoute;
 begin
   Result := FOpenAI.GetModelsRoute;
@@ -919,6 +975,11 @@ end;
 procedure TOpenAIComponent.SetIsAzure(const Value: Boolean);
 begin
   FOpenAI.API.IsAzure := Value;
+end;
+
+procedure TOpenAIComponent.SetDisableBearerPrefix(const Value: Boolean);
+begin
+  FOpenAI.API.DisableBearerPrefix := Value;
 end;
 
 procedure TOpenAIComponent.SetOrganization(const Value: string);
