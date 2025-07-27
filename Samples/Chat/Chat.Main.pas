@@ -90,7 +90,7 @@ end;
 
 procedure TFormChat.FormCreate(Sender: TObject);
 begin
-  OpenAIClient1.Token := {$INCLUDE token.txt};
+  OpenAIClient1.Token := {$INCLUDE token.txt};   //'sk-...'
 end;
 
 procedure TFormChat.OpenAIChat1BeginWork(Sender: TObject);

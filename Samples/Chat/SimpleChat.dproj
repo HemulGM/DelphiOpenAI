@@ -309,6 +309,7 @@
         <DCCReference Include="..\..\OpenAI.Types.pas"/>
         <DCCReference Include="..\..\OpenAI.Utils.ObjectHolder.pas"/>
         <DCCReference Include="..\..\OpenAI.Utils.Base64.pas"/>
+        <DCCReference Include="..\..\OpenAI.Utils.JSON.Cleaner.pas"/>
         <None Include="token.txt"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
@@ -348,7 +349,19 @@
                     </Platform>
                 </DeployFile>
                 <DeployFile LocalName="Win32\Debug\SimpleChat.exe" Configuration="Debug" Class="ProjectOutput"/>
+                <DeployFile LocalName="Win32\Debug\SimpleChat.exe" Configuration="Debug" Class="ProjectOutput">
+                    <Platform Name="Win32">
+                        <RemoteName>SimpleChat.exe</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
                 <DeployFile LocalName="token.txt" Configuration="Debug" Class="ProjectFile"/>
+                <DeployFile LocalName="token.txt" Configuration="Debug" Class="ProjectFile">
+                    <Platform Name="Win32">
+                        <RemoteDir>.\</RemoteDir>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
                 <DeployClass Name="AdditionalDebugSymbols">
                     <Platform Name="iOSSimulator">
                         <Operation>1</Operation>
