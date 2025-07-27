@@ -613,7 +613,11 @@ type
     /// <summary>
     /// From assistant
     /// </summary>
-    class function Assistant(const Content: string; const Name: string = ''): TChatMessageBuild; static;
+    class function Assistant(const Content: string; const Name: string = ''): TChatMessageBuild; overload; static;
+    /// <summary>
+    /// From assistant
+    /// </summary>
+    class function Assistant(const Content: TArray<TMessageContent>; const Name: string = ''): TChatMessageBuild; overload; static;
     /// <summary>
     /// Function result
     /// </summary>
@@ -1723,6 +1727,13 @@ class function TChatMessageBuild.Assistant(const Content: string; const Name: st
 begin
   Result.FRole := TMessageRole.Assistant;
   Result.FContent := Content;
+  Result.FName := Name;
+end;
+
+class function TChatMessageBuild.Assistant(const Content: TArray<TMessageContent>; const Name: string): TChatMessageBuild;
+begin
+  Result.FRole := TMessageRole.Assistant;
+  Result.FContents := Content;
   Result.FName := Name;
 end;
 

@@ -27,7 +27,8 @@ type
   protected
     procedure Notify(const Item: TChatMessageBuild; Action: TCollectionNotification); override;
   public
-    procedure New(Role: TMessageRole; Content, Tag: string);
+    procedure New(Message: TChatMessageBuild); overload;
+    procedure New(Role: TMessageRole; const Content, Tag: string); overload;
     procedure NewFunc(const FuncName, FuncResult, Tag: string);
     procedure NewTool(const Content, ToolCallId, Name, Tag: string);
     procedure NewAsistantFunc(const FuncName, Args, Tag: string);
@@ -85,13 +86,18 @@ begin
     end;
 end;
 
-procedure TChatHistory.New(Role: TMessageRole; Content, Tag: string);
+procedure TChatHistory.New(Role: TMessageRole; const Content, Tag: string);
 var
   Item: TChatMessageBuild;
 begin
   Item := TChatMessageBuild.Create(Role, Content);
   Item.Tag := Tag;
   Add(Item);
+end;
+
+procedure TChatHistory.New(Message: TChatMessageBuild);
+begin
+  Add(Message);
 end;
 
 procedure TChatHistory.NewAsistantFunc(const FuncName, Args, Tag: string);
