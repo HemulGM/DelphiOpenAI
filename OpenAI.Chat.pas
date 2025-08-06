@@ -1340,8 +1340,7 @@ begin
   Response := TStringStream.Create('', TEncoding.UTF8);
   try
     RetPos := 0;
-    Result := API.Post<TChatParams>('chat/completions', ParamProc, Response,
-        TReceiveDataCallback(
+    Result := API.Post<TChatParams>('chat/completions', ParamProc, Response, TReceiveDataCallback(
       procedure(const Sender: TObject; AContentLength: Int64; AReadCount: Int64; var AAbort: Boolean)
       var
         IsDone: Boolean;
