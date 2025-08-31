@@ -16,6 +16,8 @@ type
 
   TOnChatDelta = procedure(Sender: TObject; Event: TChat; IsDone: Boolean) of object;
 
+  TOnFunctionCall = procedure(Sender: TObject; const FuncName, FuncArgs: string) of object;
+
   TOnError = procedure(Sender: TObject; Error: Exception) of object;
 
   ExceptionChatBusy = class(Exception);
@@ -42,6 +44,7 @@ type
     FOnChatDelta: TOnChatDelta;
     FDoStreamStop: Boolean;
     FFunctions: TOpenAIChatFunctions;
+    FOnFunctionCall: TOnFunctionCall;
     procedure SetClient(const Value: TOpenAIClient);
     procedure SetModel(const Value: string);
     procedure SetFrequencyPenalty(const Value: Single);
@@ -63,6 +66,8 @@ type
     procedure SetOnEndWork(const Value: TNotifyEvent);
     procedure SetOnChatDelta(const Value: TOnChatDelta);
     procedure SetFunctions(const Value: TOpenAIChatFunctions);
+    procedure SetOnFunctionCall(const Value: TOnFunctionCall);
+    procedure DoFunctionCall(ChatFunction: TChatFunctionCall);
   protected
     procedure DoChat(Chat: TChat); virtual;
     procedure DoChatDelta(Chat: TChat; IsDone: Boolean); virtual;
@@ -94,6 +99,7 @@ type
   public
     property OnChat: TOnChat read FOnChat write SetOnChat;
     property OnChatDelta: TOnChatDelta read FOnChatDelta write SetOnChatDelta;
+    property OnFunctionCall: TOnFunctionCall read FOnFunctionCall write SetOnFunctionCall;
     property OnError: TOnError read FOnError write SetOnError;
     property OnBeginWork: TNotifyEvent read FOnBeginWork write SetOnBeginWork;
     property OnEndWork: TNotifyEvent read FOnEndWork write SetOnEndWork;
@@ -208,8 +214,25 @@ begin
     FOnBeginWork(Self);
 end;
 
+procedure TOpenAIChatCustom.DoFunctionCall(ChatFunction: TChatFunctionCall);
+begin
+  if Assigned(FOnFunctionCall) then
+    FOnFunctionCall(Self, ChatFunction.Name, ChatFunction.Arguments);
+  InternalSend([
+      TChatMessageBuild.Func(FFunctions.Call(ChatFunction.Name, ChatFunction.Arguments), ChatFunction.Name)
+      ]);
+end;
+
 procedure TOpenAIChatCustom.DoChat(Chat: TChat);
 begin
+  if Length(Chat.Choices) > 0 then
+    if Assigned(Chat.Choices[0].Message) then
+      if Length(Chat.Choices[0].Message.ToolCalls) > 0 then
+      begin
+        DoFunctionCall(Chat.Choices[0].Message.ToolCalls[0].&Function);
+        Exit;
+      end;
+
   if Assigned(FOnChat) then
     FOnChat(Self, Chat);
 end;
@@ -513,6 +536,11 @@ end;
 procedure TOpenAIChatCustom.SetOnError(const Value: TOnError);
 begin
   FOnError := Value;
+end;
+
+procedure TOpenAIChatCustom.SetOnFunctionCall(const Value: TOnFunctionCall);
+begin
+  FOnFunctionCall := Value;
 end;
 
 procedure TOpenAIChatCustom.SetPresencePenalty(const Value: Single);

@@ -25,6 +25,8 @@ object FormChat: TFormChat
   object MemoMessage: TMemo
     Touch.InteractiveGestures = [Pan, LongTap, DoubleTap]
     DataDetectorTypes = []
+    Lines.Strings = (
+      'Weather in Yekaterinburg')
     TextSettings.WordWrap = True
     Position.X = 8.000000000000000000
     Position.Y = 337.000000000000000000
@@ -117,7 +119,7 @@ object FormChat: TFormChat
     Model = 'gpt-4o'
     Temperature = 1.000000000000000000
     TopP = 1.000000000000000000
-    MaxTokens = 1
+    MaxTokens = 10000
     OnChat = OpenAIChat1Chat
     OnChatDelta = OpenAIChat1ChatDelta
     OnError = OpenAIChat1Error
@@ -136,6 +138,7 @@ object FormChat: TFormChat
           'ype": "string", "description": "The city and state, e.g. San Fra' +
           'ncisco, CA"},'#13#10'      "unit": {"type": "string", "enum": ["celsiu' +
           's", "fahrenheit"]}'#13#10'  },'#13#10'  "required": ["location"]'#13#10'}'
+        Strict = True
         OnFunctionExecute = FuncGetCurrentWeather
       end>
     Left = 384

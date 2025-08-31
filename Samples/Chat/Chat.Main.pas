@@ -165,7 +165,7 @@ begin
     JSON.AddPair('location', Location);
     JSON.AddPair('unit', UnitKind);
 
-    JSON.AddPair('temperature', TJSONNumber.Create(72));
+    JSON.AddPair('temperature', TJSONNumber.Create(14));
     JSON.AddPair('forecast', TJSONArray.Create('sunny', 'windy'));
 
     Result := JSON.ToJSON;
