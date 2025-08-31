@@ -67,7 +67,7 @@ type
     procedure SetOnChatDelta(const Value: TOnChatDelta);
     procedure SetFunctions(const Value: TOpenAIChatFunctions);
     procedure SetOnFunctionCall(const Value: TOnFunctionCall);
-    procedure DoFunctionCall(ChatFunction: TChatFunctionCall);
+    procedure DoFunctionCall(ChatFunctions: TArray<TChatToolCall>);
   protected
     procedure DoChat(Chat: TChat); virtual;
     procedure DoChatDelta(Chat: TChat; IsDone: Boolean); virtual;
@@ -214,13 +214,18 @@ begin
     FOnBeginWork(Self);
 end;
 
-procedure TOpenAIChatCustom.DoFunctionCall(ChatFunction: TChatFunctionCall);
+procedure TOpenAIChatCustom.DoFunctionCall(ChatFunctions: TArray<TChatToolCall>);
 begin
-  if Assigned(FOnFunctionCall) then
-    FOnFunctionCall(Self, ChatFunction.Name, ChatFunction.Arguments);
-  InternalSend([
-      TChatMessageBuild.Func(FFunctions.Call(ChatFunction.Name, ChatFunction.Arguments), ChatFunction.Name)
-      ]);
+  var FuncMessages: TArray<TChatMessageBuild> := [];
+  for var Func in ChatFunctions do
+  begin
+    if Assigned(FOnFunctionCall) then
+      FOnFunctionCall(Self, Func.&Function.Name, Func.&Function.Arguments);
+    FuncMessages := FuncMessages +
+      [TChatMessageBuild.Func(FFunctions.Call(Func.&Function.Name, Func.&Function.Arguments), Func.&Function.Name)];
+  end;
+  if Length(FuncMessages) > 0 then
+    InternalSend(FuncMessages);
 end;
 
 procedure TOpenAIChatCustom.DoChat(Chat: TChat);
@@ -229,7 +234,7 @@ begin
     if Assigned(Chat.Choices[0].Message) then
       if Length(Chat.Choices[0].Message.ToolCalls) > 0 then
       begin
-        DoFunctionCall(Chat.Choices[0].Message.ToolCalls[0].&Function);
+        DoFunctionCall(Chat.Choices[0].Message.ToolCalls);
         Exit;
       end;
 

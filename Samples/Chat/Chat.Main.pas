@@ -34,6 +34,7 @@ type
     procedure OpenAIChat1EndWork(Sender: TObject);
     procedure FuncGetCurrentWeather(Sender: TObject; const Args: string; out Result: string);
     procedure ButtonAttachClick(Sender: TObject);
+    procedure OpenAIChatFunctions1Items1FunctionExecute(Sender: TObject; const Args: string; out Result: string);
   private
     { Private declarations }
   public
@@ -129,6 +130,18 @@ procedure TFormChat.OpenAIChat1Error(Sender: TObject; Error: Exception);
 begin
   MemoMessages.Lines.Add('Error: ' + Error.Message);
   MemoMessages.Lines.Add('');
+end;
+
+procedure TFormChat.OpenAIChatFunctions1Items1FunctionExecute(Sender: TObject; const Args: string; out Result: string);
+begin
+  Result := '''
+  {
+    "name": "ROOT",
+    "user_name": "HemulGM",
+    "ram": "32Gb",
+    "cpu": "Intel(R) Core(TM) i7-9700KF CPU @ 3.60GHz"
+  }
+  ''';
 end;
 
 procedure TFormChat.FuncGetCurrentWeather(Sender: TObject; const Args: string; out Result: string);
