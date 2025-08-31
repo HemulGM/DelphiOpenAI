@@ -8,7 +8,7 @@ uses
   Data.Bind.Components, Data.Bind.ObjectScope, REST.Client, OpenAI, FMX.Styles,
   OpenAI.Component.Chat, FMX.Memo.Types, FMX.StdCtrls, FMX.Controls.Presentation,
   FMX.ScrollBox, FMX.Memo, OpenAI.Component.Functions, FMX.Layouts, FMX.ListBox,
-  OpenAI.Types;
+  OpenAI.Types, OpenAI.Component.ChatHistory;
 
 type
   TFormChat = class(TForm)
@@ -24,6 +24,7 @@ type
     ButtonAttach: TButton;
     ButtonRemoveAttach: TButton;
     OpenDialogImg: TOpenDialog;
+    OpenAIChatHistory1: TOpenAIChatHistory;
     procedure FormCreate(Sender: TObject);
     procedure OpenAIChat1Chat(Sender: TObject; Event: TChat);
     procedure OpenAIChat1Error(Sender: TObject; Error: Exception);
@@ -76,13 +77,16 @@ begin
   for var i := 0 to ListBox1.Count - 1 do
     Content := Content + [TMessageContent.CreateImage(FileToBase64(ListBox1.ListItems[i].TagString))];
 
+  if Length(Content) <= 0 then
+    Exit;
+
   OpenAIChat1.Send([TChatMessageBuild.User(Content)]);
+  MemoMessage.Text := '';
 end;
 
 procedure TFormChat.ButtonStreamSendClick(Sender: TObject);
 begin
   MemoMessages.Lines.Add('User: ' + MemoMessage.Text);
-  MemoMessages.Lines.Add('');
   OpenAIChat1.Stream := True;
   OpenAIChat1.Send([TChatMessageBuild.User(MemoMessage.Text)]);
   MemoMessages.Lines.Add('Assistant: ');
@@ -145,18 +149,14 @@ begin
 end;
 
 procedure TFormChat.FuncGetCurrentWeather(Sender: TObject; const Args: string; out Result: string);
-var
-  JSON: TJSONObject;
-  Location: string;
-  UnitKind: string;
 begin
   Result := '';
-  Location := '';
-  UnitKind := '';
+  var Location := '';
+  var UnitKind := '';
 
   // Parse arguments
   try
-    JSON := TJSONObject.ParseJSONValue(Args) as TJSONObject;
+    var JSON := TJSONObject.ParseJSONValue(Args) as TJSONObject;
     if Assigned(JSON) then
     try
       Location := JSON.GetValue('location', '');
@@ -173,7 +173,7 @@ begin
     Exit;
 
   // Generate response
-  JSON := TJSONObject.Create;
+  var JSON := TJSONObject.Create;
   try
     JSON.AddPair('location', Location);
     JSON.AddPair('unit', UnitKind);

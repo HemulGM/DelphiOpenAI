@@ -59,7 +59,8 @@ contains
   OpenAI.Component.Chat in 'OpenAI.Component.Chat.pas',
   OpenAI.Component.Functions in 'OpenAI.Component.Functions.pas',
   OpenAI.Component.Reg in 'OpenAI.Component.Reg.pas',
-  OpenAI.Utils.JSON.Cleaner in 'OpenAI.Utils.JSON.Cleaner.pas';
+  OpenAI.Utils.JSON.Cleaner in 'OpenAI.Utils.JSON.Cleaner.pas',
+  OpenAI.Component.ChatHistory in 'OpenAI.Component.ChatHistory.pas';
 
 end.
 

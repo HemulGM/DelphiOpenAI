@@ -310,6 +310,7 @@
         <DCCReference Include="..\..\OpenAI.Utils.ObjectHolder.pas"/>
         <DCCReference Include="..\..\OpenAI.Utils.Base64.pas"/>
         <DCCReference Include="..\..\OpenAI.Utils.JSON.Cleaner.pas"/>
+        <DCCReference Include="..\..\OpenAI.Component.ChatHistory.pas"/>
         <None Include="token.txt"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>

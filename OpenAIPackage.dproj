@@ -196,6 +196,7 @@
         <DCCReference Include="OpenAI.Component.Functions.pas"/>
         <DCCReference Include="OpenAI.Component.Reg.pas"/>
         <DCCReference Include="OpenAI.Utils.JSON.Cleaner.pas"/>
+        <DCCReference Include="OpenAI.Component.ChatHistory.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>
@@ -235,6 +236,12 @@
                 </DeployFile>
                 <DeployFile LocalName="..\..\..\..\Public\Documents\Embarcadero\Studio\20.0\Bpl\OpenAIPackage.bpl" Configuration="Debug" Class="ProjectOutput"/>
                 <DeployFile LocalName="C:\Users\Public\Documents\Embarcadero\Studio\23.0\Bpl\OpenAIPackage.bpl" Configuration="Debug" Class="ProjectOutput"/>
+                <DeployFile LocalName="C:\Users\Public\Documents\Embarcadero\Studio\23.0\Bpl\OpenAIPackage.bpl" Configuration="Debug" Class="ProjectOutput">
+                    <Platform Name="Win32">
+                        <RemoteName>OpenAIPackage.bpl</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
                 <DeployClass Name="AdditionalDebugSymbols">
                     <Platform Name="OSX32">
                         <Operation>1</Operation>

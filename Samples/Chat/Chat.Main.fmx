@@ -115,6 +115,7 @@ object FormChat: TFormChat
   end
   object OpenAIChat1: TOpenAIChat
     Client = OpenAIClient1
+    History = OpenAIChatHistory1
     Functions = OpenAIChatFunctions1
     Model = 'gpt-4o'
     Temperature = 1.000000000000000000
@@ -149,5 +150,12 @@ object FormChat: TFormChat
       end>
     Left = 256
     Top = 32
+  end
+  object OpenAIChatHistory1: TOpenAIChatHistory
+    AutoTrim = False
+    MaxTokensForQuery = 1024
+    MaxTokensOfModel = 4096
+    Left = 256
+    Top = 96
   end
 end

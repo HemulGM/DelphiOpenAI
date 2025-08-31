@@ -5,7 +5,7 @@ interface
 uses
   System.SysUtils, System.Classes, System.SyncObjs, System.Generics.Collections,
   System.Threading, OpenAI, OpenAI.Chat, OpenAI.Component.Functions,
-  OpenAI.Utils.ObjectHolder;
+  OpenAI.Utils.ObjectHolder, OpenAI.Component.ChatHistory;
 
 type
   TChat = OpenAI.Chat.TChat;
@@ -45,6 +45,7 @@ type
     FDoStreamStop: Boolean;
     FFunctions: TOpenAIChatFunctions;
     FOnFunctionCall: TOnFunctionCall;
+    FHistory: TOpenAIChatHistoryCustom;
     procedure SetClient(const Value: TOpenAIClient);
     procedure SetModel(const Value: string);
     procedure SetFrequencyPenalty(const Value: Single);
@@ -68,6 +69,7 @@ type
     procedure SetFunctions(const Value: TOpenAIChatFunctions);
     procedure SetOnFunctionCall(const Value: TOnFunctionCall);
     procedure DoFunctionCall(ChatFunctions: TArray<TChatToolCall>);
+    procedure SetHistory(const Value: TOpenAIChatHistoryCustom);
   protected
     procedure DoChat(Chat: TChat); virtual;
     procedure DoChatDelta(Chat: TChat; IsDone: Boolean); virtual;
@@ -80,6 +82,7 @@ type
   public
     property Client: TOpenAIClient read FClient write SetClient;
     property Functions: TOpenAIChatFunctions read FFunctions write SetFunctions;
+    property History: TOpenAIChatHistoryCustom read FHistory write SetHistory;
     property Model: string read FModel write SetModel;
     property Temperature: Single read FTemperature write SetTemperature;
     property TopP: Single read FTopP write SetTopP;
@@ -108,6 +111,7 @@ type
   TOpenAIChat = class(TOpenAIChatCustom)
   published
     property Client;
+    property History;
     property Functions;
     /// <summary>
     /// ID of the model to use. See the model endpoint compatibility table for details on which models work with the Chat API.
@@ -187,7 +191,7 @@ begin
   FStop := TStringList.Create;
   FTemperature := 1;
   FStream := False;
-  FModel := 'gpt-3.5-turbo';
+  FModel := 'gpt-4';
   FTopP := 1;
   FN := 1;
   FMaxTokens := 1024;
@@ -269,10 +273,21 @@ end;
 procedure TOpenAIChatCustom.Send(const Messages: TArray<TChatMessageBuild>);
 begin
   CheckTask;
-  if not Stream then
-    InternalSend(Messages)
+  if Assigned(FHistory) then
+  begin
+    FHistory.Items.AddRange(Messages);
+    if not Stream then
+      InternalSend(FHistory.Items.ToArray)
+    else
+      InternalStreamSend(FHistory.Items.ToArray);
+  end
   else
-    InternalStreamSend(Messages);
+  begin
+    if not Stream then
+      InternalSend(Messages)
+    else
+      InternalStreamSend(Messages);
+  end;
 end;
 
 procedure TOpenAIChatCustom.InternalSend(const Messages: TArray<TChatMessageBuild>);
@@ -501,6 +516,11 @@ end;
 procedure TOpenAIChatCustom.SetFunctions(const Value: TOpenAIChatFunctions);
 begin
   FFunctions := Value;
+end;
+
+procedure TOpenAIChatCustom.SetHistory(const Value: TOpenAIChatHistoryCustom);
+begin
+  FHistory := Value;
 end;
 
 procedure TOpenAIChatCustom.SetMaxTokens(const Value: Integer);
