@@ -961,6 +961,23 @@ type
     /// each with an associated log probability. logprobs must be set to true if this parameter is used.
     /// </summary>
     function TopLogprobs(const Value: Integer): TChatParams;
+    /// <summary>
+    /// Parameters for audio output. Required when modalities includes "audio".
+    /// </summary>
+    /// <param name="Voice">The voice to use for audio output (e.g. "alloy", "ash", "ballad", "coral",
+    /// "echo", "fable", "nova", "onyx", "sage", "shimmer").</param>
+    /// <param name="Format">The audio output format: "wav", "mp3", "flac", "opus", "pcm16", "aac".</param>
+    function Audio(const Voice, Format: string): TChatParams;
+    /// <summary>
+    /// Controls prompt cache retention policy.
+    /// "in-memory" keeps the cache in memory (default). "24h" enables extended caching
+    /// that offloads KV tensors to GPU-local storage.
+    /// </summary>
+    function PromptCacheRetention(const Value: string): TChatParams;
+    /// <summary>
+    /// A key used for prompt caching optimization. Replaces the user field for caching purposes.
+    /// </summary>
+    function PromptCacheKey(const Value: string): TChatParams;
     constructor Create; override;
   end;
 
@@ -1427,7 +1444,7 @@ end;
 constructor TChatParams.Create;
 begin
   inherited;
-  Model('gpt-4o-mini');
+  Model('gpt-5.4-mini');
 end;
 
 function TChatParams.Functions(const Value: TArray<IChatFunction>): TChatParams;
@@ -1543,6 +1560,26 @@ begin
   VJO := TJSONParam.Create;
   VJO.Add('search_context_size', SearchContextSize);
   Result := TChatParams(Add('web_search_options', VJO));
+end;
+
+function TChatParams.Audio(const Voice, Format: string): TChatParams;
+var
+  VJO: TJSONParam;
+begin
+  VJO := TJSONParam.Create;
+  VJO.Add('voice', Voice);
+  VJO.Add('format', Format);
+  Result := TChatParams(Add('audio', VJO));
+end;
+
+function TChatParams.PromptCacheRetention(const Value: string): TChatParams;
+begin
+  Result := TChatParams(Add('prompt_cache_retention', Value));
+end;
+
+function TChatParams.PromptCacheKey(const Value: string): TChatParams;
+begin
+  Result := TChatParams(Add('prompt_cache_key', Value));
 end;
 
 function TChatParams.ResponseFormat(const Value: TChatResponseFormat; SchemaFormat: TJSONSchemaFormat): TChatParams;
