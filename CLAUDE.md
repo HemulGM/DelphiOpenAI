@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Delphi wrapper library for the OpenAI API. Pure Delphi implementation with no third-party dependencies—only requires RTL and RESTComponents. Compatible with OpenAI, Azure OpenAI, DeepSeek, YandexGPT, Qwen, and GigaChat backends.
+Delphi wrapper library for the OpenAI API. Pure Delphi implementation with no third-party dependencies—only requires RTL and RESTComponents.
 
 ## Build
 
@@ -61,7 +61,6 @@ OpenAI.Chat.Create(
 
 `TOpenAIAPI` (`OpenAI.API.pas`) manages all HTTP communication using `System.Net.HttpClient`. Supports:
 - Streaming via SSE with callback handlers
-- Azure endpoint configuration (deployment name, API version)
 - Proxy settings, custom headers, configurable timeouts
 - Custom exception hierarchy: `OpenAIException`, `OpenAIExceptionAPI`, `OpenAIExceptionRateLimitError`, etc.
 

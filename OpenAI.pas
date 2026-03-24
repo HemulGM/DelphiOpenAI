@@ -139,7 +139,6 @@ type
     FCompletionsRoute: TCompletionsRoute;
     FEditsRoute: TEditsRoute;
     FImagesRoute: TImagesRoute;
-    FImagesAzureRoute: TImagesAzureRoute;
     FModelsRoute: TModelsRoute;
     FEmbeddingsRoute: TEmbeddingsRoute;
     FModerationsRoute: TModerationsRoute;
@@ -150,7 +149,6 @@ type
     FChatRoute: TChatRoute;
     FAudioRoute: TAudioRoute;
     FAssistantsRoute: TAssistantsRoute;
-    FPrepare: IAPIPrepare;
     procedure SetToken(const Value: string);
     function GetToken: string;
     function GetBaseUrl: string;
@@ -170,17 +168,7 @@ type
     function GetChatRoute: TChatRoute;
     function GetAudioRoute: TAudioRoute;
     function GetAssistantsRoute: TAssistantsRoute;
-    function GetAzureAPIVersion: string;
-    function GetAzureDeployment: string;
-    function GetIsAzure: Boolean;
-    procedure SetAzureAPIVersion(const Value: string);
-    procedure SetAzureDeployment(const Value: string);
-    procedure SetIsAzure(const Value: Boolean);
-    function GetImagesAzureRoute: TImagesAzureRoute;
     function GetFineTuningRoute: TFineTuningRoute;
-    function GetDisableBearerPrefix: Boolean;
-    procedure SetDisableBearerPrefix(const Value: Boolean);
-    procedure SetPrepare(const Value: IAPIPrepare);
   public
     constructor Create; overload;
     constructor Create(const AToken: string); overload;
@@ -209,12 +197,6 @@ type
     /// subscription quota.
     /// </summary>
     property Organization: string read GetOrganization write SetOrganization;
-
-    property IsAzure: Boolean read GetIsAzure write SetIsAzure;
-    property DisableBearerPrefix: Boolean read GetDisableBearerPrefix write SetDisableBearerPrefix;
-    property AzureApiVersion: string read GetAzureAPIVersion write SetAzureAPIVersion;
-    property AzureDeployment: string read GetAzureDeployment write SetAzureDeployment;
-    property Prepare: IAPIPrepare read FPrepare write SetPrepare;
   public
     /// <summary>
     /// Given a prompt, the model will return one or more predicted completions,
@@ -229,10 +211,6 @@ type
     /// Given a prompt and/or an input image, the model will generate a new image.
     /// </summary>
     property Image: TImagesRoute read GetImagesRoute;
-    /// <summary>
-    /// Given a prompt and/or an input image, the model will generate a new image.
-    /// </summary>
-    property ImageAzure: TImagesAzureRoute read GetImagesAzureRoute;
     /// <summary>
     /// List and describe the various models available in the API.
     /// You can refer to the Models documentation to understand what models are available and the differences between them.
@@ -356,14 +334,6 @@ type
     procedure SetConnectionTimeout(const Value: Integer);
     procedure SetResponseTimeout(const Value: Integer);
     procedure SetSendTimeout(const Value: Integer);
-    function GetAzureAPIVersion: string;
-    function GetAzureDeployment: string;
-    function GetIsAzure: Boolean;
-    procedure SetAzureAPIVersion(const Value: string);
-    procedure SetAzureDeployment(const Value: string);
-    procedure SetIsAzure(const Value: Boolean);
-    function GetDisableBearerPrefix: Boolean;
-    procedure SetDisableBearerPrefix(const Value: Boolean);
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -468,11 +438,6 @@ type
     /// -1 - Infinite timeout. 0 - platform specific timeout. Supported by all platforms.
     /// </summary>
     property ResponseTimeout: Integer read GetResponseTimeout write SetResponseTimeout;
-
-    property IsAzure: Boolean read GetIsAzure write SetIsAzure;
-    property DisableBearerPrefix: Boolean read GetDisableBearerPrefix write SetDisableBearerPrefix;
-    property AzureApiVersion: string read GetAzureAPIVersion write SetAzureAPIVersion;
-    property AzureDeployment: string read GetAzureDeployment write SetAzureDeployment;
     property CustomHeaders: THTTPHeaders read FCustomHeaders;
   end;
 
@@ -513,10 +478,6 @@ type
     /// -1 - Infinite timeout. 0 - platform specific timeout. Supported by all platforms.
     /// </summary>
     property ResponseTimeout default TURLClient.DefaultResponseTimeout;
-    property IsAzure default False;
-    property DisableBearerPrefix default False;
-    property AzureApiVersion;
-    property AzureDeployment;
     property CustomHeaders;
   end;
 
@@ -608,7 +569,6 @@ begin
   FCompletionsRoute.Free;
   FEditsRoute.Free;
   FImagesRoute.Free;
-  FImagesAzureRoute.Free;
   FModelsRoute.Free;
   FEmbeddingsRoute.Free;
   FModerationsRoute.Free;
@@ -639,16 +599,6 @@ begin
   if not Assigned(FAudioRoute) then
     FAudioRoute := TAudioRoute.CreateRoute(API);
   Result := FAudioRoute;
-end;
-
-function TOpenAI.GetAzureAPIVersion: string;
-begin
-  Result := FAPI.AzureApiVersion;
-end;
-
-function TOpenAI.GetAzureDeployment: string;
-begin
-  Result := FAPI.AzureDeployment;
 end;
 
 function TOpenAI.GetBaseUrl: string;
@@ -712,28 +662,11 @@ begin
   Result := FFineTuningRoute;
 end;
 
-function TOpenAI.GetImagesAzureRoute: TImagesAzureRoute;
-begin
-  if not Assigned(FImagesAzureRoute) then
-    FImagesAzureRoute := TImagesAzureRoute.CreateRoute(API);
-  Result := FImagesAzureRoute;
-end;
-
 function TOpenAI.GetImagesRoute: TImagesRoute;
 begin
   if not Assigned(FImagesRoute) then
     FImagesRoute := TImagesRoute.CreateRoute(API);
   Result := FImagesRoute;
-end;
-
-function TOpenAI.GetIsAzure: Boolean;
-begin
-  Result := FAPI.IsAzure;
-end;
-
-function TOpenAI.GetDisableBearerPrefix: Boolean;
-begin
-  Result := FAPI.DisableBearerPrefix;
 end;
 
 function TOpenAI.GetModelsRoute: TModelsRoute;
@@ -760,40 +693,14 @@ begin
   Result := FAPI.Token;
 end;
 
-procedure TOpenAI.SetAzureAPIVersion(const Value: string);
-begin
-  FAPI.AzureApiVersion := Value;
-end;
-
-procedure TOpenAI.SetAzureDeployment(const Value: string);
-begin
-  FAPI.AzureDeployment := Value;
-end;
-
 procedure TOpenAI.SetBaseUrl(const Value: string);
 begin
   FAPI.BaseURL := Value;
 end;
 
-procedure TOpenAI.SetIsAzure(const Value: Boolean);
-begin
-  FAPI.IsAzure := Value;
-end;
-
-procedure TOpenAI.SetDisableBearerPrefix(const Value: Boolean);
-begin
-  FAPI.DisableBearerPrefix := Value;
-end;
-
 procedure TOpenAI.SetOrganization(const Value: string);
 begin
   FAPI.Organization := Value;
-end;
-
-procedure TOpenAI.SetPrepare(const Value: IAPIPrepare);
-begin
-  FPrepare := Value;
-  API.Prepare := Value;
 end;
 
 procedure TOpenAI.SetToken(const Value: string);
@@ -845,16 +752,6 @@ end;
 function TOpenAIComponent.GetAudioRoute: TAudioRoute;
 begin
   Result := FOpenAI.GetAudioRoute;
-end;
-
-function TOpenAIComponent.GetAzureAPIVersion: string;
-begin
-  Result := FOpenAI.API.AzureApiVersion;
-end;
-
-function TOpenAIComponent.GetAzureDeployment: string;
-begin
-  Result := FOpenAI.API.AzureDeployment;
 end;
 
 function TOpenAIComponent.GetBaseUrl: string;
@@ -912,16 +809,6 @@ begin
   Result := FOpenAI.GetImagesRoute;
 end;
 
-function TOpenAIComponent.GetIsAzure: Boolean;
-begin
-  Result := FOpenAI.API.IsAzure;
-end;
-
-function TOpenAIComponent.GetDisableBearerPrefix: Boolean;
-begin
-  Result := FOpenAI.API.DisableBearerPrefix;
-end;
-
 function TOpenAIComponent.GetModelsRoute: TModelsRoute;
 begin
   Result := FOpenAI.GetModelsRoute;
@@ -952,16 +839,6 @@ begin
   Result := FOpenAI.GetToken;
 end;
 
-procedure TOpenAIComponent.SetAzureAPIVersion(const Value: string);
-begin
-  FOpenAI.API.AzureApiVersion := Value;
-end;
-
-procedure TOpenAIComponent.SetAzureDeployment(const Value: string);
-begin
-  FOpenAI.API.AzureDeployment := Value;
-end;
-
 procedure TOpenAIComponent.SetBaseUrl(const Value: string);
 begin
   FOpenAI.SetBaseUrl(Value);
@@ -970,16 +847,6 @@ end;
 procedure TOpenAIComponent.SetConnectionTimeout(const Value: Integer);
 begin
   FOpenAI.API.ConnectionTimeout := Value;
-end;
-
-procedure TOpenAIComponent.SetIsAzure(const Value: Boolean);
-begin
-  FOpenAI.API.IsAzure := Value;
-end;
-
-procedure TOpenAIComponent.SetDisableBearerPrefix(const Value: Boolean);
-begin
-  FOpenAI.API.DisableBearerPrefix := Value;
 end;
 
 procedure TOpenAIComponent.SetOrganization(const Value: string);

@@ -67,13 +67,6 @@ type
 
   OpenAIExceptionInvalidResponse = class(OpenAIException);
 
-  OpenAIPrepareException = class(OpenAIException);
-
-  IAPIPrepare = interface
-    ['{10B51102-8D50-40F5-AD6D-E44D9B22A56F}']
-    procedure PrepareQuery(API: TOpenAIAPI);
-  end;
-
   {$WARNINGS OFF}
   TOpenAIAPI = class
   public
@@ -84,17 +77,12 @@ type
     FBaseUrl: string;
     FOrganization: string;
 
-    FIsAzure: Boolean;
-    FAzureApiVersion: string;
-    FAzureDeployment: string;
     FCustomHeaders: TNetHeaders;
     FProxySettings: TProxySettings;
     FConnectionTimeout: Integer;
     FSendTimeout: Integer;
     FResponseTimeout: Integer;
     FAssistantsVersion: string;
-    FDisableBearerPrefix: Boolean;
-    FPrepare: IAPIPrepare;
 
     procedure SetToken(const Value: string);
     procedure SetBaseUrl(const Value: string);
@@ -143,16 +131,11 @@ type
     /// <summary> Property to set/get the ResponseTimeout. Value is in milliseconds.
     ///  -1 - Infinite timeout. 0 - platform specific timeout. Supported by all platforms. </summary>
     property ResponseTimeout: Integer read FResponseTimeout write SetResponseTimeout;
-    property IsAzure: Boolean read FIsAzure write FIsAzure;
-    property DisableBearerPrefix: Boolean read FDisableBearerPrefix write FDisableBearerPrefix;
-    property AzureApiVersion: string read FAzureApiVersion write FAzureApiVersion;
-    property AzureDeployment: string read FAzureDeployment write FAzureDeployment;
     property CustomHeaders: TNetHeaders read FCustomHeaders write SetCustomHeaders;
     /// <summary>
     /// Example: v1, v2, ...
     /// </summary>
     property AssistantsVersion: string read FAssistantsVersion write FAssistantsVersion;
-    property Prepare: IAPIPrepare read FPrepare write FPrepare;
   end;
   {$WARNINGS ON}
 
@@ -179,10 +162,6 @@ begin
   FResponseTimeout := TURLClient.DefaultResponseTimeout;
   FToken := '';
   FBaseUrl := URL_BASE;
-  FIsAzure := False;
-  FDisableBearerPrefix := False;
-  FAzureApiVersion := '';
-  FAzureDeployment := '';
 end;
 
 constructor TOpenAIAPI.Create(const AToken: string);
@@ -459,14 +438,7 @@ end;
 
 function TOpenAIAPI.GetHeaders: TNetHeaders;
 begin
-  // Additional headers are not required when using azure
-  if IsAzure then
-    Exit;
-
-  if DisableBearerPrefix then
-    Result := [TNetHeader.Create('Authorization', FToken)] + FCustomHeaders
-  else
-    Result := [TNetHeader.Create('Authorization', 'Bearer ' + FToken)] + FCustomHeaders;
+  Result := [TNetHeader.Create('Authorization', 'Bearer ' + FToken)] + FCustomHeaders;
   if not FOrganization.IsEmpty then
     Result := Result + [TNetHeader.Create('OpenAI-Organization', FOrganization)];
   if not FAssistantsVersion.IsEmpty then
@@ -475,20 +447,11 @@ end;
 
 function TOpenAIAPI.GetRequestURL(const Path: string): string;
 begin
-  Result := FBaseURL + '/';
-  if IsAzure then
-    Result := Result + AzureDeployment + '/';
-  Result := Result + Path;
-
-  // API-Key and API-Version have to be included in the request not header when using azure
-  if IsAzure then
-    Result := Result + Format('?api-version=%s&api-key=%s', [AzureApiVersion, Token]);
+  Result := FBaseURL + '/' + Path;
 end;
 
 procedure TOpenAIAPI.CheckAPI;
 begin
-  if Assigned(FPrepare) then
-    FPrepare.PrepareQuery(Self);
   if FToken.IsEmpty then
     raise OpenAIExceptionAPI.Create('Token is empty!');
   if FBaseUrl.IsEmpty then

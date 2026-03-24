@@ -13,16 +13,6 @@ This repositorty contains Delphi implementation over [OpenAI](https://beta.opena
 
 ❗*This is an unofficial library. OpenAI does not provide any official library for Delphi.*
 
-### Compatibility
-Also, the library is compatible with the following AI APIs (tested): 
-- OpenAI Azure
-- DeepSeek
-- YandexGPT
-- Qwen
-- GigaChat
-
-and other compatible with the OpenAI API.
-
 ### Table of contents
 
 - [What is OpenAI](#what-is-openai)
@@ -37,7 +27,6 @@ and other compatible with the OpenAI API.
     - [Errors](#errors)
     - [Exceptions](#exceptions)
     - [Usage proxy](#proxy)
-    - [Preparing mechanism](#preparing-mechanism)
 - [Examples](#examples)
 - [Requirements](#requirements)
 - [Links](#links)
@@ -319,18 +308,6 @@ OpenAI.API.ProxySettings := TProxySettings.Create(
     ProxyPort,
     ProxyUserName,
     ProxyPassword);
-```
-
-### Preparing mechanism
-
-If a third-party API requires some actions before making a request, then use the IAPIPrepare interface and the Prepare property.
-
-```Pascal
-var client := TOpenAI.Create('https://gigachat.devices.sberbank.ru/api/v1', '');
-сlient.Prepare := TApiPrepareGigaChat.Create(
-  '<client_id>',
-  '<auth_key>');
-var response := client.Chat.Create(...);
 ```
 
 ## Examples
