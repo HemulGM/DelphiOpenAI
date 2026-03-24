@@ -99,12 +99,20 @@ type
     procedure StringReverter(Data: TObject; Field: string; Arg: string); override;
   end;
 
+  /// <summary>
+  /// Reasoning effort levels for reasoning models.
+  /// None and Minimal are supported starting with GPT-5.2+. Earlier models (o3) support Low, Medium, High only.
+  /// </summary>
   TReasoningEffort = (None, Minimal, Low, Medium, High, XHigh);
 
   TReasoningEffortHelper = record helper for TReasoningEffort
     function ToString: string;
   end;
 
+  /// <summary>
+  /// Output verbosity levels. Controls how detailed the model's response is.
+  /// Supported by GPT-5 and later models.
+  /// </summary>
   TVerbosity = (Low, Medium, High);
 
   TVerbosityHelper = record helper for TVerbosity
@@ -911,8 +919,9 @@ type
     function PresencePenalty(const Value: Single = 0): TChatParams;
     /// <summary>
     /// Constrains effort on reasoning for reasoning models.
-    /// Supported values are model-dependent and can include none, minimal, low, medium, high, and xhigh.
+    /// Supported values: None, Minimal, Low, Medium, High, XHigh (model-dependent).
     /// Lower effort favors speed and lower token usage, while higher effort favors more complete reasoning.
+    /// Note: Earlier models (o3) only support Low, Medium, High. GPT-5.2+ defaults to None and supports the full range.
     /// </summary>
     function ReasoningEffort(const Value: TReasoningEffort): TChatParams;
     /// <summary>
