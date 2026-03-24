@@ -99,9 +99,15 @@ type
     procedure StringReverter(Data: TObject; Field: string; Arg: string); override;
   end;
 
-  TReasoningEffort = (Low, Medium, High);
+  TReasoningEffort = (None, Minimal, Low, Medium, High, XHigh);
 
   TReasoningEffortHelper = record helper for TReasoningEffort
+    function ToString: string;
+  end;
+
+  TVerbosity = (Low, Medium, High);
+
+  TVerbosityHelper = record helper for TVerbosity
     function ToString: string;
   end;
 
@@ -904,11 +910,25 @@ type
     /// </summary>
     function PresencePenalty(const Value: Single = 0): TChatParams;
     /// <summary>
-    /// o-series models only
-    /// Constrains effort on reasoning for reasoning models. Currently supported values are
-    /// low, medium, and high. Reducing reasoning effort can result in faster responses and fewer tokens used on reasoning in a response.
+    /// Constrains effort on reasoning for reasoning models.
+    /// Supported values are model-dependent and can include none, minimal, low, medium, high, and xhigh.
+    /// Lower effort favors speed and lower token usage, while higher effort favors more complete reasoning.
     /// </summary>
     function ReasoningEffort(const Value: TReasoningEffort): TChatParams;
+    /// <summary>
+    /// Controls the output verbosity of the model. Supported values are low, medium, and high.
+    /// Low verbosity produces short, to-the-point answers; high verbosity produces long, comprehensive answers.
+    /// Supported by GPT-5 and later models.
+    /// </summary>
+    function Verbosity(const Value: TVerbosity): TChatParams;
+    /// <summary>
+    /// Enables web search for the request. The model will search the web for relevant information
+    /// before generating a response. Supported by search-enabled models (e.g. gpt-4o-search-preview).
+    /// </summary>
+    /// <param name="SearchContextSize">Controls the amount of search context used.
+    /// Values: "low", "medium" (default), "high".
+    /// </param>
+    function WebSearchOptions(const SearchContextSize: string = 'medium'): TChatParams;
     /// <summary>
     /// Number between -2.0 and 2.0. Positive values penalize new tokens based on their existing frequency
     /// in the text so far,
@@ -1407,9 +1427,7 @@ end;
 constructor TChatParams.Create;
 begin
   inherited;
-  Model('gpt-3.5-turbo');
-  // Model('gpt-3.5-turbo-0613');
-  // Model('gpt-3.5-turbo-16k');
+  Model('gpt-4o-mini');
 end;
 
 function TChatParams.Functions(const Value: TArray<IChatFunction>): TChatParams;
@@ -1511,6 +1529,20 @@ end;
 function TChatParams.ReasoningEffort(const Value: TReasoningEffort): TChatParams;
 begin
   Result := TChatParams(Add('reasoning_effort', Value.ToString));
+end;
+
+function TChatParams.Verbosity(const Value: TVerbosity): TChatParams;
+begin
+  Result := TChatParams(Add('verbosity', Value.ToString));
+end;
+
+function TChatParams.WebSearchOptions(const SearchContextSize: string): TChatParams;
+var
+  VJO: TJSONParam;
+begin
+  VJO := TJSONParam.Create;
+  VJO.Add('search_context_size', SearchContextSize);
+  Result := TChatParams(Add('web_search_options', VJO));
 end;
 
 function TChatParams.ResponseFormat(const Value: TChatResponseFormat; SchemaFormat: TJSONSchemaFormat): TChatParams;
@@ -2490,14 +2522,36 @@ end;
 function TReasoningEffortHelper.ToString: string;
 begin
   case Self of
+    TReasoningEffort.None:
+      Exit('none');
+    TReasoningEffort.Minimal:
+      Exit('minimal');
     TReasoningEffort.Low:
       Exit('low');
     TReasoningEffort.Medium:
       Exit('medium');
     TReasoningEffort.High:
       Exit('high');
+    TReasoningEffort.XHigh:
+      Exit('xhigh');
   else
     raise Exception.Create('Unknown TReasoningEffort value');
+  end;
+end;
+
+{ TVerbosityHelper }
+
+function TVerbosityHelper.ToString: string;
+begin
+  case Self of
+    TVerbosity.Low:
+      Exit('low');
+    TVerbosity.Medium:
+      Exit('medium');
+    TVerbosity.High:
+      Exit('high');
+  else
+    raise Exception.Create('Unknown TVerbosity value');
   end;
 end;
 
