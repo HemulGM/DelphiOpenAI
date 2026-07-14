@@ -1523,10 +1523,10 @@ begin
     if Value = TChatResponseFormat.JSONSchema then
     begin
       VJO.Add('json_schema', SchemaFormat);
-      SchemaFormat := nil;
     end;
     Result := TChatParams(Add('response_format', VJO));
   finally
+    VJO.Free;
     SchemaFormat.Free;
   end;
 end;
@@ -1981,6 +1981,8 @@ begin
       Exit('text');
     TChatResponseFormat.JSONObject:
       Exit('json_object');
+    TChatResponseFormat.JSONSchema:
+      Exit('json_schema');
   end;
 end;
 
